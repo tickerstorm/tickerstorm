@@ -44,16 +44,16 @@ public class MarketDataDto implements Serializable {
   public BigDecimal ask;
   public BigDecimal bid;
   public BigDecimal price;
-  public BigInteger askSize;
-  public BigInteger bidSize;
+  public BigDecimal askSize;
+  public BigDecimal bidSize;
   public BigDecimal volume;
   public BigDecimal close;
   public BigDecimal open;
   public BigDecimal high;
   public BigDecimal low;
-  public BigInteger quantity;
+  public BigDecimal quantity;
   public String exchange;
-
+  
   public String getExchange() {
     return exchange;
   }
@@ -62,11 +62,11 @@ public class MarketDataDto implements Serializable {
     this.exchange = exchange;
   }
 
-  public BigInteger getQuantity() {
+  public BigDecimal getQuantity() {
     return quantity;
   }
 
-  public void setQuantity(BigInteger quantity) {
+  public void setQuantity(BigDecimal quantity) {
     this.quantity = quantity;
   }
 
@@ -104,19 +104,19 @@ public class MarketDataDto implements Serializable {
     this.price = price;
   }
 
-  public BigInteger getAskSize() {
+  public BigDecimal getAskSize() {
     return askSize;
   }
 
-  public void setAskSize(BigInteger askSize) {
+  public void setAskSize(BigDecimal askSize) {
     this.askSize = askSize;
   }
 
-  public BigInteger getBidSize() {
+  public BigDecimal getBidSize() {
     return bidSize;
   }
 
-  public void setBidSize(BigInteger bidSize) {
+  public void setBidSize(BigDecimal bidSize) {
     this.bidSize = bidSize;
   }
 

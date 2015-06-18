@@ -1,9 +1,6 @@
 package io.tickerstorm.entity;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
-
-import org.springframework.data.cassandra.mapping.Table;
 
 import com.google.common.base.Objects;
 
@@ -12,11 +9,11 @@ public class Tick extends BaseMarketData {
 
   public static final String TYPE = "tick";
 
-  public BigInteger getQuantity() {
+  public BigDecimal getQuantity() {
     return quantity;
   }
 
-  public void setQuantity(BigInteger quantity) {
+  public void setQuantity(BigDecimal quantity) {
     this.quantity = quantity;
   }
 
@@ -28,7 +25,7 @@ public class Tick extends BaseMarketData {
     this.price = price;
   }
 
-  public BigInteger quantity;
+  public BigDecimal quantity;
   public BigDecimal price;
 
   @Override

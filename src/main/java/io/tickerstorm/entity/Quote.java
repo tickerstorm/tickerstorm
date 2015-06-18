@@ -28,26 +28,26 @@ public class Quote extends BaseMarketData {
     this.ask = ask;
   }
 
-  public BigInteger getAskSize() {
+  public BigDecimal getAskSize() {
     return askSize;
   }
 
-  public void setAskSize(BigInteger askSize) {
+  public void setAskSize(BigDecimal askSize) {
     this.askSize = askSize;
   }
 
-  public BigInteger getBidSize() {
+  public BigDecimal getBidSize() {
     return bidSize;
   }
 
-  public void setBidSize(BigInteger bidSize) {
+  public void setBidSize(BigDecimal bidSize) {
     this.bidSize = bidSize;
   }
 
   public BigDecimal bid;
   public BigDecimal ask;
-  public BigInteger askSize;
-  public BigInteger bidSize;
+  public BigDecimal askSize;
+  public BigDecimal bidSize;
 
   @Override
   public int hashCode() {

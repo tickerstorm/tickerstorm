@@ -72,8 +72,8 @@ public class TestMarketDataDto {
     c.symbol = "AAPL";
     c.exchange = "test";
     c.timestamp = new DateTime();
-    c.askSize = BigInteger.ZERO;
-    c.bidSize = BigInteger.ZERO;
+    c.askSize = BigDecimal.ZERO;
+    c.bidSize = BigDecimal.ZERO;
 
     MarketDataDto dto = MarketDataDto.convert(c);
 
@@ -106,7 +106,7 @@ public class TestMarketDataDto {
 
     Tick c = new Tick();
     c.price = BigDecimal.TEN;
-    c.quantity = BigInteger.TEN;
+    c.quantity = BigDecimal.TEN;
     c.source = "test";
     c.symbol = "AAPL";
     c.exchange = "test";
