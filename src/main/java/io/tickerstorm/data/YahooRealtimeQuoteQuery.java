@@ -1,0 +1,77 @@
+package io.tickerstorm.data;
+
+import io.tickerstorm.entity.Quote;
+
+import java.math.BigDecimal;
+import java.math.BigInteger;
+
+import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class YahooRealtimeQuoteQuery implements QueryBuilder, DataConverter {
+
+  public static final Logger logger = LoggerFactory.getLogger(YahooRealtimeQuoteQuery.class);
+
+  public static final String HOST = "http://download.finance.yahoo.com/d/quotes.csv?s=";
+
+  public String symbol;
+  
+  public YahooRealtimeQuoteQuery(String symbol) {
+    this.symbol = symbol;
+  }
+
+  public YahooRealtimeQuoteQuery withSymbol(String symbol) {
+    this.symbol = symbol;
+    return this;
+  }
+
+  @Override
+  public DataConverter converter() {
+    return this;
+  }
+
+  public Quote[] convert(String line) {
+    String[] data = line.split(",");
+
+    Quote c = new Quote();
+    c.symbol = symbol;
+    c.source = "yahoo";
+    c.timestamp = new DateTime();
+
+    if (!data[0].equalsIgnoreCase("N/A"))
+      c.ask = new BigDecimal(data[0]);
+    else if (!data[1].equalsIgnoreCase("N/A"))
+      c.ask = new BigDecimal(data[1]);
+    else
+      return null;
+
+    c.askSize = new BigInteger(data[2]);
+
+    if (!data[3].equalsIgnoreCase("N/A"))
+      c.bid = new BigDecimal(data[3]);
+    else if (!data[4].equalsIgnoreCase("N/A"))
+      c.bid = new BigDecimal(data[4]);
+    else
+      return null;
+
+    c.bidSize = new BigInteger(data[5]);
+    c.exchange = data[6];
+
+    return new Quote[] { c };
+  }
+
+  public String build() {
+
+    String url = HOST + symbol + "&f=a0aa5bb2b6x";
+
+    logger.info(url);
+    return url;
+  }
+
+  @Override
+  public String provider() {
+    return "Yahoo";
+  }
+
+}

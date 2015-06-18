@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mappings xmlns="http://dozer.sourceforge.net" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://dozer.sourceforge.net http://dozer.sourceforge.net/schema/beanmapping.xsd">
+
+	<configuration>
+		<stop-on-errors>true</stop-on-errors>
+		<wildcard>true</wildcard>
+
+		<custom-converters>
+			<converter type="io.tickerstorm.dao.CustomDateTimeConverter">
+				<class-a>java.lang.String</class-a>
+				<class-b>org.joda.time.DateTime</class-b>
+			</converter>
+			<converter type="io.tickerstorm.dao.CustomDateTimeConverter">
+				<class-a>java.lang.String</class-a>
+				<class-b>java.lang.Long</class-b>
+			</converter>
+		</custom-converters>
+	</configuration>
+
+	<mapping type="bi-directional" map-null="false">
+		<class-a>io.tickerstorm.entity.Candle</class-a>
+		<class-b>io.tickerstorm.dao.MarketDataDto</class-b>
+		<field>
+			<a>timestamp</a>
+			<b>primarykey.timestamp</b>
+		</field>
+		<field>
+			<a>interval</a>
+			<b>primarykey.interval</b>
+		</field>
+		<field>
+			<a>symbol</a>
+			<b>primarykey.symbol</b>
+		</field>
+		<field>
+			<a>source</a>
+			<b>primarykey.source</b>
+		</field>
+		<field>
+			<a>type</a>
+			<b>primarykey.type</b>
+		</field>
+	</mapping>
+	
+	<mapping type="bi-directional" map-null="false">
+		<class-a>io.tickerstorm.entity.Quote</class-a>
+		<class-b>io.tickerstorm.dao.MarketDataDto</class-b>
+		<field>
+			<a>timestamp</a>
+			<b>primarykey.timestamp</b>
+		</field>
+		<field>
+			<a>symbol</a>
+			<b>primarykey.symbol</b>
+		</field>
+		<field>
+			<a>source</a>
+			<b>primarykey.source</b>
+		</field>
+		<field>
+			<a>type</a>
+			<b>primarykey.type</b>
+		</field>
+	</mapping>
+	
+	<mapping type="bi-directional" map-null="false">
+		<class-a>io.tickerstorm.entity.Tick</class-a>
+		<class-b>io.tickerstorm.dao.MarketDataDto</class-b>
+		<field>
+			<a>timestamp</a>
+			<b>primarykey.timestamp</b>
+		</field>
+		<field>
+			<a>symbol</a>
+			<b>primarykey.symbol</b>
+		</field>
+		<field>
+			<a>source</a>
+			<b>primarykey.source</b>
+		</field>
+		<field>
+			<a>type</a>
+			<b>primarykey.type</b>
+		</field>
+	</mapping>
+
+</mappings>  
