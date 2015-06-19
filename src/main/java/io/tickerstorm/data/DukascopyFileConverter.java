@@ -61,7 +61,7 @@ public class DukascopyFileConverter extends BaseFileConverter implements DataCon
           String[] cols = l.split(",");
           Candle c = new Candle();
           c.symbol = currency;
-          c.timestamp = formatter.parseDateTime(cols[0]).withZone(DateTimeZone.UTC);
+          c.timestamp = formatter.parseDateTime(cols[0]).withZone(DateTimeZone.forID("GMT"));
           c.open = new BigDecimal(cols[1]);
           c.high = new BigDecimal(cols[2]);
           c.low = new BigDecimal(cols[3]);
