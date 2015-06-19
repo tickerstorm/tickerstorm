@@ -123,7 +123,7 @@ public class DukascopyFileConverter extends BaseFileConverter implements DataCon
 
     file = new File(file.getPath().replace("\\", "\\\\"));
 
-    if (file.getPath().contains(provider())) {
+    if (file.getPath().contains(provider()) && !file.getName().equalsIgnoreCase(provider())) {
       if (file.isDirectory() && file.list().length == 0) {
         logger.info("Deleting " + file.getPath() + " since it's empty");
         file.delete();

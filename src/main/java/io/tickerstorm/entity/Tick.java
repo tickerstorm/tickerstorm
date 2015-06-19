@@ -29,13 +29,43 @@ public class Tick extends BaseMarketData {
   public BigDecimal price;
 
   @Override
+  public boolean equals(Object obj) {
+    if (this == obj)
+      return true;
+    if (!super.equals(obj))
+      return false;
+    if (getClass() != obj.getClass())
+      return false;
+    Tick other = (Tick) obj;
+    if (price == null) {
+      if (other.price != null)
+        return false;
+    } else if (!price.equals(other.price))
+      return false;
+    if (quantity == null) {
+      if (other.quantity != null)
+        return false;
+    } else if (!quantity.equals(other.quantity))
+      return false;
+    return true;
+  }
+
+  @Override
   public int hashCode() {
-    return Objects.hashCode(super.hashCode(), quantity, price);
+    final int prime = 31;
+    int result = super.hashCode();
+    result = prime * result + ((price == null) ? 0 : price.hashCode());
+    result = prime * result + ((quantity == null) ? 0 : quantity.hashCode());
+    return result;
   }
 
   @Override
   public String getType() {
     return TYPE;
+  }
+  
+  public void setType(String type){
+    //nothing
   }
 
 }

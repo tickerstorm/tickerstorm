@@ -56,8 +56,7 @@ public class YahooRealtimeQuoteQuery implements QueryBuilder, DataConverter {
       return null;
 
     c.bidSize = new BigDecimal(data[5]);
-    c.exchange = data[6];
-
+    
     return new Quote[] { c };
   }
 

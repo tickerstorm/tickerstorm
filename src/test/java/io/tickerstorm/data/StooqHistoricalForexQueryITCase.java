@@ -4,6 +4,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 import io.tickerstorm.TickerStormAppConfig;
+import io.tickerstorm.dao.MarketDataDao;
 import io.tickerstorm.entity.Candle;
 import io.tickerstorm.entity.MarketData;
 
@@ -11,6 +12,7 @@ import java.io.File;
 
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.cassandra.core.CassandraOperations;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.testng.annotations.AfterMethod;
@@ -22,7 +24,7 @@ import com.google.common.eventbus.Subscribe;
 import com.google.common.io.Files;
 
 @ContextConfiguration(classes = { TickerStormAppConfig.class })
-public class TestStooqHistoricalForexQuery extends AbstractTestNGSpringContextTests {
+public class StooqHistoricalForexQueryITCase extends AbstractTestNGSpringContextTests {
 
   StooqHistoricalForexQuery query;
 
@@ -31,6 +33,9 @@ public class TestStooqHistoricalForexQuery extends AbstractTestNGSpringContextTe
 
   @Autowired
   EventBus bus;
+  
+  @Autowired
+  private CassandraOperations session;
 
   Object verifier;
 
@@ -45,6 +50,7 @@ public class TestStooqHistoricalForexQuery extends AbstractTestNGSpringContextTe
   @AfterMethod
   public void tearDown() {
     bus.unregister(verifier);
+    session.getSession().execute("TRUNCATE marketdata");
   }
 
   @Test

@@ -1,5 +1,7 @@
 package io.tickerstorm.dao;
 
+import java.util.Date;
+
 import org.apache.commons.lang3.StringUtils;
 import org.dozer.CustomConverter;
 import org.dozer.MappingException;
@@ -57,7 +59,7 @@ public class CustomDateTimeConverter implements CustomConverter {
 
     } else if (destClass.equals(String.class) && sourceClass.equals(DateTime.class)) {
 
-      return String.valueOf(((DateTime) source).getMillis());
+      return ((DateTime) source).toString(ISODateTimeFormat.dateTime());
 
     } else if (destClass.equals(Long.class) && sourceClass.equals(DateTime.class)) {
 
@@ -65,7 +67,8 @@ public class CustomDateTimeConverter implements CustomConverter {
 
     } else if (destClass.equals(Long.class) && sourceClass.equals(String.class)) {
 
-      if (source.equals("0000-00-00 00:00:00") || StringUtils.isEmpty((String) source) || ((String) source).equalsIgnoreCase("null")) {
+      if (((String) source).contains("0000-00-00 00:00:00") || StringUtils.isEmpty((String) source)
+          || ((String) source).equalsIgnoreCase("null")) {
         return null;
       }
 
@@ -76,6 +79,30 @@ public class CustomDateTimeConverter implements CustomConverter {
 
       DateTime dt = new DateTime(source);
       return dt.toString(ISODateTimeFormat.dateTime());
+
+    } else if (destClass.equals(Long.class) && sourceClass.equals(DateTime.class)) {
+
+      return ((DateTime) source).getMillis();
+
+    } else if (destClass.equals(DateTime.class) && sourceClass.equals(Long.class)) {
+
+      return new DateTime(source);
+
+    } else if (destClass.equals(Long.class) && sourceClass.equals(Date.class)) {
+
+      return ((Date) source).getTime();
+
+    } else if (destClass.equals(Date.class) && sourceClass.equals(Long.class)) {
+
+      return new Date((Long) source);
+
+    } else if (destClass.equals(DateTime.class) && sourceClass.equals(Date.class)) {
+
+      return new DateTime((Date) source);
+
+    } else if (destClass.equals(Date.class) && sourceClass.equals(DateTime.class)) {
+
+      return ((DateTime) source).toDate();
 
     }
 

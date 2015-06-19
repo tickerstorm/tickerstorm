@@ -76,8 +76,7 @@ public class YahooChartsDataQuery implements QueryBuilder, DataConverter {
     c.symbol = symbol;
     c.interval = Candle.MIN_5_INTERVAL;
     c.source = "yahoo";
-    c.exchange = exchange;
-
+    
     return new Candle[] { c };
   }
 

@@ -48,6 +48,7 @@ public class DataQueryClient {
 
   private CloseableHttpResponse queryFile(QueryBuilder builder, CloseableHttpResponse response) throws Exception {
 
+    logger.info("Downloading file...");
     byte[] array = IOUtils.toByteArray(response.getEntity().getContent());
     Header header = response.getFirstHeader("Content-disposition");
     String filename = null;
@@ -56,7 +57,7 @@ public class DataQueryClient {
       filename = header.getValue().split(";")[1].split("=")[1];
 
     String path = "./data/" + builder.provider() + "/" + filename;
-    logger.info("Downloading file " + path);
+    logger.info("Writing file to " + path);
 
     File f = new File(path);
     Files.createParentDirs(f);
@@ -67,6 +68,7 @@ public class DataQueryClient {
     }
 
     Files.write(array, f);
+    Thread.sleep(50); //give it some time to flush to disk
 
     return response;
 
@@ -80,6 +82,7 @@ public class DataQueryClient {
 
     CloseableHttpResponse response = null;
     try {
+      logger.info("Requesting " + query);
       response = client.execute(get);
 
       if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {

@@ -51,7 +51,13 @@ public class Quote extends BaseMarketData {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(super.hashCode(), bid, ask);
+    final int prime = 31;
+    int result = super.hashCode();
+    result = prime * result + ((ask == null) ? 0 : ask.hashCode());
+    result = prime * result + ((askSize == null) ? 0 : askSize.hashCode());
+    result = prime * result + ((bid == null) ? 0 : bid.hashCode());
+    result = prime * result + ((bidSize == null) ? 0 : bidSize.hashCode());
+    return result;
   }
 
   @Override
@@ -59,4 +65,39 @@ public class Quote extends BaseMarketData {
      return TYPE;
   }
 
+  public void setType(String type){
+    //nothing
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj)
+      return true;
+    if (!super.equals(obj))
+      return false;
+    if (getClass() != obj.getClass())
+      return false;
+    Quote other = (Quote) obj;
+    if (ask == null) {
+      if (other.ask != null)
+        return false;
+    } else if (!ask.equals(other.ask))
+      return false;
+    if (askSize == null) {
+      if (other.askSize != null)
+        return false;
+    } else if (!askSize.equals(other.askSize))
+      return false;
+    if (bid == null) {
+      if (other.bid != null)
+        return false;
+    } else if (!bid.equals(other.bid))
+      return false;
+    if (bidSize == null) {
+      if (other.bidSize != null)
+        return false;
+    } else if (!bidSize.equals(other.bidSize))
+      return false;
+    return true;
+  }
 }

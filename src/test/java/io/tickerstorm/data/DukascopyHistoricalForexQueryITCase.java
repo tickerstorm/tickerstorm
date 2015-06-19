@@ -4,6 +4,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 import io.tickerstorm.TickerStormAppConfig;
+import io.tickerstorm.dao.MarketDataDao;
 import io.tickerstorm.entity.Candle;
 import io.tickerstorm.entity.MarketData;
 
@@ -12,6 +13,7 @@ import java.math.BigDecimal;
 
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.cassandra.core.CassandraOperations;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.testng.annotations.AfterMethod;
@@ -23,7 +25,7 @@ import com.google.common.eventbus.Subscribe;
 import com.google.common.io.Files;
 
 @ContextConfiguration(classes = { TickerStormAppConfig.class })
-public class TestDukascopyHistoricalForexQuery extends AbstractTestNGSpringContextTests {
+public class DukascopyHistoricalForexQueryITCase extends AbstractTestNGSpringContextTests {
 
   @Autowired
   private DataQueryClient client;
@@ -31,6 +33,12 @@ public class TestDukascopyHistoricalForexQuery extends AbstractTestNGSpringConte
   @Autowired
   EventBus bus;
 
+  @Autowired
+  private CassandraOperations session;
+  
+  @Autowired
+  private DirectoryMonitoringService monitor;
+  
   Object verifier;
 
   boolean verified = false;
@@ -44,6 +52,7 @@ public class TestDukascopyHistoricalForexQuery extends AbstractTestNGSpringConte
   @AfterMethod
   public void tearDown() {
     bus.unregister(verifier);
+    session.getSession().execute("TRUNCATE marketdata");
   }
 
   @Test

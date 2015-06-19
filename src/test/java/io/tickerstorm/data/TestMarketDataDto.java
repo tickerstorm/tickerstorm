@@ -8,10 +8,8 @@ import io.tickerstorm.entity.Quote;
 import io.tickerstorm.entity.Tick;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
 
 import org.joda.time.DateTime;
-import org.joda.time.format.ISODateTimeFormat;
 import org.testng.annotations.Test;
 
 public class TestMarketDataDto {
@@ -27,7 +25,6 @@ public class TestMarketDataDto {
     c.source = "test";
     c.symbol = "AAPL";
     c.interval = Candle.EOD;
-    c.exchange = "test";
     c.timestamp = new DateTime();
     c.volume = BigDecimal.ZERO;
 
@@ -38,10 +35,9 @@ public class TestMarketDataDto {
     assertEquals(dto.high, c.high);
     assertEquals(dto.open, c.open);
     assertEquals(dto.volume, c.volume);
-    assertEquals(dto.exchange, c.exchange);
     assertEquals(dto.primarykey.source, c.source);
     assertEquals(dto.primarykey.interval, c.interval);
-    assertEquals(dto.primarykey.timestamp, c.timestamp.toString(ISODateTimeFormat.dateTime()));
+    assertEquals(dto.primarykey.timestamp, c.timestamp.toDate());
     assertEquals(dto.primarykey.symbol, c.symbol);
     assertNotNull(dto.primarykey.date);
 
@@ -54,7 +50,7 @@ public class TestMarketDataDto {
     assertEquals(d.volume, c.volume);
     assertEquals(d.source, c.source);
     assertEquals(d.interval, c.interval);
-    assertEquals(d.exchange, c.exchange);
+    
     // assertEquals(d.timestamp, c.timestamp); not working
     assertNotNull(d.timestamp);
     assertNotNull(c.timestamp);
@@ -70,7 +66,7 @@ public class TestMarketDataDto {
     c.bid = BigDecimal.TEN;
     c.source = "test";
     c.symbol = "AAPL";
-    c.exchange = "test";
+    
     c.timestamp = new DateTime();
     c.askSize = BigDecimal.ZERO;
     c.bidSize = BigDecimal.ZERO;
@@ -82,7 +78,7 @@ public class TestMarketDataDto {
     assertEquals(dto.askSize, c.askSize);
     assertEquals(dto.bidSize, c.bidSize);
     assertEquals(dto.primarykey.source, c.source);
-    assertEquals(dto.primarykey.timestamp, c.timestamp.toString(ISODateTimeFormat.dateTime()));
+    assertEquals(dto.primarykey.timestamp, c.timestamp.toDate());
     assertEquals(dto.primarykey.symbol, c.symbol);
     assertNotNull(dto.primarykey.date);
 
@@ -93,7 +89,7 @@ public class TestMarketDataDto {
     assertEquals(d.askSize, c.askSize);
     assertEquals(d.bidSize, c.bidSize);
     assertEquals(d.source, c.source);
-    assertEquals(d.exchange, c.exchange);
+    
     // assertEquals(d.timestamp, c.timestamp); not working
     assertNotNull(d.timestamp);
     assertNotNull(c.timestamp);
@@ -109,7 +105,7 @@ public class TestMarketDataDto {
     c.quantity = BigDecimal.TEN;
     c.source = "test";
     c.symbol = "AAPL";
-    c.exchange = "test";
+    
     c.timestamp = new DateTime();
 
     MarketDataDto dto = MarketDataDto.convert(c);
@@ -117,7 +113,7 @@ public class TestMarketDataDto {
     assertEquals(dto.price, c.price);
     assertEquals(dto.quantity, c.quantity);
     assertEquals(dto.primarykey.source, c.source);
-    assertEquals(dto.primarykey.timestamp, c.timestamp.toString(ISODateTimeFormat.dateTime()));
+    assertEquals(dto.primarykey.timestamp, c.timestamp.toDate());
     assertEquals(dto.primarykey.symbol, c.symbol);
     assertNotNull(dto.primarykey.date);
     
@@ -126,7 +122,7 @@ public class TestMarketDataDto {
     assertEquals(d.price, c.price);
     assertEquals(d.quantity, c.quantity);
     assertEquals(d.source, c.source);
-    assertEquals(d.exchange, c.exchange);
+    
     // assertEquals(d.timestamp, c.timestamp); not working
     assertNotNull(d.timestamp);
     assertNotNull(c.timestamp);

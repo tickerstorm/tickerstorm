@@ -10,34 +10,37 @@ import com.google.common.base.Objects;
 @SuppressWarnings("serial")
 public abstract class BaseMarketData implements MarketData, Serializable {
 
-  public void setSource(String source) {
-    this.source = source;
-  }
-
-  public void setTimestamp(DateTime timestamp) {
-    this.timestamp = timestamp;
-  }
-
-  public void setSymbol(String symbol) {
-    this.symbol = symbol;
-  }
-
-  public void setExchange(String exchange) {
-    this.exchange = exchange;
-  }
-
   public String source;
+
   public DateTime timestamp;
+
   public String symbol;
-  public String exchange;
 
   @Override
   public boolean equals(Object obj) {
-    return Objects.equal(this, obj);
-  }
-
-  public String getExchange() {
-    return exchange;
+    if (this == obj)
+      return true;
+    if (obj == null)
+      return false;
+    if (getClass() != obj.getClass())
+      return false;
+    BaseMarketData other = (BaseMarketData) obj;
+    if (source == null) {
+      if (other.source != null)
+        return false;
+    } else if (!source.equals(other.source))
+      return false;
+    if (symbol == null) {
+      if (other.symbol != null)
+        return false;
+    } else if (!symbol.equals(other.symbol))
+      return false;
+    if (timestamp == null) {
+      if (other.timestamp != null)
+        return false;
+    } else if (!timestamp.equals(other.timestamp))
+      return false;
+    return true;
   }
 
   public String getSource() {
@@ -54,7 +57,24 @@ public abstract class BaseMarketData implements MarketData, Serializable {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(source, timestamp, symbol);
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + ((source == null) ? 0 : source.hashCode());
+    result = prime * result + ((symbol == null) ? 0 : symbol.hashCode());
+    result = prime * result + ((timestamp == null) ? 0 : timestamp.hashCode());
+    return result;
+  }
+
+  public void setSource(String source) {
+    this.source = source;
+  }
+
+  public void setSymbol(String symbol) {
+    this.symbol = symbol;
+  }
+
+  public void setTimestamp(DateTime timestamp) {
+    this.timestamp = timestamp;
   }
 
   @Override
