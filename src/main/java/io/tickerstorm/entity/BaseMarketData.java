@@ -5,7 +5,6 @@ import java.io.Serializable;
 import org.joda.time.DateTime;
 
 import com.google.common.base.MoreObjects;
-import com.google.common.base.Objects;
 
 @SuppressWarnings("serial")
 public abstract class BaseMarketData implements MarketData, Serializable {

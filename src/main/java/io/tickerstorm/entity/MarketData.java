@@ -1,6 +1,8 @@
 package io.tickerstorm.entity;
 
-public interface MarketData extends Event {
+import java.io.Serializable;
+
+public interface MarketData extends Event, Serializable {
 
   public String getSymbol();
 
