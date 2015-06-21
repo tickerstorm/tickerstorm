@@ -3,7 +3,7 @@ package io.tickerstorm.data;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
-import io.tickerstorm.TickerStormAppConfig;
+import io.tickerstorm.TickerStormConfig;
 import io.tickerstorm.dao.MarketDataDao;
 import io.tickerstorm.entity.Candle;
 import io.tickerstorm.entity.MarketData;
@@ -24,7 +24,7 @@ import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import com.google.common.io.Files;
 
-@ContextConfiguration(classes = { TickerStormAppConfig.class })
+@ContextConfiguration(classes = { TickerStormConfig.class })
 public class DukascopyHistoricalForexQueryITCase extends AbstractTestNGSpringContextTests {
 
   @Autowired

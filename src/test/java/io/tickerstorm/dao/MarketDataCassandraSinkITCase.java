@@ -1,7 +1,7 @@
 package io.tickerstorm.dao;
 
 import static org.testng.Assert.*;
-import io.tickerstorm.TickerStormAppConfig;
+import io.tickerstorm.TickerStormConfig;
 import io.tickerstorm.entity.Candle;
 
 import java.math.BigDecimal;
@@ -16,7 +16,7 @@ import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
-@ContextConfiguration(classes = { TickerStormAppConfig.class })
+@ContextConfiguration(classes = { TickerStormConfig.class })
 public class MarketDataCassandraSinkITCase extends AbstractTestNGSpringContextTests {
 
   @Autowired
