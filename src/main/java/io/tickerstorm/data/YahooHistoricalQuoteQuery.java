@@ -31,6 +31,11 @@ public class YahooHistoricalQuoteQuery implements DataConverter, QueryBuilder {
     return this;
   }
   
+  @Override
+  public Mode mode() {
+    return Mode.line;
+  }
+  
   public YahooHistoricalQuoteQuery week(){
     this.interval = WEEK;
     return this;

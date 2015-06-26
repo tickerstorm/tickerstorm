@@ -1,5 +1,6 @@
 package io.tickerstorm.data;
 
+import io.tickerstorm.data.DataConverter.Mode;
 import io.tickerstorm.entity.Quote;
 
 import java.math.BigDecimal;
@@ -28,6 +29,11 @@ public class YahooRealtimeQuoteQuery implements QueryBuilder, DataConverter {
   @Override
   public DataConverter converter() {
     return this;
+  }
+  
+  @Override
+  public Mode mode() {
+    return Mode.line;
   }
 
   public Quote[] convert(String line) {

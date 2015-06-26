@@ -132,4 +132,9 @@ public class DukascopyFileConverter extends BaseFileConverter implements DataCon
       }
     }
   }
+
+  @Override
+  public Mode mode() {
+    return Mode.file;
+  }
 }

@@ -75,8 +75,6 @@ public class MarketDataCassandraSink {
   @Subscribe
   public void onMarketData(MarketData data) {
     
-    logger.info(data.toString());
-
     try {
       MarketDataDto dto = MarketDataDto.convert(data);
       dao.save(dto);

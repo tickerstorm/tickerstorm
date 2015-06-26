@@ -1,5 +1,6 @@
 package io.tickerstorm.data;
 
+import io.tickerstorm.data.DataConverter.Mode;
 import io.tickerstorm.entity.MarketData;
 
 import java.io.File;
@@ -84,24 +85,23 @@ public class DataQueryClient {
     try {
       logger.info("Requesting " + query);
       response = client.execute(get);
-
+      int count = 0;
       if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
 
         if (response.getFirstHeader("Content-disposition") != null) {
 
           response = queryFile(builder, response);
 
-        } else {
+        } else if (Mode.line.equals(builder.converter().mode())) {
 
           LineIterator lines = IOUtils.lineIterator(response.getEntity().getContent(), "UTF-8");
 
-          int count = 0;
           while (lines.hasNext()) {
 
             String line = (String) lines.next();
             MarketData[] md = builder.converter().convert(line);
 
-            if (md != null) {
+            if (md != null && md.length > 0) {
               for (MarketData d : md) {
                 count++;
                 bus.post(d);
@@ -109,15 +109,26 @@ public class DataQueryClient {
             }
           }
 
-          logger.info("Converted " + count + " lines from query " + query);
+        } else if (Mode.doc.equals(builder.converter().mode())) {
 
+          String doc = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
+          MarketData[] md = builder.converter().convert(doc);
+
+          if (md != null && md.length > 0) {
+            for (MarketData d : md) {
+              count++;
+              bus.post(d);
+            }
+          }
         }
+        
+        logger.info("Converted " + count + " lines from query " + query);
       }
 
     } catch (Exception e) {
       logger.error(e.getMessage(), e);
       Throwables.propagate(e);
-    
+
     } finally {
       EntityUtils.consumeQuietly(response.getEntity());
 

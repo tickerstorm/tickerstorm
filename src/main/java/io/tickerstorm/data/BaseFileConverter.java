@@ -52,5 +52,10 @@ public abstract class BaseFileConverter implements FileAlterationListener, DataC
     // TODO Auto-generated method stub
 
   }
+  
+  @Override
+  public Mode mode() {
+    return Mode.file;
+  }
 
 }

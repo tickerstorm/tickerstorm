@@ -31,11 +31,6 @@ public class YahooChartsDataQuery implements QueryBuilder, DataConverter {
 
   }
 
-  public YahooChartsDataQuery withRange(String range) {
-    this.range = range;
-    return this;
-  }
-
   public YahooChartsDataQuery withSymbol(String symbol) {
     this.symbol = symbol;
     return this;
@@ -85,6 +80,11 @@ public class YahooChartsDataQuery implements QueryBuilder, DataConverter {
   @Override
   public String provider() {
     return "Yahoo";
+  }
+
+  @Override
+  public Mode mode() {
+    return Mode.line;
   }
 
 }
