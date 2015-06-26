@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.dozer.DozerBeanMapper;
+import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
 import org.springframework.data.cassandra.mapping.Table;
@@ -22,7 +23,7 @@ import com.google.common.collect.Lists;
 @SuppressWarnings("serial")
 public class MarketDataDto implements Serializable {
 
-  public static final org.joda.time.format.DateTimeFormatter dateFormatter = DateTimeFormat.forPattern("yyyyMMdd");  
+  public static final org.joda.time.format.DateTimeFormatter dateFormatter = DateTimeFormat.forPattern("yyyyMMdd");
   public static final DozerBeanMapper mapper = new DozerBeanMapper();
 
   static {
@@ -34,10 +35,16 @@ public class MarketDataDto implements Serializable {
     MarketDataDto dto = new MarketDataDto();
     PrimaryKey key = new PrimaryKey();
     try {
+
       mapper.map(data, dto);
       mapper.map(data, key);
-      key.date = Integer.valueOf(data.getTimestamp().withZone(DateTimeZone.forID("GMT")).toString(dateFormatter));
+      key.date = data.getTimestamp().withZone(DateTimeZone.UTC).toString(dateFormatter);
       dto.primarykey = key;
+      dto.primarykey.symbol = dto.primarykey.symbol.toLowerCase();
+      dto.primarykey.source = dto.primarykey.source.toLowerCase();
+      dto.primarykey.interval = dto.primarykey.interval.toLowerCase();
+      dto.primarykey.timestamp = new DateTime(dto.primarykey.timestamp).withZone(DateTimeZone.UTC).toDate();
+
     } catch (Exception e) {
       Throwables.propagate(e);
     }

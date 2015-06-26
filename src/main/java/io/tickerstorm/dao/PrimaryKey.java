@@ -16,7 +16,7 @@ public class PrimaryKey implements Serializable {
   public String symbol;
 
   @PrimaryKeyColumn(name = "date", ordinal = 1, type = PrimaryKeyType.PARTITIONED, ordering = Ordering.DESCENDING)
-  public int date;
+  public String date;
 
   @PrimaryKeyColumn(name = "type", ordinal = 2, type = PrimaryKeyType.CLUSTERED)
   public String type;
@@ -39,7 +39,10 @@ public class PrimaryKey implements Serializable {
     if (getClass() != obj.getClass())
       return false;
     PrimaryKey other = (PrimaryKey) obj;
-    if (date != other.date)
+    if (date == null) {
+      if (other.date != null)
+        return false;
+    } else if (!date.equals(other.date))
       return false;
     if (interval == null) {
       if (other.interval != null)
@@ -77,11 +80,11 @@ public class PrimaryKey implements Serializable {
     return timestamp;
   }
 
-  public int getDate() {
+  public String getDate() {
     return date;
   }
 
-  public void setDate(int date) {
+  public void setDate(String date) {
     this.date = date;
   }
 
@@ -105,7 +108,7 @@ public class PrimaryKey implements Serializable {
   public int hashCode() {
     final int prime = 31;
     int result = 1;
-    result = prime * result + date;
+    result = prime * result + ((date == null) ? 0 : date.hashCode());
     result = prime * result + ((interval == null) ? 0 : interval.hashCode());
     result = prime * result + ((source == null) ? 0 : source.hashCode());
     result = prime * result + ((symbol == null) ? 0 : symbol.hashCode());

@@ -3,7 +3,6 @@ package io.tickerstorm.data;
 import io.tickerstorm.entity.Quote;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
 
 import org.joda.time.DateTime;
 import org.slf4j.Logger;

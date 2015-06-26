@@ -19,33 +19,52 @@ public class StooqHistoricalForexQuery implements QueryBuilder {
     return new StooqFileConverter();
   }
 
-  public StooqHistoricalForexQuery withCurrencies() {
+  public StooqHistoricalForexQuery currencies() {
     this.fileName = "_world_txt";
     this.securityTypes.add("currencies");
     return this;
   }
 
-  public StooqHistoricalForexQuery withBonds() {
+  public StooqHistoricalForexQuery bonds() {
     this.securityTypes.add("bonds");
     return this;
   }
 
-  public StooqHistoricalForexQuery withCommodities() {
+  public StooqHistoricalForexQuery commodities() {
     this.securityTypes.add("commodities");
     return this;
   }
 
-  public StooqHistoricalForexQuery withIndicies() {
+  public StooqHistoricalForexQuery indicies() {
     this.securityTypes.add("indicies");
     return this;
   }
-
-  public StooqHistoricalForexQuery withUSData() {
-    this.fileName = "_us_txt";
+  
+  public StooqHistoricalForexQuery etfs() {
+    this.securityTypes.add("nasdaq etfs");
+    this.securityTypes.add("nyse etfs");
+    this.securityTypes.add("nysqmkt etfs");
+    return this;
+  }
+  
+  public StooqHistoricalForexQuery stocks() {
+    this.securityTypes.add("nasdaq stocks");
+    this.securityTypes.add("nyse stocks");
+    this.securityTypes.add("nysqmkt stocks");
     return this;
   }
 
-  public StooqHistoricalForexQuery int5min() {
+  public StooqHistoricalForexQuery forUS() {
+    this.fileName = "_us_txt";
+    return this;
+  }
+  
+  public StooqHistoricalForexQuery forWorld() {
+    this.fileName = "_world_txt";
+    return this;
+  }
+
+  public StooqHistoricalForexQuery min5() {
     this.interval = "5";
     return this;
   }

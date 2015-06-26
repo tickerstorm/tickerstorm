@@ -14,10 +14,12 @@ import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.PropertySource;
 
+@ComponentScan(basePackages = { "io.tickerstorm.messaging" })
 @Configuration
 @PropertySource({ "classpath:default.properties" })
 public class ActiveMQConfig {
@@ -37,11 +39,21 @@ public class ActiveMQConfig {
 
   }
 
-  @Qualifier("historical")
+//  @Qualifier("historical")
+//  @Bean
+//  public MessageProducer buildHistoricalMarketDataPublisher(Session session, @Qualifier("historical") Destination destination)
+//      throws Exception {
+//    logger.debug("Creating Historcial Message Producer");
+//    MessageProducer producer = session.createProducer(destination);
+//    producer.setDeliveryMode(DeliveryMode.NON_PERSISTENT);
+//    return producer;
+//
+//  }
+
+  @Qualifier("realtime")
   @Bean
-  public MessageProducer buildHistoricalMarketDataPublisher(Session session, @Qualifier("historical") Destination destination)
-      throws Exception {
-    logger.debug("Creating Historcial Message Producer");
+  public MessageProducer buildRealtimeMarketDataPublisher(Session session, @Qualifier("realtime") Destination destination) throws Exception {
+    logger.debug("Creating Realtime Message Producer");
     MessageProducer producer = session.createProducer(destination);
     producer.setDeliveryMode(DeliveryMode.NON_PERSISTENT);
     return producer;
@@ -72,19 +84,35 @@ public class ActiveMQConfig {
     return session;
   }
 
-  @Qualifier("historical")
+//  @Qualifier("historical")
+//  @Bean
+//  public Destination buildHistoricalMarketDataDestination(Session session) throws Exception {
+//    logger.debug("Creating Histrocal Destination");
+//    Destination destination = session.createTopic("topic.historical.marketdata");
+//    return destination;
+//  }
+
+  @Qualifier("realtime")
   @Bean
-  public Destination buildHistoricalMarketDataDestination(Session session) throws Exception {
-    logger.debug("Creating Histrocal Destination");
-    Destination destination = session.createTopic("topic.historical.marketdata");
+  public Destination buildRealtimeMarketDataDestination(Session session) throws Exception {
+    logger.debug("Creating Realtime Destination");
+    Destination destination = session.createTopic("topic.realtime.marketdata");
     return destination;
   }
 
-  @Qualifier("historical")
+//  @Qualifier("historical")
+//  @Bean
+//  public MessageConsumer buildHistorcialMarketDataConsumer(@Qualifier("historical") Destination destination, Session session)
+//      throws Exception {
+//    logger.debug("Creating Historical MessageConsumer");
+//    MessageConsumer consumer = session.createConsumer(destination);
+//    return consumer;
+//  }
+
+  @Qualifier("realtime")
   @Bean
-  public MessageConsumer buildHistorcialMarketDataConsumer(@Qualifier("historical") Destination destination, Session session)
-      throws Exception {
-    logger.debug("Creating MessageConsumer");
+  public MessageConsumer buildRealtimeMarketDataConsumer(@Qualifier("realtime") Destination destination, Session session) throws Exception {
+    logger.debug("Creating Realtime MessageConsumer");
     MessageConsumer consumer = session.createConsumer(destination);
     return consumer;
   }

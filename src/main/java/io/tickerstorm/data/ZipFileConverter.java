@@ -5,13 +5,12 @@ import io.tickerstorm.entity.MarketData;
 import java.io.File;
 import java.util.UUID;
 
+import net.lingala.zip4j.core.ZipFile;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import net.lingala.zip4j.core.ZipFile;
-
-import com.google.common.base.Throwables;
 import com.google.common.io.Files;
 
 @Component
@@ -21,6 +20,7 @@ public class ZipFileConverter extends BaseFileConverter {
 
   @Override
   public void onFileCreate(File path) {
+
     super.onFileCreate(path);
 
     String extension = Files.getFileExtension(path.getPath());
@@ -35,10 +35,13 @@ public class ZipFileConverter extends BaseFileConverter {
         Files.createParentDirs(new File(dir));
         ZipFile zip = new ZipFile(path);
         zip.extractAll(dir);
-        path.delete();
 
       } catch (Exception e) {
-        Throwables.propagate(e);
+
+        logger.error(e.getMessage(), e);
+
+      } finally {
+        path.delete();
       }
     }
 
@@ -51,7 +54,6 @@ public class ZipFileConverter extends BaseFileConverter {
 
   @Override
   public String provider() {
-    // TODO Auto-generated method stub
     return null;
   }
 

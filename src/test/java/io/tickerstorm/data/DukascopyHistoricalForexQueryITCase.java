@@ -4,6 +4,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 import io.tickerstorm.TickerStormConfig;
+import io.tickerstorm.DataLoadSchedulerConfig;
 import io.tickerstorm.dao.MarketDataDao;
 import io.tickerstorm.entity.Candle;
 import io.tickerstorm.entity.MarketData;
@@ -13,6 +14,7 @@ import java.math.BigDecimal;
 
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.cassandra.core.CassandraOperations;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
@@ -24,12 +26,13 @@ import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import com.google.common.io.Files;
 
-@ContextConfiguration(classes = { TickerStormConfig.class })
+@ContextConfiguration(classes = { DataLoadSchedulerConfig.class })
 public class DukascopyHistoricalForexQueryITCase extends AbstractTestNGSpringContextTests {
 
   @Autowired
   private DataQueryClient client;
 
+  @Qualifier("historical")
   @Autowired
   EventBus bus;
 

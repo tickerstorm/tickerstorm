@@ -16,6 +16,7 @@ import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import com.google.common.base.Throwables;
@@ -30,6 +31,7 @@ public class DukascopyFileConverter extends BaseFileConverter implements DataCon
 
   private static final Logger logger = LoggerFactory.getLogger(DukascopyFileConverter.class);
 
+  @Qualifier("historical")
   @Autowired
   private EventBus bus;
 

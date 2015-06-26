@@ -4,6 +4,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 import io.tickerstorm.TickerStormConfig;
+import io.tickerstorm.DataLoadSchedulerConfig;
 import io.tickerstorm.dao.MarketDataDao;
 import io.tickerstorm.entity.Candle;
 import io.tickerstorm.entity.MarketData;
@@ -12,6 +13,7 @@ import java.io.File;
 
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.cassandra.core.CassandraOperations;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
@@ -23,7 +25,7 @@ import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import com.google.common.io.Files;
 
-@ContextConfiguration(classes = { TickerStormConfig.class })
+@ContextConfiguration(classes = { DataLoadSchedulerConfig.class })
 public class StooqHistoricalForexQueryITCase extends AbstractTestNGSpringContextTests {
 
   StooqHistoricalForexQuery query;
@@ -31,6 +33,7 @@ public class StooqHistoricalForexQueryITCase extends AbstractTestNGSpringContext
   @Autowired
   private DataQueryClient client;
 
+  @Qualifier("historical")
   @Autowired
   EventBus bus;
   
@@ -72,7 +75,7 @@ public class StooqHistoricalForexQueryITCase extends AbstractTestNGSpringContext
     verifier = new DownloadGloabForextVerification();
     bus.register(verifier);
 
-    query = new StooqHistoricalForexQuery().withCurrencies().int5min();
+    query = new StooqHistoricalForexQuery().currencies().min5();
     client.query(query);
 
     Thread.sleep(20000);

@@ -3,7 +3,6 @@ package io.tickerstorm.messaging;
 import io.tickerstorm.entity.MarketData;
 
 import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageProducer;
@@ -23,41 +22,65 @@ public class EventBusToJMSBridge {
 
   private static final Logger logger = org.slf4j.LoggerFactory.getLogger(EventBusToJMSBridge.class);
 
-  @Qualifier("historical")
-  @Autowired
-  private EventBus historicalBus;
+  // @Qualifier("historical")
+  // @Autowired
+  // private EventBus historicalBus;
 
-  @Qualifier("historical")
+  @Qualifier("realtime")
   @Autowired
-  private MessageProducer producer;
+  private EventBus realtimeBus;
+
+  @Qualifier("realtime")
+  @Autowired
+  private MessageProducer rtProducer;
+
+  // @Qualifier("historical")
+  // @Autowired
+  // private MessageProducer histProducer;
 
   @Autowired
   private Session session;
-  
+
   @PostConstruct
-  public void init(){
-    historicalBus.register(this);
+  public void init() {
+    // historicalBus.register(new HistoricalBridge());
+    realtimeBus.register(new RealtimeBridge());
   }
 
-  @PreDestroy
-  public void destroy(){
-    historicalBus.unregister(this);
-  }
-  
-  @Subscribe
-  public void onMarketData(MarketData data) {
+  // private class HistoricalBridge {
+  //
+  // @Subscribe
+  // public void onMarketData(MarketData data) {
+  //
+  // try {
+  //
+  // Message m = session.createObjectMessage(data);
+  // m.setJMSExpiration(2000);
+  // histProducer.send(m);
+  //
+  // } catch (JMSException e) {
+  // logger.error(e.getMessage(), Throwables.getRootCause(e));
+  // }
+  //
+  // }
+  // }
 
-    try {
-      
-      Message m = session.createObjectMessage();
-      m.setObjectProperty("marketdata", data);
-      m.setJMSExpiration(2000);
-      producer.send(m);
-      
-    } catch (JMSException e) {
-      logger.error(e.getMessage(), Throwables.getRootCause(e));
+  private class RealtimeBridge {
+
+    @Subscribe
+    public void onMarketData(MarketData data) {
+
+      try {
+
+        Message m = session.createObjectMessage(data);
+        m.setJMSExpiration(2000);
+        rtProducer.send(m);
+
+      } catch (JMSException e) {
+        logger.error(e.getMessage(), Throwables.getRootCause(e));
+      }
+
     }
-
   }
 
 }

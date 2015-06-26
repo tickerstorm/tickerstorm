@@ -1,4 +1,4 @@
-package io.tickerstorm.messaging;
+package io.tickerstorm.storm;
 
 import javax.jms.ConnectionFactory;
 import javax.jms.Destination;
@@ -9,12 +9,12 @@ import org.springframework.stereotype.Component;
 
 import backtype.storm.contrib.jms.JmsProvider;
 
-@Qualifier("historical")
+@Qualifier("realtime")
 @Component
 @SuppressWarnings("serial")
-public class StormHistoricalJmsDestinationProvider implements JmsProvider {
+public class StormJmsDestinationProvider implements JmsProvider {
 
-  @Qualifier("historical")
+  @Qualifier("realtime")
   @Autowired
   private Destination destination;
 

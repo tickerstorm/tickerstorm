@@ -26,6 +26,20 @@ public class YahooHistoricalQuoteQuery implements DataConverter, QueryBuilder {
   private DateTime until = new DateTime().withZone(DateTimeZone.forID("EST"));
   private String interval = EOD;
   
+  public YahooHistoricalQuoteQuery eod(){
+    this.interval = EOD;
+    return this;
+  }
+  
+  public YahooHistoricalQuoteQuery week(){
+    this.interval = WEEK;
+    return this;
+  }
+  
+  public YahooHistoricalQuoteQuery month(){
+    this.interval = MONTH;
+    return this;
+  }
   
   @Override
   public DataConverter converter() {
@@ -46,18 +60,13 @@ public class YahooHistoricalQuoteQuery implements DataConverter, QueryBuilder {
     return this;
   }
 
-  public YahooHistoricalQuoteQuery withInterval(String i) {
-    this.interval = i;
-    return this;
-  }
-
   public YahooHistoricalQuoteQuery until(DateTime until) {
     this.until = until;
     return this;
   }
 
   public String build() {
-    String url = HOST + "&s=" + symbol + "&a=" + (from.monthOfYear().get() - 1) + "&b=" + from.dayOfMonth() + "&c=" + from.year().get() + "&d="
+    String url = HOST + "&s=" + symbol + "&a=" + (from.getMonthOfYear() - 1) + "&b=" + from.getDayOfMonth() + "&c=" + from.getYear() + "&d="
         + (until.getMonthOfYear() - 1) + "&e=" + until.getDayOfMonth() + "&f=" + until.getYear() + "&g=" + interval + "&ignore=.csv";
     
     logger.info(url);

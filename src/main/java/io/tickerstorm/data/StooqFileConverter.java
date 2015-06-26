@@ -21,9 +21,9 @@ import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
-import com.google.common.base.Throwables;
 import com.google.common.eventbus.EventBus;
 import com.google.common.io.Files;
 
@@ -31,11 +31,13 @@ import com.google.common.io.Files;
 public class StooqFileConverter extends BaseFileConverter implements DataConverter {
 
   private static final DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss");
+  private static final DateTimeFormatter dayFormatter = DateTimeFormat.forPattern("yyyyMMdd");
 
   private static final Logger logger = LoggerFactory.getLogger(StooqFileConverter.class);
 
   private Set<String> securityTypes = new HashSet<String>();
 
+  @Qualifier("historical")
   @Autowired
   private EventBus bus;
 
@@ -51,47 +53,70 @@ public class StooqFileConverter extends BaseFileConverter implements DataConvert
     File f = new File(path);
     List<MarketData> data = new ArrayList<MarketData>();
 
-    try {
+    if (f.isFile()) {
 
-      if (f.isFile()) {
+      String symbol = f.getName().substring(0, f.getName().indexOf("."));
+      
+      for (String s : securityTypes) {
 
-        String symbol = f.getName().substring(0, f.getName().indexOf("."));
+        if (f.getPath().contains(s)) {
 
-        for (String s : securityTypes) {
+          List<String> lines = new ArrayList<String>();
 
-          if (f.getPath().contains(s)) {
+          try {
+            lines = IOUtils.readLines(new FileInputStream(new File(path)));
+          } catch (Exception e) {
+            logger.error("Unable to read lines from file " + path);
+            continue;
+          }
 
-            List<String> lines = IOUtils.readLines(new FileInputStream(new File(path)));
+          for (String line : lines) {
 
-            for (String line : lines) {
+            if (line.startsWith("Date"))
+              continue;
 
-              if (line.startsWith("Date"))
-                continue;
+            Candle c = new Candle();
+            try {
 
               String[] cols = line.split(",");
-              Candle c = new Candle();
+              
               c.symbol = symbol;
-              c.timestamp = formatter.parseDateTime(cols[0] + " " + cols[1]);
-              c.open = new BigDecimal(cols[2]);
-              c.high = new BigDecimal(cols[3]);
-              c.low = new BigDecimal(cols[4]);
-              c.close = new BigDecimal(cols[5]);
-              c.volume = new BigDecimal(cols[6]);
+
+              try {
+
+                c.timestamp = formatter.parseDateTime(cols[0] + " " + cols[1]);
+                c.open = new BigDecimal(cols[2]);
+                c.high = new BigDecimal(cols[3]);
+                c.low = new BigDecimal(cols[4]);
+                c.close = new BigDecimal(cols[5]);
+                c.volume = new BigDecimal(cols[6]);
+
+              } catch (Exception ex) {
+
+                c.timestamp = dayFormatter.parseDateTime(cols[0]);
+                c.open = new BigDecimal(cols[1]);
+                c.high = new BigDecimal(cols[2]);
+                c.low = new BigDecimal(cols[3]);
+                c.close = new BigDecimal(cols[4]);
+                c.volume = new BigDecimal(cols[5]);
+              }
 
               if (BigInteger.ZERO.equals(c.volume))
                 c.volume = null;
 
               c.interval = interval(path);
               c.source = provider();
-              bus.post(c);
-              data.add(c);
+
+            } catch (Exception e) {
+              logger.error("Unable to parse symbol " + symbol, e.getMessage());
+              continue;
             }
+
+            bus.post(c);
+            data.add(c);
           }
         }
       }
-
-    } catch (Exception e) {
-      Throwables.propagate(e);
     }
 
     return data.toArray(new MarketData[] {});

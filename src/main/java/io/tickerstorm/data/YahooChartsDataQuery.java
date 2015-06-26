@@ -3,7 +3,7 @@ package io.tickerstorm.data;
 import io.tickerstorm.entity.Candle;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
+import java.util.Date;
 import java.util.TimeZone;
 
 import org.joda.time.DateTime;
@@ -19,7 +19,6 @@ public class YahooChartsDataQuery implements QueryBuilder, DataConverter {
   private String symbol;
   private String range = "9d";
 
-  private String exchange;
   private TimeZone timezone;
 
   @Override
@@ -50,11 +49,6 @@ public class YahooChartsDataQuery implements QueryBuilder, DataConverter {
 
   public Candle[] convert(String line) {
 
-    if (line.contains("Exchange-Name:")) {
-      this.exchange = line.split(":")[1];
-      return null;
-    }
-
     if (line.contains("timezone:")) {
       this.timezone = TimeZone.getTimeZone(line.split(":")[1]);
       return null;
@@ -67,7 +61,7 @@ public class YahooChartsDataQuery implements QueryBuilder, DataConverter {
     String[] args = line.split(",");
 
     Candle c = new Candle();
-    c.timestamp = new DateTime(Integer.valueOf(args[0]) * 1000).withZone(DateTimeZone.forTimeZone(timezone));
+    c.timestamp = new DateTime(new Date(Long.valueOf(args[0]) * 1000)).withZone(DateTimeZone.forTimeZone(timezone));
     c.low = new BigDecimal(args[3]);
     c.high = new BigDecimal(args[2]);
     c.close = new BigDecimal(args[1]);
@@ -76,7 +70,7 @@ public class YahooChartsDataQuery implements QueryBuilder, DataConverter {
     c.symbol = symbol;
     c.interval = Candle.MIN_5_INTERVAL;
     c.source = "yahoo";
-    
+
     return new Candle[] { c };
   }
 

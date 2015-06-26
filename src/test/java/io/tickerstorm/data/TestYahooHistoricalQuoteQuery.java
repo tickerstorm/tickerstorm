@@ -31,7 +31,7 @@ public class TestYahooHistoricalQuoteQuery {
 
   @Test
   public void testBasicSymbolQuery() {
-    query = new YahooHistoricalQuoteQuery("AAPL").withInterval(YahooHistoricalQuoteQuery.EOD).from(new DateTime().minusYears(1))
+    query = new YahooHistoricalQuoteQuery("AAPL").eod().from(new DateTime().minusYears(1))
         .until(new DateTime());
 
     client.bus.register(new BasicSymbolQuery());

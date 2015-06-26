@@ -62,13 +62,13 @@ public class DataQueryClient {
     File f = new File(path);
     Files.createParentDirs(f);
 
-    if (f.exists()){
+    if (f.exists()) {
       logger.info("Deleting exisitng file " + f);
       f.delete();
     }
 
     Files.write(array, f);
-    Thread.sleep(50); //give it some time to flush to disk
+    Thread.sleep(50); // give it some time to flush to disk
 
     return response;
 
@@ -95,6 +95,7 @@ public class DataQueryClient {
 
           LineIterator lines = IOUtils.lineIterator(response.getEntity().getContent(), "UTF-8");
 
+          int count = 0;
           while (lines.hasNext()) {
 
             String line = (String) lines.next();
@@ -102,15 +103,21 @@ public class DataQueryClient {
 
             if (md != null) {
               for (MarketData d : md) {
+                count++;
                 bus.post(d);
               }
             }
           }
+
+          logger.info("Converted " + count + " lines from query " + query);
+
         }
       }
 
     } catch (Exception e) {
+      logger.error(e.getMessage(), e);
       Throwables.propagate(e);
+    
     } finally {
       EntityUtils.consumeQuietly(response.getEntity());
 

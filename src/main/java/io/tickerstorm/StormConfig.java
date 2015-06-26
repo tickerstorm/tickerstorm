@@ -1,9 +1,17 @@
 package io.tickerstorm;
 
-import io.tickerstorm.messaging.StormHistoricalJmsDestinationProvider;
-import io.tickerstorm.messaging.StormJmsTupleProducer;
+import io.tickerstorm.storm.StormJmsDestinationProvider;
+import io.tickerstorm.storm.StormJmsTupleProducer;
 
 import javax.jms.Session;
+
+import net.sf.ehcache.Cache;
+import net.sf.ehcache.CacheManager;
+import net.sf.ehcache.config.CacheConfiguration;
+import net.sf.ehcache.config.MemoryUnit;
+import net.sf.ehcache.config.PersistenceConfiguration;
+import net.sf.ehcache.config.PersistenceConfiguration.Strategy;
+import net.sf.ehcache.store.MemoryStoreEvictionPolicy;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
@@ -12,13 +20,13 @@ import org.springframework.context.annotation.Configuration;
 
 import backtype.storm.contrib.jms.spout.JmsSpout;
 
-@ComponentScan(basePackages = { "io.tickerstorm" })
+@ComponentScan(basePackages = { "io.tickerstorm.storm" })
 @Configuration
 public class StormConfig {
 
-  @Qualifier("historical")
+  @Qualifier("realtime")
   @Bean
-  public JmsSpout buildJmsSpout(@Qualifier("historical") StormHistoricalJmsDestinationProvider provider, StormJmsTupleProducer producer) {
+  public JmsSpout buildJmsSpout(@Qualifier("realtime") StormJmsDestinationProvider provider, StormJmsTupleProducer producer) {
 
     JmsSpout spout = new JmsSpout();
     spout.setJmsProvider(provider);
@@ -30,4 +38,15 @@ public class StormConfig {
 
   }
 
+  @Bean
+  public CacheManager buildCache() {
+
+    CacheConfiguration config = new CacheConfiguration().eternal(false).maxBytesLocalHeap(100, MemoryUnit.MEGABYTES)
+        .memoryStoreEvictionPolicy(MemoryStoreEvictionPolicy.FIFO).persistence(new PersistenceConfiguration().strategy(Strategy.NONE));
+    config.setName("timeseries");
+    CacheManager manager = CacheManager.create();
+    manager.addCache(new Cache(config));
+
+    return manager;
+  }
 }

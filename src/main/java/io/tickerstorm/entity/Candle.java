@@ -2,6 +2,9 @@ package io.tickerstorm.entity;
 
 import java.math.BigDecimal;
 
+import org.joda.time.Period;
+
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 
 @SuppressWarnings("serial")
@@ -15,6 +18,31 @@ public class Candle extends BaseMarketData {
   public static final String HOURLY_INTERVAL = "1h";
   public static final String MONTH_INTERVAL = "1mon";
   public static final String EOD = "EOD";
+
+  public Period getPeriod() {
+
+    if (interval != null) {
+      if (MIN_1_INTERVAL.equals(interval))
+        return Period.minutes(1);
+
+      if (MIN_5_INTERVAL.equals(interval))
+        return Period.minutes(5);
+
+      if (MIN_10_INTERVAL.equals(interval))
+        return Period.minutes(10);
+
+      if (EOD.equals(interval))
+        return Period.days(1);
+
+      if (MONTH_INTERVAL.equals(interval))
+        return Period.months(1);
+
+      if (HOURLY_INTERVAL.equals(interval))
+        return Period.hours(1);
+    }
+
+    return null;
+  }
 
   public BigDecimal low;
 
@@ -138,5 +166,10 @@ public class Candle extends BaseMarketData {
 
   public void setVolume(BigDecimal volume) {
     this.volume = volume;
+  }
+  
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this).toString();
   }
 }
