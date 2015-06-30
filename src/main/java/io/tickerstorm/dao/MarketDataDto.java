@@ -39,10 +39,15 @@ public class MarketDataDto implements Serializable {
       mapper.map(data, dto);
       mapper.map(data, key);
       key.date = data.getTimestamp().withZone(DateTimeZone.UTC).toString(dateFormatter);
+      key.hour = data.getTimestamp().withZone(DateTimeZone.UTC).getHourOfDay();
+      key.min = data.getTimestamp().withZone(DateTimeZone.UTC).getMinuteOfHour();
       dto.primarykey = key;
       dto.primarykey.symbol = dto.primarykey.symbol.toLowerCase();
       dto.primarykey.source = dto.primarykey.source.toLowerCase();
-      dto.primarykey.interval = dto.primarykey.interval.toLowerCase();
+
+      if (dto.primarykey.interval != null)
+        dto.primarykey.interval = dto.primarykey.interval.toLowerCase();
+      
       dto.primarykey.timestamp = new DateTime(dto.primarykey.timestamp).withZone(DateTimeZone.UTC).toDate();
 
     } catch (Exception e) {

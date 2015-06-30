@@ -3,7 +3,6 @@ package io.tickerstorm.data;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
-import io.tickerstorm.TickerStormConfig;
 import io.tickerstorm.DataLoadSchedulerConfig;
 import io.tickerstorm.dao.MarketDataDao;
 import io.tickerstorm.entity.Candle;
@@ -16,6 +15,7 @@ import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.cassandra.core.CassandraOperations;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.testng.annotations.AfterMethod;
@@ -31,6 +31,9 @@ public class DukascopyHistoricalForexQueryITCase extends AbstractTestNGSpringCon
 
   @Autowired
   private DataQueryClient client;
+  
+  @Autowired
+  private MarketDataDao dao;
 
   @Qualifier("historical")
   @Autowired
@@ -38,10 +41,10 @@ public class DukascopyHistoricalForexQueryITCase extends AbstractTestNGSpringCon
 
   @Autowired
   private CassandraOperations session;
-  
+
   @Autowired
   private DirectoryMonitoringService monitor;
-  
+
   Object verifier;
 
   boolean verified = false;
@@ -67,8 +70,11 @@ public class DukascopyHistoricalForexQueryITCase extends AbstractTestNGSpringCon
     Files.copy(new File("./src/test/resources/data/Dukascopy/AUDCAD_Candlestick_1_m_BID_01.06.2015-06.06.2015.csv"), new File(
         "./data/Dukascopy/AUDCAD_Candlestick_1_m_BID_01.06.2015-06.06.2015.csv"));
 
-    Thread.sleep(20000);
+    Thread.sleep(60000);
     assertTrue(verified);
+    
+    Long count = dao.count();
+    assertTrue(count > 0);
 
   }
 
@@ -90,7 +96,7 @@ public class DukascopyHistoricalForexQueryITCase extends AbstractTestNGSpringCon
       assertTrue(c.low.compareTo(BigDecimal.ZERO) > 0);
       assertNotNull(c.high);
       assertTrue(c.high.compareTo(BigDecimal.ZERO) > 0);
-      assertNotNull(c.volume);      
+      assertNotNull(c.volume);
       assertEquals(c.interval, Candle.MIN_1_INTERVAL);
       verified = true;
 

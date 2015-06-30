@@ -36,9 +36,9 @@ public class TestMarketDataDto {
     assertEquals(dto.open, c.open);
     assertEquals(dto.volume, c.volume);
     assertEquals(dto.primarykey.source, c.source);
-    assertEquals(dto.primarykey.interval, c.interval);
+    assertEquals(dto.primarykey.interval, c.interval.toLowerCase());
     assertEquals(dto.primarykey.timestamp, c.timestamp.toDate());
-    assertEquals(dto.primarykey.symbol, c.symbol);
+    assertEquals(dto.primarykey.symbol, c.symbol.toLowerCase());
     assertNotNull(dto.primarykey.date);
 
     Candle d = (Candle) dto.toMarketData();
@@ -48,13 +48,13 @@ public class TestMarketDataDto {
     assertEquals(d.high, c.high);
     assertEquals(d.open, c.open);
     assertEquals(d.volume, c.volume);
-    assertEquals(d.source, c.source);
-    assertEquals(d.interval, c.interval);
+    assertEquals(d.source, c.source.toLowerCase());
+    assertEquals(d.interval, c.interval.toLowerCase());
     
     // assertEquals(d.timestamp, c.timestamp); not working
     assertNotNull(d.timestamp);
     assertNotNull(c.timestamp);
-    assertEquals(d.symbol, c.symbol);
+    assertEquals(d.symbol, c.symbol.toLowerCase());
 
   }
 
@@ -77,9 +77,9 @@ public class TestMarketDataDto {
     assertEquals(dto.bid, c.bid);
     assertEquals(dto.askSize, c.askSize);
     assertEquals(dto.bidSize, c.bidSize);
-    assertEquals(dto.primarykey.source, c.source);
+    assertEquals(dto.primarykey.source, c.source.toLowerCase());
     assertEquals(dto.primarykey.timestamp, c.timestamp.toDate());
-    assertEquals(dto.primarykey.symbol, c.symbol);
+    assertEquals(dto.primarykey.symbol, c.symbol.toLowerCase());
     assertNotNull(dto.primarykey.date);
 
     Quote d = (Quote) dto.toMarketData();
@@ -88,12 +88,12 @@ public class TestMarketDataDto {
     assertEquals(d.bid, c.bid);
     assertEquals(d.askSize, c.askSize);
     assertEquals(d.bidSize, c.bidSize);
-    assertEquals(d.source, c.source);
+    assertEquals(d.source, c.source.toLowerCase());
     
     // assertEquals(d.timestamp, c.timestamp); not working
     assertNotNull(d.timestamp);
     assertNotNull(c.timestamp);
-    assertEquals(d.symbol, c.symbol);
+    assertEquals(d.symbol, c.symbol.toLowerCase());
 
   }
 
@@ -114,19 +114,19 @@ public class TestMarketDataDto {
     assertEquals(dto.quantity, c.quantity);
     assertEquals(dto.primarykey.source, c.source);
     assertEquals(dto.primarykey.timestamp, c.timestamp.toDate());
-    assertEquals(dto.primarykey.symbol, c.symbol);
+    assertEquals(dto.primarykey.symbol, c.symbol.toLowerCase());
     assertNotNull(dto.primarykey.date);
     
     Tick d = (Tick) dto.toMarketData();
 
     assertEquals(d.price, c.price);
     assertEquals(d.quantity, c.quantity);
-    assertEquals(d.source, c.source);
+    assertEquals(d.source, c.source.toLowerCase());
     
     // assertEquals(d.timestamp, c.timestamp); not working
     assertNotNull(d.timestamp);
     assertNotNull(c.timestamp);
-    assertEquals(d.symbol, c.symbol);
+    assertEquals(d.symbol, c.symbol.toLowerCase());
 
   }
 

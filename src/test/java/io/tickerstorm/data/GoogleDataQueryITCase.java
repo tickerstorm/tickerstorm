@@ -8,9 +8,6 @@ import io.tickerstorm.dao.MarketDataDao;
 import io.tickerstorm.entity.Candle;
 import io.tickerstorm.entity.MarketData;
 
-import java.io.File;
-
-import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.cassandra.core.CassandraOperations;
@@ -22,22 +19,21 @@ import org.testng.annotations.Test;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
-import com.google.common.io.Files;
 
 @ContextConfiguration(classes = { DataLoadSchedulerConfig.class })
-public class StooqHistoricalForexQueryITCase extends AbstractTestNGSpringContextTests {
+public class GoogleDataQueryITCase extends AbstractTestNGSpringContextTests {
 
-  StooqHistoricalForexQuery query;
+  GoogleDataQuery query;
 
   @Autowired
   private DataQueryClient client;
 
-  @Autowired
-  private MarketDataDao dao;
-
   @Qualifier("historical")
   @Autowired
   EventBus bus;
+  
+  @Autowired
+  private MarketDataDao dao;
 
   @Autowired
   private CassandraOperations session;
@@ -48,57 +44,40 @@ public class StooqHistoricalForexQueryITCase extends AbstractTestNGSpringContext
 
   @BeforeMethod
   public void setup() throws Exception {
-    verified = false;
-    FileUtils.forceMkdir(new File("./data/Stooq"));
+    verified = false;    
   }
 
   @AfterMethod
   public void tearDown() {
     bus.unregister(verifier);
     session.getSession().execute("TRUNCATE marketdata");
-    FileUtils.deleteQuietly(new File("./data/Stooq/5_world_txt.zip"));
-  }
-
-  @Test
-  public void parseGloabForext() throws Exception {
-
-    verifier = new DownloadGloabForextVerification();
-    bus.register(verifier);
-
-    Files.copy(new File("./src/test/resources/data/Stooq/5_world_txt.zip"), new File("./data/Stooq/5_world_txt.zip"));
-
-    Thread.sleep(60000);
-    assertTrue(verified);
-
-    Long count = dao.count();
-    assertTrue(count > 0);
-
   }
 
   @Test
   public void downloadGloabForext() throws Exception {
 
-    verifier = new DownloadGloabForextVerification();
+    verifier = new GoogleDataVerifier();
     bus.register(verifier);
 
-    query = new StooqHistoricalForexQuery().currencies().min5();
+    query = new GoogleDataQuery("TOL");
     client.query(query);
 
-    Thread.sleep(60000);
+    Thread.sleep(5000);
     assertTrue(verified);
-
+    
     Long count = dao.count();
     assertTrue(count > 0);
+    
 
   }
 
-  private class DownloadGloabForextVerification {
+  private class GoogleDataVerifier {
 
     @Subscribe
     public void onEvent(MarketData md) {
 
       assertNotNull(md.getSymbol());
-      assertEquals(md.getSource(), "Stooq");
+      assertEquals(md.getSource(), "Google");
       assertNotNull(md.getTimestamp());
 
       Candle c = (Candle) md;
@@ -110,7 +89,9 @@ public class StooqHistoricalForexQueryITCase extends AbstractTestNGSpringContext
       assertTrue(c.low.longValue() > 0);
       assertNotNull(c.high);
       assertTrue(c.high.longValue() > 0);
-      assertEquals(c.interval, Candle.MIN_5_INTERVAL);
+      assertNotNull(c.volume);
+      assertTrue(c.volume.longValue() > 0);
+      assertEquals(c.interval, Candle.MIN_1_INTERVAL);
       verified = true;
 
     }

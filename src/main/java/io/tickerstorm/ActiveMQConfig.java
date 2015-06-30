@@ -19,8 +19,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.PropertySource;
 
-@ComponentScan(basePackages = { "io.tickerstorm.messaging" })
 @Configuration
+@ComponentScan(basePackages = { "io.tickerstorm.messaging" })
 @PropertySource({ "classpath:default.properties" })
 public class ActiveMQConfig {
 

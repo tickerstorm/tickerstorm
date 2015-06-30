@@ -53,7 +53,10 @@ public class GoogleDataQuery implements QueryBuilder, DataConverter {
   }
 
   public GoogleDataQuery days(int i) {
-    period = i;
+
+    if (i < 16 && i > 0)
+      period = i;
+
     return this;
   }
 
@@ -64,26 +67,25 @@ public class GoogleDataQuery implements QueryBuilder, DataConverter {
     LineIterator iterator = IOUtils.lineIterator(new StringReader(doc));
 
     DateTime timestamp = null;
-    
+
     while (iterator.hasNext()) {
 
       String line = iterator.next();
-      
+
       int offset = -240;
-      if(line.contains("TIMEZONE_OFFSET")){
+      if (line.contains("TIMEZONE_OFFSET")) {
         offset = Integer.valueOf(line.split("=")[1]);
       }
 
       if (line.contains("=") || line.contains("EXCHANGE"))
         continue;
 
-      
       int mins = 0;
       String[] args = line.split(",");
 
       if (args[0].startsWith("a")) {
         String t = args[0].replace("a", "");
-        timestamp = new DateTime(new Date(Long.valueOf(t) * 1000)).withZone(DateTimeZone.forOffsetHours(offset/60));
+        timestamp = new DateTime(new Date(Long.valueOf(t) * 1000)).withZone(DateTimeZone.forOffsetHours(offset / 60));
       } else {
         mins = Integer.valueOf(args[0]);
       }

@@ -63,7 +63,7 @@ public class MarketDataCassandraSinkITCase extends AbstractTestNGSpringContextTe
       assertEquals(dto.primarykey.source, c.source);
       assertEquals(dto.primarykey.interval, c.interval);
       assertEquals(dto.primarykey.timestamp, c.timestamp.toDate());
-      assertEquals(dto.primarykey.symbol, c.symbol);
+      assertEquals(dto.primarykey.symbol, c.symbol.toLowerCase());
       assertNotNull(dto.primarykey.date);
 
       Candle d = (Candle) dto.toMarketData();
@@ -79,7 +79,7 @@ public class MarketDataCassandraSinkITCase extends AbstractTestNGSpringContextTe
       assertTrue(d.timestamp.compareTo(c.timestamp) == 0);
       assertNotNull(d.timestamp);
       assertNotNull(c.timestamp);
-      assertEquals(d.symbol, c.symbol);      
+      assertEquals(d.symbol, c.symbol.toLowerCase());      
       
     }
 

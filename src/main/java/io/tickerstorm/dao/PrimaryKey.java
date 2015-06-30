@@ -29,6 +29,12 @@ public class PrimaryKey implements Serializable {
 
   @PrimaryKeyColumn(name = "timestamp", ordinal = 5, type = PrimaryKeyType.CLUSTERED, ordering = Ordering.DESCENDING)
   public Date timestamp;
+  
+  @PrimaryKeyColumn(name = "hour", ordinal = 6, type = PrimaryKeyType.CLUSTERED, ordering = Ordering.DESCENDING)
+  public Integer hour;
+  
+  @PrimaryKeyColumn(name = "min", ordinal = 6, type = PrimaryKeyType.CLUSTERED, ordering = Ordering.DESCENDING)
+  public Integer min;
 
   @Override
   public boolean equals(Object obj) {
@@ -44,10 +50,20 @@ public class PrimaryKey implements Serializable {
         return false;
     } else if (!date.equals(other.date))
       return false;
+    if (hour == null) {
+      if (other.hour != null)
+        return false;
+    } else if (!hour.equals(other.hour))
+      return false;
     if (interval == null) {
       if (other.interval != null)
         return false;
     } else if (!interval.equals(other.interval))
+      return false;
+    if (min == null) {
+      if (other.min != null)
+        return false;
+    } else if (!min.equals(other.min))
       return false;
     if (source == null) {
       if (other.source != null)
@@ -109,7 +125,9 @@ public class PrimaryKey implements Serializable {
     final int prime = 31;
     int result = 1;
     result = prime * result + ((date == null) ? 0 : date.hashCode());
+    result = prime * result + ((hour == null) ? 0 : hour.hashCode());
     result = prime * result + ((interval == null) ? 0 : interval.hashCode());
+    result = prime * result + ((min == null) ? 0 : min.hashCode());
     result = prime * result + ((source == null) ? 0 : source.hashCode());
     result = prime * result + ((symbol == null) ? 0 : symbol.hashCode());
     result = prime * result + ((timestamp == null) ? 0 : timestamp.hashCode());
