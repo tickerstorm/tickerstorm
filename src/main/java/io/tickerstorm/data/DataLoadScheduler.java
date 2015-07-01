@@ -29,7 +29,7 @@ public class DataLoadScheduler {
     timer.scheduleAtFixedRate(new StooqTask(query), new DateTime().plusSeconds(5).toDate(), 86400000);
     timer.scheduleAtFixedRate(new YahooTask(query), new DateTime().plusSeconds(5).toDate(), 86400000);
     timer.scheduleAtFixedRate(new GoogleTask(query), new DateTime().plusSeconds(5).toDate(), 86400000);
-
+    
   }
 
   private class StooqTask extends TimerTask {

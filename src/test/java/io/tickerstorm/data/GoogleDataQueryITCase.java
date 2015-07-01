@@ -8,6 +8,9 @@ import io.tickerstorm.dao.MarketDataDao;
 import io.tickerstorm.entity.Candle;
 import io.tickerstorm.entity.MarketData;
 
+import java.io.File;
+
+import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.cassandra.core.CassandraOperations;
@@ -19,6 +22,7 @@ import org.testng.annotations.Test;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
+import com.google.common.io.Files;
 
 @ContextConfiguration(classes = { DataLoadSchedulerConfig.class })
 public class GoogleDataQueryITCase extends AbstractTestNGSpringContextTests {
@@ -31,7 +35,7 @@ public class GoogleDataQueryITCase extends AbstractTestNGSpringContextTests {
   @Qualifier("historical")
   @Autowired
   EventBus bus;
-  
+
   @Autowired
   private MarketDataDao dao;
 
@@ -44,13 +48,15 @@ public class GoogleDataQueryITCase extends AbstractTestNGSpringContextTests {
 
   @BeforeMethod
   public void setup() throws Exception {
-    verified = false;    
+    verified = false;
+    FileUtils.forceMkdir(new File("./data/Google"));
   }
 
   @AfterMethod
   public void tearDown() {
     bus.unregister(verifier);
     session.getSession().execute("TRUNCATE marketdata");
+    FileUtils.deleteQuietly(new File("./data/Google/TOL.csv"));
   }
 
   @Test
@@ -64,11 +70,25 @@ public class GoogleDataQueryITCase extends AbstractTestNGSpringContextTests {
 
     Thread.sleep(5000);
     assertTrue(verified);
-    
+
     Long count = dao.count();
     assertTrue(count > 0);
-    
 
+  }
+
+  @Test
+  public void testParseGoogleFile() throws Exception {
+
+    verifier = new GoogleDataVerifier();
+    bus.register(verifier);
+
+    Files.copy(new File("./src/test/resources/data/Google/TOL.csv"), new File("./data/Google/TOL.csv"));
+
+    Thread.sleep(20000);
+    assertTrue(verified);
+
+    Long count = dao.count();
+    assertTrue(count > 0);
   }
 
   private class GoogleDataVerifier {

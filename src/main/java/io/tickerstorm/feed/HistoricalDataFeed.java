@@ -3,7 +3,6 @@ package io.tickerstorm.feed;
 import io.tickerstorm.dao.MarketDataDto;
 import io.tickerstorm.entity.Candle;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -59,20 +58,22 @@ public class HistoricalDataFeed {
     DateTime start = query.interval.getStart();
     DateTime end = query.interval.getEnd();
     DateTime date = start;
-    Set<String> dates = new HashSet<>();
+    Set<String> dates = new java.util.HashSet<>();
+    dates.add(date.toString(dateFormat));
 
     for (String s : query.symbols) {
 
       while (!date.isEqual(end)) {
-        date = nextDate(date, end);
+
+        if (date.isBefore(end))
+          date = date.plusDays(1);
+
         dates.add(date.toString(dateFormat));
       }
 
       Select select = QueryBuilder.select().from("marketdata");
-          select.where(QueryBuilder.eq("symbol", s))
-          .and(QueryBuilder.in("date", dates))
-          .and(QueryBuilder.eq("type", Candle.TYPE))
-          .and(QueryBuilder.eq("source", query.source))
+      select.where(QueryBuilder.eq("symbol", s.toLowerCase())).and(QueryBuilder.in("date", dates.toArray(new String[] {})))
+          .and(QueryBuilder.eq("type", Candle.TYPE.toLowerCase())).and(QueryBuilder.eq("source", query.source.toLowerCase()))
           .and(QueryBuilder.eq("interval", query.periods.iterator().next()));
 
       logger.info(select.toString());
@@ -85,15 +86,5 @@ public class HistoricalDataFeed {
         bus.post(dto.toMarketData());
       }
     }
-  }
-
-  private DateTime nextDate(DateTime start, DateTime end) {
-
-    if (start.isBefore(end)) {
-      return start.plusDays(1);
-    }
-
-    return end;
-
   }
 }

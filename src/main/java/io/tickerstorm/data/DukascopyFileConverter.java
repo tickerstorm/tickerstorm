@@ -25,7 +25,7 @@ import com.google.common.eventbus.EventBus;
 import com.google.common.io.Files;
 
 @Component
-public class DukascopyFileConverter extends BaseFileConverter implements DataConverter {
+public class DukascopyFileConverter extends BaseFileConverter{
 
   private static final DateTimeFormatter formatter = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss.SSS");
 

@@ -3,6 +3,8 @@ package io.tickerstorm.data;
 import io.tickerstorm.entity.Candle;
 import io.tickerstorm.entity.MarketData;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.StringReader;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -11,10 +13,23 @@ import java.util.List;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.LineIterator;
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
 
-public class GoogleDataQuery implements QueryBuilder, DataConverter {
+import com.google.common.base.Throwables;
+import com.google.common.eventbus.EventBus;
+import com.google.common.io.Files;
+
+@Component
+public class GoogleDataQuery extends BaseFileConverter implements QueryBuilder {
+
+  private static final Logger logger = LoggerFactory.getLogger(GoogleDataQuery.class);
 
   public static final String HOST = "http://www.google.com/finance/getprices";
   public static final Integer MIN_1 = 60;
@@ -24,6 +39,10 @@ public class GoogleDataQuery implements QueryBuilder, DataConverter {
   private String[] fields = new String[] { "d", "c", "h", "l", "o", "v" };
   private DataConverter converter;
 
+  @Qualifier("historical")
+  @Autowired
+  private EventBus bus;
+
   public GoogleDataQuery(String symbol, DataConverter converter) {
     this.symbol = symbol;
     this.converter = converter;
@@ -32,6 +51,9 @@ public class GoogleDataQuery implements QueryBuilder, DataConverter {
   public GoogleDataQuery(String symbol) {
     this.symbol = symbol;
     this.converter = this;
+  }
+
+  private GoogleDataQuery() {
   }
 
   public String build() {
@@ -65,7 +87,7 @@ public class GoogleDataQuery implements QueryBuilder, DataConverter {
 
     List<MarketData> md = new ArrayList<MarketData>();
     LineIterator iterator = IOUtils.lineIterator(new StringReader(doc));
-
+    String symbol = this.symbol;
     DateTime timestamp = null;
 
     while (iterator.hasNext()) {
@@ -75,6 +97,10 @@ public class GoogleDataQuery implements QueryBuilder, DataConverter {
       int offset = -240;
       if (line.contains("TIMEZONE_OFFSET")) {
         offset = Integer.valueOf(line.split("=")[1]);
+      }
+
+      if (line.contains("SYMBOL") && StringUtils.isEmpty(symbol)) {
+        symbol = line.split("=")[1];
       }
 
       if (line.contains("=") || line.contains("EXCHANGE"))
@@ -91,7 +117,7 @@ public class GoogleDataQuery implements QueryBuilder, DataConverter {
       }
 
       Candle c = new Candle();
-      c.symbol = this.symbol;
+      c.symbol = symbol;
       c.close = new BigDecimal(args[1]);
       c.high = new BigDecimal(args[2]);
       c.low = new BigDecimal(args[3]);
@@ -102,6 +128,9 @@ public class GoogleDataQuery implements QueryBuilder, DataConverter {
       c.source = "Google";
       md.add(c);
 
+      if (bus != null)
+        bus.post(c);
+
     }
 
     return md.toArray(new MarketData[] {});
@@ -110,6 +139,39 @@ public class GoogleDataQuery implements QueryBuilder, DataConverter {
   @Override
   public Mode mode() {
     return Mode.doc;
+  }
+
+  @Override
+  public void onFileCreate(File file) {
+
+    if (file.getPath().contains(provider()) && Files.getFileExtension(file.getPath()).equals("csv")) {
+      logger.info("Converting " + file.getPath());
+
+      String symbol = Files.getNameWithoutExtension(file.getName());
+
+      try (java.io.InputStream s = new FileInputStream(file.getPath())) {
+
+        String content = new String("SYMBOL=" + symbol + "\n").concat(IOUtils.toString(s));
+        convert(content);
+
+      } catch (Exception e) {
+        Throwables.propagate(e);
+      }
+
+      file.delete();
+    }
+
+  }
+
+  @Override
+  public void onDirectoryChange(File file) {
+
+    if (file.getPath().contains(provider()) && !file.getName().equalsIgnoreCase(provider())) {
+      if (file.isDirectory() && file.list().length == 0) {
+        logger.info("Deleting " + file.getPath() + " since it's empty");
+        file.delete();
+      }
+    }
   }
 
 }
