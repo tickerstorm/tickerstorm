@@ -7,13 +7,14 @@ import io.tickerstorm.entity.Tick;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoField;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.dozer.DozerBeanMapper;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.format.DateTimeFormat;
 import org.springframework.data.cassandra.mapping.Table;
 
 import com.google.common.base.Throwables;
@@ -23,7 +24,7 @@ import com.google.common.collect.Lists;
 @SuppressWarnings("serial")
 public class MarketDataDto implements Serializable {
 
-  public static final org.joda.time.format.DateTimeFormatter dateFormatter = DateTimeFormat.forPattern("yyyyMMdd");
+  public static final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("uuuuMMdd");
   public static final DozerBeanMapper mapper = new DozerBeanMapper();
 
   static {
@@ -38,17 +39,15 @@ public class MarketDataDto implements Serializable {
 
       mapper.map(data, dto);
       mapper.map(data, key);
-      key.date = data.getTimestamp().withZone(DateTimeZone.UTC).toString(dateFormatter);
-      key.hour = data.getTimestamp().withZone(DateTimeZone.UTC).getHourOfDay();
-      key.min = data.getTimestamp().withZone(DateTimeZone.UTC).getMinuteOfHour();
+      key.date = dateFormatter.format(LocalDateTime.ofInstant(data.getTimestamp(), ZoneOffset.UTC));
+      key.hour = LocalDateTime.ofInstant(data.getTimestamp(), ZoneOffset.UTC).get(ChronoField.HOUR_OF_DAY);
+      key.min = LocalDateTime.ofInstant(data.getTimestamp(), ZoneOffset.UTC).get(ChronoField.MINUTE_OF_HOUR);
       dto.primarykey = key;
       dto.primarykey.symbol = dto.primarykey.symbol.toLowerCase();
       dto.primarykey.source = dto.primarykey.source.toLowerCase();
 
       if (dto.primarykey.interval != null)
         dto.primarykey.interval = dto.primarykey.interval.toLowerCase();
-      
-      dto.primarykey.timestamp = new DateTime(dto.primarykey.timestamp).withZone(DateTimeZone.UTC).toDate();
 
     } catch (Exception e) {
       Throwables.propagate(e);

@@ -1,11 +1,10 @@
 package io.tickerstorm.data;
 
-import io.tickerstorm.data.DataConverter.Mode;
 import io.tickerstorm.entity.Quote;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,7 +15,7 @@ public class YahooRealtimeQuoteQuery implements QueryBuilder, DataConverter {
   public static final String HOST = "http://download.finance.yahoo.com/d/quotes.csv?s=";
 
   public String symbol;
-  
+
   public YahooRealtimeQuoteQuery(String symbol) {
     this.symbol = symbol;
   }
@@ -30,7 +29,7 @@ public class YahooRealtimeQuoteQuery implements QueryBuilder, DataConverter {
   public DataConverter converter() {
     return this;
   }
-  
+
   @Override
   public Mode mode() {
     return Mode.line;
@@ -42,7 +41,7 @@ public class YahooRealtimeQuoteQuery implements QueryBuilder, DataConverter {
     Quote c = new Quote();
     c.symbol = symbol;
     c.source = "yahoo";
-    c.timestamp = new DateTime();
+    c.timestamp = Instant.now();
 
     if (!data[0].equalsIgnoreCase("N/A"))
       c.ask = new BigDecimal(data[0]);
@@ -61,7 +60,7 @@ public class YahooRealtimeQuoteQuery implements QueryBuilder, DataConverter {
       return null;
 
     c.bidSize = new BigDecimal(data[5]);
-    
+
     return new Quote[] { c };
   }
 

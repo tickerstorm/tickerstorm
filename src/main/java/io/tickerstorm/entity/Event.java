@@ -1,10 +1,10 @@
 package io.tickerstorm.entity;
 
-import org.joda.time.DateTime;
+import java.time.Instant;
 
 public interface Event {
 
-  public DateTime getTimestamp();
+  public Instant getTimestamp();
   public String getSource();
   public String getType();
 

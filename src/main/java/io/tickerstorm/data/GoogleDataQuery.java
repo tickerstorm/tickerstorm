@@ -7,15 +7,14 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.StringReader;
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.LineIterator;
 import org.apache.commons.lang3.StringUtils;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -88,7 +87,7 @@ public class GoogleDataQuery extends BaseFileConverter implements QueryBuilder {
     List<MarketData> md = new ArrayList<MarketData>();
     LineIterator iterator = IOUtils.lineIterator(new StringReader(doc));
     String symbol = this.symbol;
-    DateTime timestamp = null;
+    Instant timestamp = null;
 
     while (iterator.hasNext()) {
 
@@ -111,7 +110,7 @@ public class GoogleDataQuery extends BaseFileConverter implements QueryBuilder {
 
       if (args[0].startsWith("a")) {
         String t = args[0].replace("a", "");
-        timestamp = new DateTime(new Date(Long.valueOf(t) * 1000)).withZone(DateTimeZone.forOffsetHours(offset / 60));
+        timestamp = Instant.ofEpochSecond(Long.valueOf(t));
       } else {
         mins = Integer.valueOf(args[0]);
       }
@@ -123,7 +122,7 @@ public class GoogleDataQuery extends BaseFileConverter implements QueryBuilder {
       c.low = new BigDecimal(args[3]);
       c.open = new BigDecimal(args[4]);
       c.volume = new BigDecimal(args[4]);
-      c.timestamp = timestamp.plusMinutes(mins);
+      c.timestamp = timestamp.plus(mins, ChronoUnit.MINUTES);
       c.interval = Candle.MIN_1_INTERVAL;
       c.source = "Google";
       md.add(c);

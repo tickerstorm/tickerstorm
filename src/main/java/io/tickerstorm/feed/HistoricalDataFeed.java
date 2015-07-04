@@ -3,15 +3,13 @@ package io.tickerstorm.feed;
 import io.tickerstorm.dao.MarketDataDto;
 import io.tickerstorm.entity.Candle;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
-import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +26,7 @@ import com.google.common.eventbus.Subscribe;
 @Repository
 public class HistoricalDataFeed {
 
-  private static final DateTimeFormatter dateFormat = DateTimeFormat.forPattern("yyyyMMdd");
+  private static final java.time.format.DateTimeFormatter dateFormat = java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd");
 
   private static final Logger logger = LoggerFactory.getLogger(HistoricalDataFeed.class);
 
@@ -55,20 +53,21 @@ public class HistoricalDataFeed {
   @Subscribe
   public void onQuery(HistoricalFeedQuery query) {
 
-    DateTime start = query.interval.getStart();
-    DateTime end = query.interval.getEnd();
-    DateTime date = start;
+    LocalDateTime start = query.from;
+    LocalDateTime end = query.until;
+    LocalDateTime date = start;
+
     Set<String> dates = new java.util.HashSet<>();
-    dates.add(date.toString(dateFormat));
+    dates.add(dateFormat.format(date));
 
     for (String s : query.symbols) {
 
-      while (!date.isEqual(end)) {
+      while (!date.equals(end)) {
 
         if (date.isBefore(end))
           date = date.plusDays(1);
 
-        dates.add(date.toString(dateFormat));
+        dates.add(dateFormat.format(date));
       }
 
       Select select = QueryBuilder.select().from("marketdata");

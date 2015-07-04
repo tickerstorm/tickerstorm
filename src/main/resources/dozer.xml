@@ -27,6 +27,14 @@
 				<class-a>java.util.Date</class-a>
 				<class-b>org.joda.time.DateTime</class-b>
 			</converter>
+			<converter type="io.tickerstorm.dao.CustomDateTimeConverter">
+				<class-a>java.time.Instant</class-a>
+				<class-b>java.time.Instant</class-b>
+			</converter>
+			<converter type="io.tickerstorm.dao.CustomDateTimeConverter">
+				<class-a>java.util.Date</class-a>
+				<class-b>java.time.Instant</class-b>
+			</converter>
 		</custom-converters>
 	</configuration>
 
@@ -52,9 +60,9 @@
 		<field>
 			<a>type</a>
 			<b>primarykey.type</b>
-		</field>	
+		</field>
 	</mapping>
-	
+
 	<mapping type="bi-directional" map-null="false">
 		<class-a>io.tickerstorm.entity.Quote</class-a>
 		<class-b>io.tickerstorm.dao.MarketDataDto</class-b>
@@ -75,7 +83,7 @@
 			<b>primarykey.type</b>
 		</field>
 	</mapping>
-	
+
 	<mapping type="bi-directional" map-null="false">
 		<class-a>io.tickerstorm.entity.Tick</class-a>
 		<class-b>io.tickerstorm.dao.MarketDataDto</class-b>

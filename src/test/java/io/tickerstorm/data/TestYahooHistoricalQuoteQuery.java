@@ -6,7 +6,8 @@ import static org.testng.Assert.assertTrue;
 import io.tickerstorm.entity.Candle;
 import io.tickerstorm.entity.MarketData;
 
-import org.joda.time.DateTime;
+import java.time.LocalDateTime;
+
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -31,8 +32,7 @@ public class TestYahooHistoricalQuoteQuery {
 
   @Test
   public void testBasicSymbolQuery() {
-    query = new YahooHistoricalQuoteQuery("AAPL").eod().from(new DateTime().minusYears(1))
-        .until(new DateTime());
+    query = new YahooHistoricalQuoteQuery("AAPL").eod().from(LocalDateTime.now().minusYears(1)).until(LocalDateTime.now());
 
     client.bus.register(new BasicSymbolQuery());
     client.query(query);

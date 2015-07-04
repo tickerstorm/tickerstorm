@@ -7,7 +7,7 @@ import java.util.Map;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Element;
 
-import org.joda.time.Period;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,15 +46,15 @@ public class ComputeAverageBolt extends BaseRichBolt {
 
     if (candle != null) {
 
-      Tick tick = new Tick(candle.getPeriod(), candle.getTimestamp(), Decimal.valueOf(candle.open.toPlainString()),
-          Decimal.valueOf(candle.high.toPlainString()), Decimal.valueOf(candle.low.toPlainString()), Decimal.valueOf(candle.close
-              .toPlainString()), Decimal.valueOf(candle.volume.toPlainString()));
+      Tick tick = new Tick(new org.joda.time.Period(candle.duration()), new DateTime(candle.getTimestamp()), Decimal.valueOf(candle.open
+          .toPlainString()), Decimal.valueOf(candle.high.toPlainString()), Decimal.valueOf(candle.low.toPlainString()),
+          Decimal.valueOf(candle.close.toPlainString()), Decimal.valueOf(candle.volume.toPlainString()));
 
       String key = new StringBuffer(candle.symbol).append("-").append(candle.interval).append("-").append("-timeseries").toString();
 
       if (!cacheManager.getCache("timeseries").isKeyInCache(key)) {
 
-        series = new TimeSeries(candle.getPeriod());
+        series = new TimeSeries(new org.joda.time.Period(candle.duration()));
         series.addTick(tick);
         cacheManager.getCache("timeseries").putIfAbsent(new Element(key, series));
 
@@ -66,7 +66,7 @@ public class ComputeAverageBolt extends BaseRichBolt {
       }
     }
 
-    TimeSeries days30 = series.subseries(0, Period.days(30));
+    TimeSeries days30 = series.subseries(0, org.joda.time.Period.days(30));
     int lastTick = days30.getEnd();
     ClosePriceIndicator closeInd = new ClosePriceIndicator(days30);
     SMAIndicator sma = new SMAIndicator(closeInd, lastTick);

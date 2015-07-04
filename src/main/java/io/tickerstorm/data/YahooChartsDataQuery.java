@@ -3,11 +3,9 @@ package io.tickerstorm.data;
 import io.tickerstorm.entity.Candle;
 
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.Instant;
 import java.util.TimeZone;
 
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,7 +54,7 @@ public class YahooChartsDataQuery implements QueryBuilder, DataConverter {
     String[] args = line.split(",");
 
     Candle c = new Candle();
-    c.timestamp = new DateTime(new Date(Long.valueOf(args[0]) * 1000)).withZone(DateTimeZone.forTimeZone(timezone));
+    c.timestamp = Instant.ofEpochSecond(Long.valueOf(args[0]));
     c.low = new BigDecimal(args[3]);
     c.high = new BigDecimal(args[2]);
     c.close = new BigDecimal(args[1]);

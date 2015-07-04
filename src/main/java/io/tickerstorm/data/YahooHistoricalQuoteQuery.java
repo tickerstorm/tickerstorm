@@ -3,15 +3,18 @@ package io.tickerstorm.data;
 import io.tickerstorm.entity.Candle;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoField;
+import java.util.TimeZone;
 
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.format.ISODateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class YahooHistoricalQuoteQuery implements DataConverter, QueryBuilder {
-  
+
   public static final Logger logger = LoggerFactory.getLogger(YahooHistoricalQuoteQuery.class);
 
   public static final String HOST = "http://ichart.yahoo.com/table.csv?";
@@ -19,33 +22,33 @@ public class YahooHistoricalQuoteQuery implements DataConverter, QueryBuilder {
   public static final String WEEK = "w";
   public static final String MONTH = "m";
 
-  public static final org.joda.time.format.DateTimeFormatter FORMATTER = ISODateTimeFormat.date();
+  public static final DateTimeFormatter FORMATTER = DateTimeFormatter.ISO_DATE;
 
   private String symbol;
-  private DateTime from = new DateTime().minusDays(20).withZone(DateTimeZone.forID("EST"));
-  private DateTime until = new DateTime().withZone(DateTimeZone.forID("EST"));
+  private LocalDateTime from = LocalDateTime.now().minusDays(20);
+  private LocalDateTime until = LocalDateTime.now();
   private String interval = EOD;
-  
-  public YahooHistoricalQuoteQuery eod(){
+
+  public YahooHistoricalQuoteQuery eod() {
     this.interval = EOD;
     return this;
   }
-  
+
   @Override
   public Mode mode() {
     return Mode.line;
   }
-  
-  public YahooHistoricalQuoteQuery week(){
+
+  public YahooHistoricalQuoteQuery week() {
     this.interval = WEEK;
     return this;
   }
-  
-  public YahooHistoricalQuoteQuery month(){
+
+  public YahooHistoricalQuoteQuery month() {
     this.interval = MONTH;
     return this;
   }
-  
+
   @Override
   public DataConverter converter() {
     return this;
@@ -60,20 +63,21 @@ public class YahooHistoricalQuoteQuery implements DataConverter, QueryBuilder {
     return this;
   }
 
-  public YahooHistoricalQuoteQuery from(DateTime from) {
+  public YahooHistoricalQuoteQuery from(LocalDateTime from) {
     this.from = from;
     return this;
   }
 
-  public YahooHistoricalQuoteQuery until(DateTime until) {
+  public YahooHistoricalQuoteQuery until(LocalDateTime until) {
     this.until = until;
     return this;
   }
 
   public String build() {
-    String url = HOST + "&s=" + symbol + "&a=" + (from.getMonthOfYear() - 1) + "&b=" + from.getDayOfMonth() + "&c=" + from.getYear() + "&d="
-        + (until.getMonthOfYear() - 1) + "&e=" + until.getDayOfMonth() + "&f=" + until.getYear() + "&g=" + interval + "&ignore=.csv";
-    
+    String url = HOST + "&s=" + symbol + "&a=" + (from.get(ChronoField.YEAR) - 1) + "&b=" + from.get(ChronoField.MONTH_OF_YEAR) + "&c="
+        + from.get(ChronoField.YEAR) + "&d=" + (until.get(ChronoField.YEAR) - 1) + "&e=" + until.get(ChronoField.MONTH_OF_YEAR) + "&f="
+        + until.get(ChronoField.YEAR) + "&g=" + interval + "&ignore=.csv";
+
     logger.info(url);
     return url;
   }
@@ -86,7 +90,7 @@ public class YahooHistoricalQuoteQuery implements DataConverter, QueryBuilder {
     String[] args = line.split(",");
 
     Candle c = new Candle();
-    c.timestamp = FORMATTER.parseDateTime(args[0]).withZone(DateTimeZone.forID("EST"));
+    c.timestamp = LocalDate.parse(args[0], FORMATTER).atTime(0, 0).toInstant(ZoneOffset.ofHours(-7));
     c.open = new BigDecimal(args[1]);
     c.high = new BigDecimal(args[2]);
     c.low = new BigDecimal(args[3]);
@@ -98,14 +102,12 @@ public class YahooHistoricalQuoteQuery implements DataConverter, QueryBuilder {
       c.interval = Candle.EOD;
     if (interval.equals(WEEK))
       c.interval = Candle.WEEK_INTERVAL;
-    if (interval.equals(MONTH))
-      c.interval = Candle.MONTH_INTERVAL;
 
     c.source = "yahoo";
 
-    return new Candle[]{c};
+    return new Candle[] { c };
   }
-  
+
   @Override
   public String provider() {
     return "Yahoo";

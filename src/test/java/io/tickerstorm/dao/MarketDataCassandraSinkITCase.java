@@ -5,6 +5,8 @@ import io.tickerstorm.TickerStormConfig;
 import io.tickerstorm.entity.Candle;
 
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.Date;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -42,7 +44,7 @@ public class MarketDataCassandraSinkITCase extends AbstractTestNGSpringContextTe
     c.low = BigDecimal.ONE;
     c.interval = Candle.MIN_10_INTERVAL;
     c.open = BigDecimal.ZERO;
-    c.timestamp = new DateTime().withZone(DateTimeZone.forOffsetHours(-7));
+    c.timestamp = Instant.now();
     c.volume = BigDecimal.TEN;
     c.symbol = "AAPL";
     sink.onMarketData(c);
@@ -62,7 +64,7 @@ public class MarketDataCassandraSinkITCase extends AbstractTestNGSpringContextTe
       assertEquals(dto.volume, c.volume);
       assertEquals(dto.primarykey.source, c.source);
       assertEquals(dto.primarykey.interval, c.interval);
-      assertEquals(dto.primarykey.timestamp, c.timestamp.toDate());
+      assertEquals(dto.primarykey.timestamp, Date.from(c.timestamp));
       assertEquals(dto.primarykey.symbol, c.symbol.toLowerCase());
       assertNotNull(dto.primarykey.date);
 

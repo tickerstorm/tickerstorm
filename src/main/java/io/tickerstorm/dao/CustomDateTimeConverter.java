@@ -1,5 +1,6 @@
 package io.tickerstorm.dao;
 
+import java.time.Instant;
 import java.util.Date;
 
 import org.apache.commons.lang3.StringUtils;
@@ -103,6 +104,18 @@ public class CustomDateTimeConverter implements CustomConverter {
     } else if (destClass.equals(Date.class) && sourceClass.equals(DateTime.class)) {
 
       return ((DateTime) source).toDate();
+
+    } else if (destClass.equals(Instant.class) && sourceClass.equals(Instant.class)) {
+
+      return source;
+
+    } else if (destClass.equals(Instant.class) && sourceClass.equals(Date.class)) {
+
+      return ((Date) source).toInstant();
+
+    } else if (destClass.equals(Date.class) && sourceClass.equals(Instant.class)) {
+
+      return Date.from((Instant) source);
 
     }
 

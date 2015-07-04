@@ -1,11 +1,6 @@
 package io.tickerstorm.entity;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
-
-import org.springframework.data.cassandra.mapping.Table;
-
-import com.google.common.base.Objects;
 
 @SuppressWarnings("serial")
 public class Quote extends BaseMarketData {

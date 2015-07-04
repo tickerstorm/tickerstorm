@@ -6,13 +6,12 @@ import io.tickerstorm.entity.MarketData;
 import java.io.File;
 import java.io.FileInputStream;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.io.IOUtils;
-import org.joda.time.DateTimeZone;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,9 +24,10 @@ import com.google.common.eventbus.EventBus;
 import com.google.common.io.Files;
 
 @Component
-public class DukascopyFileConverter extends BaseFileConverter{
+public class DukascopyFileConverter extends BaseFileConverter {
 
-  private static final DateTimeFormatter formatter = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss.SSS");
+  private static final java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter
+      .ofPattern("dd.MM.yyyy HH:mm:ss.SSS");
 
   private static final Logger logger = LoggerFactory.getLogger(DukascopyFileConverter.class);
 
@@ -63,7 +63,7 @@ public class DukascopyFileConverter extends BaseFileConverter{
           String[] cols = l.split(",");
           Candle c = new Candle();
           c.symbol = currency;
-          c.timestamp = formatter.parseDateTime(cols[0]).withZone(DateTimeZone.forID("GMT"));
+          c.timestamp = LocalDateTime.parse(cols[0], formatter).toInstant(ZoneOffset.UTC);
           c.open = new BigDecimal(cols[1]);
           c.high = new BigDecimal(cols[2]);
           c.low = new BigDecimal(cols[3]);

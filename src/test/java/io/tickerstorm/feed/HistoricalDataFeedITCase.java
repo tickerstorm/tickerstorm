@@ -9,11 +9,10 @@ import io.tickerstorm.entity.Candle;
 import io.tickerstorm.entity.MarketData;
 
 import java.io.File;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
 import org.apache.commons.io.FileUtils;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.Interval;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.cassandra.core.CassandraOperations;
@@ -67,15 +66,15 @@ public class HistoricalDataFeedITCase extends AbstractTestNGSpringContextTests {
   public void testSimpleCandleQuery() throws Exception {
 
     HistoricalFeedQuery query = new HistoricalFeedQuery("TOL");
-    query.interval = new Interval(new DateTime().withDayOfMonth(10).withYear(2015).withMonthOfYear(6), new DateTime().withDayOfMonth(20)
-        .withYear(2015).withMonthOfYear(6));
+    query.from = LocalDateTime.of(2015, 6, 10, 0, 0);
+    query.until = LocalDateTime.of(2015, 6, 20, 0, 0);
     query.source = "google";
     query.periods.add(Candle.MIN_1_INTERVAL);
-    query.zone = DateTimeZone.forID("EST");
+    query.zone = ZoneOffset.ofHours(-7);
 
     feed.onQuery(query);
     assertEquals(3096, count);
-    
+
   }
 
   public class HistoricalDataFeedVerifier {

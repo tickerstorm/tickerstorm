@@ -2,8 +2,6 @@ package io.tickerstorm.entity;
 
 import java.math.BigDecimal;
 
-import com.google.common.base.Objects;
-
 @SuppressWarnings("serial")
 public class Tick extends BaseMarketData {
 

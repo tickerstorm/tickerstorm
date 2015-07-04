@@ -1,8 +1,7 @@
 package io.tickerstorm.entity;
 
 import java.io.Serializable;
-
-import org.joda.time.DateTime;
+import java.time.Instant;
 
 import com.google.common.base.MoreObjects;
 
@@ -11,7 +10,7 @@ public abstract class BaseMarketData implements MarketData, Serializable {
 
   public String source;
 
-  public DateTime timestamp;
+  public Instant timestamp;
 
   public String symbol;
 
@@ -50,9 +49,6 @@ public abstract class BaseMarketData implements MarketData, Serializable {
     return symbol;
   }
 
-  public DateTime getTimestamp() {
-    return timestamp;
-  }
 
   @Override
   public int hashCode() {
@@ -72,7 +68,12 @@ public abstract class BaseMarketData implements MarketData, Serializable {
     this.symbol = symbol;
   }
 
-  public void setTimestamp(DateTime timestamp) {
+
+  public Instant getTimestamp() {
+    return timestamp;
+  }
+
+  public void setTimestamp(Instant timestamp) {
     this.timestamp = timestamp;
   }
 
