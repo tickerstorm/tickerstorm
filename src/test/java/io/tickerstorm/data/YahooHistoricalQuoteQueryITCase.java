@@ -14,7 +14,7 @@ import org.testng.annotations.Test;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
-public class TestYahooHistoricalQuoteQuery {
+public class YahooHistoricalQuoteQueryITCase {
 
   YahooHistoricalQuoteQuery query;
   DataQueryClient client;

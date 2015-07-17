@@ -12,7 +12,7 @@ import org.testng.annotations.Test;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
-public class TestYahooRealtimeQuoteQuery {
+public class YahooRealtimeQuoteQueryITCase {
 
   YahooRealtimeQuoteQuery query;
   DataQueryClient client;
