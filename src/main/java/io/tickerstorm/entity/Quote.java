@@ -1,9 +1,11 @@
 package io.tickerstorm.entity;
 
 import java.math.BigDecimal;
+import java.util.HashSet;
+import java.util.Set;
 
 @SuppressWarnings("serial")
-public class Quote extends BaseMarketData {
+public class Quote extends BaseMarketData implements Fields {
 
   public static final String TYPE = "quote";
 
@@ -57,11 +59,11 @@ public class Quote extends BaseMarketData {
 
   @Override
   public String getType() {
-     return TYPE;
+    return TYPE;
   }
 
-  public void setType(String type){
-    //nothing
+  public void setType(String type) {
+    // nothing
   }
 
   @Override
@@ -94,5 +96,16 @@ public class Quote extends BaseMarketData {
     } else if (!bidSize.equals(other.bidSize))
       return false;
     return true;
+  }
+
+  @Override
+  public Set<NumericField> explode() {
+
+    Set<NumericField> fields = new HashSet<NumericField>();
+    fields.add(new Amount(symbol, timestamp, "USD", ask, ASK));
+    fields.add(new Amount(symbol, timestamp, "USD", bid, BID));
+    fields.add(new Quantity(symbol, timestamp, askSize, ASK_SIZE));
+    fields.add(new Quantity(symbol, timestamp, bidSize, BID_SIZE));
+    return fields;
   }
 }

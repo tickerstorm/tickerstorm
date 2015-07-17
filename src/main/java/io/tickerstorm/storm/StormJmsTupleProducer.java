@@ -48,8 +48,11 @@ public class StormJmsTupleProducer implements JmsTupleProducer {
 
   @Override
   public void declareOutputFields(OutputFieldsDeclarer declarer) {
-    declarer.declare(new Fields(io.tickerstorm.storm.Fields.MARKETDATA, io.tickerstorm.storm.Fields.CANDEL,
-        io.tickerstorm.storm.Fields.QUOTE, io.tickerstorm.storm.Fields.TICK));
+    declarer.declare(new Fields(
+        io.tickerstorm.storm.Fields.MARKETDATA, 
+        io.tickerstorm.storm.Fields.CANDEL,
+        io.tickerstorm.storm.Fields.QUOTE, 
+        io.tickerstorm.storm.Fields.TICK));
   }
 
 }

@@ -2,11 +2,13 @@ package io.tickerstorm.entity;
 
 import java.math.BigDecimal;
 import java.time.Duration;
+import java.util.HashSet;
+import java.util.Set;
 
 import com.google.common.base.MoreObjects;
 
 @SuppressWarnings("serial")
-public class Candle extends BaseMarketData {
+public class Candle extends BaseMarketData implements Fields {
 
   public static final String TYPE = "candle";
   public static final String MIN_5_INTERVAL = "5m";
@@ -166,4 +168,18 @@ public class Candle extends BaseMarketData {
   public String toString() {
     return MoreObjects.toStringHelper(this).toString();
   }
+
+  @Override
+  public Set<NumericField> explode() {
+
+    Set<NumericField> fields = new HashSet<NumericField>();
+    fields.add(new Amount(symbol, timestamp, "USD", high, HIGH, interval));
+    fields.add(new Amount(symbol, timestamp, "USD", low, LOW, interval));
+    fields.add(new Amount(symbol, timestamp, "USD", open, OPEN, interval));
+    fields.add(new Amount(symbol, timestamp, "USD", close, CLOSE, interval));
+    fields.add(new Quantity(symbol, timestamp, volume, VOLUME, interval));
+    return fields;
+
+  }
+
 }
