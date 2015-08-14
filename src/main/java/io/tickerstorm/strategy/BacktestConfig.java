@@ -5,6 +5,7 @@ import io.tickerstorm.strategy.spout.RealtimeDestinationProvider;
 import io.tickerstorm.strategy.spout.StormJmsTupleProducer;
 
 import javax.jms.ConnectionFactory;
+import javax.jms.Destination;
 import javax.jms.Session;
 
 import net.sf.ehcache.Cache;
@@ -23,15 +24,16 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
-import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
+import org.springframework.jms.annotation.EnableJms;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.jms.listener.DefaultMessageListenerContainer;
 import org.springframework.jms.support.destination.DynamicDestinationResolver;
 
 import backtype.storm.contrib.jms.spout.JmsSpout;
 
+@EnableJms
 @Configuration
-@ComponentScan(basePackages = {"io.tickerstorm.storm"})
+@ComponentScan(basePackages = {"io.tickerstorm.strategy"})
 @PropertySource({"classpath:default.properties"})
 public class BacktestConfig {
 
@@ -55,6 +57,13 @@ public class BacktestConfig {
     factory.setDestinationName(Destinations.TOPIC_REALTIME_MARKETDATA);
     factory.setConcurrency("3-10");
     return factory;
+  }
+
+  @Qualifier("realtime")
+  @Bean
+  public Destination buildRealtimeDestination(ConnectionFactory factory) throws Exception {
+    return factory.createConnection().createSession(false, Session.CLIENT_ACKNOWLEDGE)
+        .createTopic(Destinations.TOPIC_REALTIME_MARKETDATA);
   }
 
   @Qualifier("query")
@@ -85,11 +94,6 @@ public class BacktestConfig {
   @Bean
   public Clock backtestClock() {
     return new BacktestClock();
-  }
-
-  @Bean
-  public PropertySourcesPlaceholderConfigurer getConfigured() {
-    return new PropertySourcesPlaceholderConfigurer();
   }
 
   @Bean

@@ -15,7 +15,6 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Import;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.jms.annotation.EnableJms;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.jms.listener.DefaultMessageListenerContainer;
@@ -23,12 +22,9 @@ import org.springframework.jms.support.destination.DynamicDestinationResolver;
 
 @EnableJms
 @Configuration
-@ComponentScan(basePackages = {"io.tickerstorm.data, io.tickerstorm.messaging"})
-@PropertySource({"classpath:default.properties"})
+@ComponentScan(basePackages = {"io.tickerstorm.data"})
 @Import({CommonConfig.class})
 public class MarketDataServiceConfig {
-
-
 
   public static final Logger logger = org.slf4j.LoggerFactory
       .getLogger(MarketDataServiceConfig.class);
