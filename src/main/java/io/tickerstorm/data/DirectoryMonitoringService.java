@@ -1,5 +1,7 @@
 package io.tickerstorm.data;
 
+import io.tickerstorm.data.converter.BaseFileConverter;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;

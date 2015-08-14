@@ -28,4 +28,7 @@
 	<root level="INFO">
 		<appender-ref ref="consoleAppender" />
 	</root>
+	<logger name="io.ticketstorm" level="DEBUG">
+		<appender-ref ref="consoleAppender" />
+	</logger>
 </configuration>

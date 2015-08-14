@@ -7,31 +7,31 @@
 		<wildcard>true</wildcard>
 
 		<custom-converters>
-			<converter type="io.tickerstorm.dao.CustomDateTimeConverter">
+			<converter type="io.tickerstorm.data.dao.CustomDateTimeConverter">
 				<class-a>java.lang.String</class-a>
 				<class-b>org.joda.time.DateTime</class-b>
 			</converter>
-			<converter type="io.tickerstorm.dao.CustomDateTimeConverter">
+			<converter type="io.tickerstorm.data.dao.CustomDateTimeConverter">
 				<class-a>java.lang.String</class-a>
 				<class-b>java.lang.Long</class-b>
 			</converter>
-			<converter type="io.tickerstorm.dao.CustomDateTimeConverter">
+			<converter type="io.tickerstorm.data.dao.CustomDateTimeConverter">
 				<class-a>org.joda.time.DateTime</class-a>
 				<class-b>java.lang.Long</class-b>
 			</converter>
-			<converter type="io.tickerstorm.dao.CustomDateTimeConverter">
+			<converter type="io.tickerstorm.data.dao.CustomDateTimeConverter">
 				<class-a>java.util.Date</class-a>
 				<class-b>java.lang.Long</class-b>
 			</converter>
-			<converter type="io.tickerstorm.dao.CustomDateTimeConverter">
+			<converter type="io.tickerstorm.data.dao.CustomDateTimeConverter">
 				<class-a>java.util.Date</class-a>
 				<class-b>org.joda.time.DateTime</class-b>
 			</converter>
-			<converter type="io.tickerstorm.dao.CustomDateTimeConverter">
+			<converter type="io.tickerstorm.data.dao.CustomDateTimeConverter">
 				<class-a>java.time.Instant</class-a>
 				<class-b>java.time.Instant</class-b>
 			</converter>
-			<converter type="io.tickerstorm.dao.CustomDateTimeConverter">
+			<converter type="io.tickerstorm.data.dao.CustomDateTimeConverter">
 				<class-a>java.util.Date</class-a>
 				<class-b>java.time.Instant</class-b>
 			</converter>
@@ -40,7 +40,7 @@
 
 	<mapping type="bi-directional" map-null="false">
 		<class-a>io.tickerstorm.entity.Candle</class-a>
-		<class-b>io.tickerstorm.dao.MarketDataDto</class-b>
+		<class-b>io.tickerstorm.data.dao.MarketDataDto</class-b>
 		<field>
 			<a>timestamp</a>
 			<b>primarykey.timestamp</b>
@@ -65,7 +65,7 @@
 
 	<mapping type="bi-directional" map-null="false">
 		<class-a>io.tickerstorm.entity.Quote</class-a>
-		<class-b>io.tickerstorm.dao.MarketDataDto</class-b>
+		<class-b>io.tickerstorm.data.dao.MarketDataDto</class-b>
 		<field>
 			<a>timestamp</a>
 			<b>primarykey.timestamp</b>
@@ -86,7 +86,7 @@
 
 	<mapping type="bi-directional" map-null="false">
 		<class-a>io.tickerstorm.entity.Tick</class-a>
-		<class-b>io.tickerstorm.dao.MarketDataDto</class-b>
+		<class-b>io.tickerstorm.data.dao.MarketDataDto</class-b>
 		<field>
 			<a>timestamp</a>
 			<b>primarykey.timestamp</b>

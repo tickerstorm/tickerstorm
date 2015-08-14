@@ -1,6 +1,11 @@
 package io.tickerstorm.data;
 
-import io.tickerstorm.feed.HistoricalFeedQuery;
+import io.tickerstorm.data.feed.HistoricalFeedQuery;
+import io.tickerstorm.data.query.DataQueryClient;
+import io.tickerstorm.data.query.GoogleDataQuery;
+import io.tickerstorm.data.query.StooqHistoricalForexQuery;
+import io.tickerstorm.data.query.YahooChartsDataQuery;
+import io.tickerstorm.data.query.YahooHistoricalQuoteQuery;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -8,6 +13,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
+
+import javax.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,50 +30,54 @@ public class DataLoadScheduler {
   @Autowired
   private DataQueryClient client;
 
+  @PostConstruct
   public void start() {
 
-    HistoricalFeedQuery query = new HistoricalFeedQuery("ITB", "DHI", "LEN", "PHM", "TOL", "NVR", "HD", "LOW", "TPH", "RYL", "MTH");
+    HistoricalFeedQuery query =
+        new HistoricalFeedQuery("ITB", "DHI", "LEN", "PHM", "TOL", "NVR", "HD", "LOW", "TPH",
+            "RYL", "MTH");
 
     timer = new Timer(true);
-    timer.scheduleAtFixedRate(new StooqTask(query), Date.from(Instant.now().plusSeconds(5)), 86400000);
-    timer.scheduleAtFixedRate(new YahooTask(query), Date.from(Instant.now().plusSeconds(5)), 86400000);
-    timer.scheduleAtFixedRate(new GoogleTask(query), Date.from(Instant.now().plusSeconds(5)), 86400000);
+    // timer.scheduleAtFixedRate(new StooqTask(query), Date.from(Instant.now().plusSeconds(5)),
+    // 86400000);
+    timer.scheduleAtFixedRate(new YahooTask(query), Date.from(Instant.now().plusSeconds(5)),
+        86400000);
+    timer.scheduleAtFixedRate(new GoogleTask(query), Date.from(Instant.now().plusSeconds(5)),
+        86400000);
 
   }
 
   private class StooqTask extends TimerTask {
 
-    public StooqTask(HistoricalFeedQuery query) {
+    HistoricalFeedQuery[] q;
 
+    public StooqTask(HistoricalFeedQuery... query) {
+      this.q = query;
     }
 
     @Override
     public void run() {
 
-      // logger.info("Runnering Stooq data load task");
+      logger.info("Runnering Stooq data load task");
 
-      // StooqHistoricalForexQuery query = new
-      // StooqHistoricalForexQuery().forWorld().currencies().commodities().min5();
-      // client.query(query);
-      //
-      // query = new
-      // StooqHistoricalForexQuery().forWorld().currencies().commodities().hourly();
-      // client.query(query);
-      //
-      // query = new
-      // StooqHistoricalForexQuery().forWorld().currencies().commodities().daily();
-      // client.query(query);
-      //
-      // query = new StooqHistoricalForexQuery().forUS().stocks().etfs().min5();
-      // client.query(query);
-      //
-      // query = new
-      // StooqHistoricalForexQuery().forUS().stocks().etfs().hourly();
-      // client.query(query);
-      //
-      // query = new
-      // StooqHistoricalForexQuery().forUS().stocks().etfs().daily();
-      // client.query(query);
+      StooqHistoricalForexQuery query =
+          new StooqHistoricalForexQuery().forWorld().currencies().commodities().min5();
+      client.query(query);
+
+      query = new StooqHistoricalForexQuery().forWorld().currencies().commodities().hourly();
+      client.query(query);
+
+      query = new StooqHistoricalForexQuery().forWorld().currencies().commodities().daily();
+      client.query(query);
+
+      query = new StooqHistoricalForexQuery().forUS().stocks().etfs().min5();
+      client.query(query);
+
+      query = new StooqHistoricalForexQuery().forUS().stocks().etfs().hourly();
+      client.query(query);
+
+      query = new StooqHistoricalForexQuery().forUS().stocks().etfs().daily();
+      client.query(query);
 
     }
 
@@ -86,7 +97,8 @@ public class DataLoadScheduler {
       logger.info("Runnering Yahoo data load task");
 
       for (String symbol : q.symbols) {
-        YahooHistoricalQuoteQuery query = new YahooHistoricalQuoteQuery(symbol).eod().from(q.from).until(q.until);
+        YahooHistoricalQuoteQuery query =
+            new YahooHistoricalQuoteQuery(symbol).eod().from(q.from).until(q.until);
         client.query(query);
 
         YahooChartsDataQuery query2 = new YahooChartsDataQuery(symbol);
