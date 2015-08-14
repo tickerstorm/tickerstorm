@@ -20,8 +20,7 @@ import com.google.common.eventbus.EventBus;
 @Configuration
 @EnableCassandraRepositories(basePackageClasses = MarketDataDao.class)
 @ImportResource(value = {"classpath:/META-INF/spring/cassandra-beans.xml"})
-@ComponentScan(
-    basePackages = {"io.tickerstorm.dao", "io.tickerstorm.entity", "io.tickerstorm.feed"})
+@ComponentScan(basePackages = {"io.tickerstorm.data"})
 @PropertySource({"classpath:default.properties"})
 public class CommonConfig {
 

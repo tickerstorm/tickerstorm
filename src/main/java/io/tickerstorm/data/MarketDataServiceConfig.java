@@ -10,10 +10,9 @@ import org.apache.activemq.broker.BrokerService;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.PropertySource;
@@ -23,15 +22,13 @@ import org.springframework.jms.listener.DefaultMessageListenerContainer;
 import org.springframework.jms.support.destination.DynamicDestinationResolver;
 
 @EnableJms
-@SpringBootApplication
+@Configuration
 @ComponentScan(basePackages = {"io.tickerstorm.data, io.tickerstorm.messaging"})
 @PropertySource({"classpath:default.properties"})
 @Import({CommonConfig.class})
 public class MarketDataServiceConfig {
 
-  public static void main(String[] args) throws Exception {
-    SpringApplication.run(MarketDataServiceConfig.class, args);
-  }
+
 
   public static final Logger logger = org.slf4j.LoggerFactory
       .getLogger(MarketDataServiceConfig.class);

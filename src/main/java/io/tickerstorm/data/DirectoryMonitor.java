@@ -17,7 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
-public class DirectoryMonitoringService {
+public class DirectoryMonitor {
 
   @Autowired
   private List<BaseFileConverter> listeners = new ArrayList<BaseFileConverter>();

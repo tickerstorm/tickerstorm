@@ -3,7 +3,7 @@ package io.tickerstorm.data.query;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
-import io.tickerstorm.data.DirectoryMonitoringService;
+import io.tickerstorm.data.DirectoryMonitor;
 import io.tickerstorm.data.MarketDataServiceConfig;
 import io.tickerstorm.data.dao.MarketDataDao;
 import io.tickerstorm.data.query.DataQueryClient;
@@ -46,7 +46,7 @@ public class DukascopyHistoricalForexQueryITCase extends AbstractTestNGSpringCon
   private CassandraOperations session;
 
   @Autowired
-  private DirectoryMonitoringService monitor;
+  private DirectoryMonitor monitor;
 
   Object verifier;
 
