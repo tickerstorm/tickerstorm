@@ -5,12 +5,15 @@ import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 import io.tickerstorm.data.MarketDataServiceConfig;
 import io.tickerstorm.data.dao.MarketDataDao;
-import io.tickerstorm.data.query.DataQueryClient;
-import io.tickerstorm.data.query.StooqHistoricalForexQuery;
 import io.tickerstorm.entity.Candle;
 import io.tickerstorm.entity.MarketData;
 
 import java.io.File;
+
+import net.engio.mbassy.bus.MBassador;
+import net.engio.mbassy.listener.Handler;
+import net.engio.mbassy.listener.Listener;
+import net.engio.mbassy.listener.References;
 
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,8 +26,6 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import com.google.common.eventbus.EventBus;
-import com.google.common.eventbus.Subscribe;
 import com.google.common.io.Files;
 
 @DirtiesContext
@@ -41,7 +42,7 @@ public class StooqHistoricalForexQueryITCase extends AbstractTestNGSpringContext
 
   @Qualifier("historical")
   @Autowired
-  EventBus bus;
+  MBassador<MarketData> bus;
 
   @Autowired
   private CassandraOperations session;
@@ -58,7 +59,7 @@ public class StooqHistoricalForexQueryITCase extends AbstractTestNGSpringContext
 
   @AfterMethod
   public void tearDown() {
-    bus.unregister(verifier);
+    bus.unsubscribe(verifier);
     session.getSession().execute("TRUNCATE marketdata");
     FileUtils.deleteQuietly(new File("./data/Stooq/5_world_txt.zip"));
   }
@@ -67,7 +68,7 @@ public class StooqHistoricalForexQueryITCase extends AbstractTestNGSpringContext
   public void parseGloabForext() throws Exception {
 
     verifier = new DownloadGloabForextVerification();
-    bus.register(verifier);
+    bus.subscribe(verifier);
 
     Files.copy(new File("./src/test/resources/data/Stooq/5_world_txt.zip"), new File(
         "./data/Stooq/5_world_txt.zip"));
@@ -84,7 +85,7 @@ public class StooqHistoricalForexQueryITCase extends AbstractTestNGSpringContext
   public void downloadGloabForext() throws Exception {
 
     verifier = new DownloadGloabForextVerification();
-    bus.register(verifier);
+    bus.subscribe(verifier);
 
     query = new StooqHistoricalForexQuery().currencies().min5();
     client.query(query);
@@ -97,9 +98,10 @@ public class StooqHistoricalForexQueryITCase extends AbstractTestNGSpringContext
 
   }
 
+  @Listener(references = References.Strong)
   private class DownloadGloabForextVerification {
 
-    @Subscribe
+    @Handler
     public void onEvent(MarketData md) {
 
       assertNotNull(md.getSymbol());

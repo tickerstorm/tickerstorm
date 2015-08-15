@@ -11,6 +11,8 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 
+import net.engio.mbassy.bus.MBassador;
+
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,20 +22,19 @@ import org.springframework.stereotype.Component;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
-import com.google.common.eventbus.EventBus;
 import com.google.common.io.Files;
 
 @Component
 public class DukascopyFileConverter extends BaseFileConverter {
 
-  private static final java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter
-      .ofPattern("dd.MM.yyyy HH:mm:ss.SSS");
+  private static final java.time.format.DateTimeFormatter formatter =
+      java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss.SSS");
 
   private static final Logger logger = LoggerFactory.getLogger(DukascopyFileConverter.class);
 
   @Qualifier("historical")
   @Autowired
-  private EventBus historical;
+  private MBassador<MarketData> historical;
 
   @Override
   public MarketData[] convert(String path) {
@@ -71,7 +72,7 @@ public class DukascopyFileConverter extends BaseFileConverter {
           c.volume = new BigDecimal(cols[5]);
           c.interval = getInterval(path);
           c.source = provider();
-          historical.post(c);
+          historical.post(c).asynchronously();
           data.add(c);
 
         }

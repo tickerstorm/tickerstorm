@@ -7,22 +7,25 @@ import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.Session;
 
+import net.engio.mbassy.bus.MBassador;
+import net.engio.mbassy.listener.Handler;
+import net.engio.mbassy.listener.Listener;
+import net.engio.mbassy.listener.References;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.jms.core.MessageCreator;
 import org.springframework.stereotype.Component;
 
-import com.google.common.eventbus.EventBus;
-import com.google.common.eventbus.Subscribe;
-
 @Qualifier("realtime")
 @Component
+@Listener(references = References.Strong)
 public class EventBusToJMSBridge {
 
   @Qualifier("realtime")
   @Autowired
-  private EventBus realtimeBus;
+  private MBassador<MarketData> realtimeBus;
 
   @Qualifier("realtime")
   @Autowired
@@ -30,17 +33,16 @@ public class EventBusToJMSBridge {
 
   @PostConstruct
   public void init() {
-    realtimeBus.register(this);
+    realtimeBus.subscribe(this);
   }
 
-  @Subscribe
+  @Handler
   public void onMarketData(MarketData data) {
 
     relatimeTemplate.send(new MessageCreator() {
       @Override
       public Message createMessage(Session session) throws JMSException {
         Message m = session.createObjectMessage(data);
-        m.setJMSExpiration(2000);
         return m;
       }
     });

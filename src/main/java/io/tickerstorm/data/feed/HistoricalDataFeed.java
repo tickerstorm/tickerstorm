@@ -1,7 +1,9 @@
 package io.tickerstorm.data.feed;
 
 import io.tickerstorm.data.dao.MarketDataDto;
+import io.tickerstorm.data.messaging.Destinations;
 import io.tickerstorm.entity.Candle;
+import io.tickerstorm.entity.MarketData;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -10,20 +12,26 @@ import java.util.Set;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
+import net.engio.mbassy.bus.MBassador;
+import net.engio.mbassy.listener.Handler;
+import net.engio.mbassy.listener.Listener;
+import net.engio.mbassy.listener.References;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.cassandra.core.CassandraOperations;
+import org.springframework.jms.annotation.JmsListener;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Repository;
 
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
-import com.google.common.eventbus.EventBus;
-import com.google.common.eventbus.Subscribe;
 
 @Repository
+@Listener(references = References.Strong)
 public class HistoricalDataFeed {
 
   private static final java.time.format.DateTimeFormatter dateFormat =
@@ -33,11 +41,11 @@ public class HistoricalDataFeed {
 
   @Qualifier("query")
   @Autowired
-  private EventBus bus;
+  private MBassador<HistoricalFeedQuery> queryBus;
 
   @Qualifier("realtime")
   @Autowired
-  private EventBus realtime;
+  private MBassador<MarketData> realtimeBus;
 
   @Autowired
   private CassandraOperations cassandra;
@@ -47,16 +55,17 @@ public class HistoricalDataFeed {
 
   @PostConstruct
   public void init() {
-    bus.register(this);
+    queryBus.subscribe(this);
   }
 
   @PreDestroy
   public void destroy() {
-    bus.unregister(this);
+    queryBus.unsubscribe(this);
   }
 
-  @Subscribe
-  public void onQuery(HistoricalFeedQuery query) {
+  @JmsListener(destination = Destinations.QUEUE_QUERY)
+  @Handler
+  public void onQuery(@Payload HistoricalFeedQuery query) {
 
     logger.debug("Historical feed query received");
 
@@ -88,11 +97,12 @@ public class HistoricalDataFeed {
 
       List<MarketDataDto> dtos = cassandra.select(select, MarketDataDto.class);
 
-      logger.debug("Fetched " + dtos.size() + " results.");
+      logger.info("Fetched " + dtos.size() + " results.");
 
       for (MarketDataDto dto : dtos) {
-        realtime.post(dto.toMarketData());
+        realtimeBus.post(dto.toMarketData()).asynchronously();
       }
+
     }
   }
 }

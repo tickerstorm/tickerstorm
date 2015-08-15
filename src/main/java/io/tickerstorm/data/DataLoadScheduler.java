@@ -8,9 +8,6 @@ import io.tickerstorm.data.query.YahooChartsDataQuery;
 import io.tickerstorm.data.query.YahooHistoricalQuoteQuery;
 
 import java.time.Duration;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -40,10 +37,10 @@ public class DataLoadScheduler {
     timer = new Timer(true);
     // timer.scheduleAtFixedRate(new StooqTask(query), Date.from(Instant.now().plusSeconds(5)),
     // 86400000);
-    timer.scheduleAtFixedRate(new YahooTask(query), Date.from(Instant.now().plusSeconds(5)),
-        86400000);
-    timer.scheduleAtFixedRate(new GoogleTask(query), Date.from(Instant.now().plusSeconds(5)),
-        86400000);
+    // timer.scheduleAtFixedRate(new YahooTask(query), Date.from(Instant.now().plusSeconds(5)),
+    // 86400000);
+    // timer.scheduleAtFixedRate(new GoogleTask(query), Date.from(Instant.now().plusSeconds(5)),
+    // 86400000);
 
   }
 
@@ -125,7 +122,7 @@ public class DataLoadScheduler {
       Duration p = Duration.between(q.from, q.until);
 
       for (String symbol : q.symbols) {
-        GoogleDataQuery query = new GoogleDataQuery(symbol).days((int) p.get(ChronoUnit.DAYS));
+        GoogleDataQuery query = new GoogleDataQuery(symbol).days((int) p.toDays());
         client.query(query);
       }
 

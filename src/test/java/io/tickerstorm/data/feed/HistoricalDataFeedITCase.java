@@ -5,14 +5,17 @@ import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 import io.tickerstorm.data.MarketDataServiceConfig;
 import io.tickerstorm.data.dao.MarketDataDao;
-import io.tickerstorm.data.feed.HistoricalDataFeed;
-import io.tickerstorm.data.feed.HistoricalFeedQuery;
 import io.tickerstorm.entity.Candle;
 import io.tickerstorm.entity.MarketData;
 
 import java.io.File;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+
+import net.engio.mbassy.bus.MBassador;
+import net.engio.mbassy.listener.Handler;
+import net.engio.mbassy.listener.Listener;
+import net.engio.mbassy.listener.References;
 
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,16 +27,18 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.google.common.eventbus.EventBus;
-import com.google.common.eventbus.Subscribe;
 import com.google.common.io.Files;
 
-@ContextConfiguration(classes = { MarketDataServiceConfig.class })
+@ContextConfiguration(classes = {MarketDataServiceConfig.class})
 public class HistoricalDataFeedITCase extends AbstractTestNGSpringContextTests {
+
+  @Qualifier("realtime")
+  @Autowired
+  private MBassador<MarketData> realtimeBus;
 
   @Qualifier("query")
   @Autowired
-  private EventBus bus;
+  private MBassador<HistoricalFeedQuery> queryBus;
 
   @Autowired
   private HistoricalDataFeed feed;
@@ -43,19 +48,18 @@ public class HistoricalDataFeedITCase extends AbstractTestNGSpringContextTests {
 
   boolean verified = false;
   int count = 0;
+  long expCount = 3096;
 
   @Autowired
   private MarketDataDao dao;
 
   @BeforeClass
   public void dataSetup() throws Exception {
-    bus.register(new HistoricalDataFeedVerifier());
+    realtimeBus.subscribe(new HistoricalDataFeedVerifier());
     FileUtils.forceMkdir(new File("./data/Google"));
-    Files.copy(new File("./src/test/resources/data/Google/TOL.csv"), new File("./data/Google/TOL.csv"));
+    Files.copy(new File("./src/test/resources/data/Google/TOL.csv"), new File(
+        "./data/Google/TOL.csv"));
     Thread.sleep(10000);
-
-    Long count = dao.count();
-    assertTrue(count > 0);
   }
 
   @AfterClass
@@ -67,21 +71,27 @@ public class HistoricalDataFeedITCase extends AbstractTestNGSpringContextTests {
   @Test
   public void testSimpleCandleQuery() throws Exception {
 
+    long st = System.currentTimeMillis();
+
     HistoricalFeedQuery query = new HistoricalFeedQuery("TOL");
     query.from = LocalDateTime.of(2015, 6, 10, 0, 0);
     query.until = LocalDateTime.of(2015, 6, 20, 0, 0);
     query.source = "google";
     query.periods.add(Candle.MIN_1_INTERVAL);
     query.zone = ZoneOffset.ofHours(-7);
+    queryBus.post(query).asynchronously();
 
-    feed.onQuery(query);
-    assertEquals(3096, count);
+    Thread.sleep(61000);
+    assertEquals(count, expCount);
+
+    System.out.print("Test time: " + (System.currentTimeMillis() - st));
 
   }
 
+  @Listener(references = References.Strong)
   public class HistoricalDataFeedVerifier {
 
-    @Subscribe
+    @Handler
     public void onMarketData(MarketData md) {
 
       assertNotNull(md.getSymbol());

@@ -5,12 +5,15 @@ import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 import io.tickerstorm.data.MarketDataServiceConfig;
 import io.tickerstorm.data.dao.MarketDataDao;
-import io.tickerstorm.data.query.DataQueryClient;
-import io.tickerstorm.data.query.GoogleDataQuery;
 import io.tickerstorm.entity.Candle;
 import io.tickerstorm.entity.MarketData;
 
 import java.io.File;
+
+import net.engio.mbassy.bus.MBassador;
+import net.engio.mbassy.listener.Handler;
+import net.engio.mbassy.listener.Listener;
+import net.engio.mbassy.listener.References;
 
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,8 +26,6 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import com.google.common.eventbus.EventBus;
-import com.google.common.eventbus.Subscribe;
 import com.google.common.io.Files;
 
 @DirtiesContext
@@ -38,7 +39,7 @@ public class GoogleDataQueryITCase extends AbstractTestNGSpringContextTests {
 
   @Qualifier("historical")
   @Autowired
-  EventBus bus;
+  MBassador<MarketData> bus;
 
   @Autowired
   private MarketDataDao dao;
@@ -58,7 +59,7 @@ public class GoogleDataQueryITCase extends AbstractTestNGSpringContextTests {
 
   @AfterMethod
   public void tearDown() {
-    bus.unregister(verifier);
+    bus.subscribe(verifier);
     session.getSession().execute("TRUNCATE marketdata");
     FileUtils.deleteQuietly(new File("./data/Google/TOL.csv"));
   }
@@ -67,7 +68,7 @@ public class GoogleDataQueryITCase extends AbstractTestNGSpringContextTests {
   public void downloadGloabForext() throws Exception {
 
     verifier = new GoogleDataVerifier();
-    bus.register(verifier);
+    bus.subscribe(verifier);
 
     query = new GoogleDataQuery("TOL");
     client.query(query);
@@ -84,7 +85,7 @@ public class GoogleDataQueryITCase extends AbstractTestNGSpringContextTests {
   public void testParseGoogleFile() throws Exception {
 
     verifier = new GoogleDataVerifier();
-    bus.register(verifier);
+    bus.subscribe(verifier);
 
     Files.copy(new File("./src/test/resources/data/Google/TOL.csv"), new File(
         "./data/Google/TOL.csv"));
@@ -96,9 +97,10 @@ public class GoogleDataQueryITCase extends AbstractTestNGSpringContextTests {
     assertTrue(count > 0);
   }
 
+  @Listener(references = References.Strong)
   private class GoogleDataVerifier {
 
-    @Subscribe
+    @Handler
     public void onEvent(MarketData md) {
 
       assertNotNull(md.getSymbol());

@@ -56,6 +56,7 @@ public class MarketDataServiceConfig {
     template.setDestinationResolver(new DynamicDestinationResolver());
     template.setSessionAcknowledgeMode(Session.CLIENT_ACKNOWLEDGE);
     template.setDefaultDestinationName(Destinations.TOPIC_REALTIME_MARKETDATA);
+    template.setTimeToLive(2000);
     return template;
   }
 

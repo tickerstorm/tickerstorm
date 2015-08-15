@@ -6,12 +6,16 @@ import static org.testng.Assert.assertTrue;
 import io.tickerstorm.data.DirectoryMonitor;
 import io.tickerstorm.data.MarketDataServiceConfig;
 import io.tickerstorm.data.dao.MarketDataDao;
-import io.tickerstorm.data.query.DataQueryClient;
 import io.tickerstorm.entity.Candle;
 import io.tickerstorm.entity.MarketData;
 
 import java.io.File;
 import java.math.BigDecimal;
+
+import net.engio.mbassy.bus.MBassador;
+import net.engio.mbassy.listener.Handler;
+import net.engio.mbassy.listener.Listener;
+import net.engio.mbassy.listener.References;
 
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,8 +28,6 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import com.google.common.eventbus.EventBus;
-import com.google.common.eventbus.Subscribe;
 import com.google.common.io.Files;
 
 @DirtiesContext
@@ -40,7 +42,7 @@ public class DukascopyHistoricalForexQueryITCase extends AbstractTestNGSpringCon
 
   @Qualifier("historical")
   @Autowired
-  EventBus bus;
+  MBassador<MarketData> bus;
 
   @Autowired
   private CassandraOperations session;
@@ -60,7 +62,7 @@ public class DukascopyHistoricalForexQueryITCase extends AbstractTestNGSpringCon
 
   @AfterMethod
   public void tearDown() {
-    bus.unregister(verifier);
+    bus.subscribe(verifier);
     session.getSession().execute("TRUNCATE marketdata");
   }
 
@@ -68,7 +70,7 @@ public class DukascopyHistoricalForexQueryITCase extends AbstractTestNGSpringCon
   public void parseGloabForext() throws Exception {
 
     verifier = new DownloadGloabForextVerification();
-    bus.register(verifier);
+    bus.subscribe(verifier);
 
     Files
         .copy(
@@ -84,9 +86,10 @@ public class DukascopyHistoricalForexQueryITCase extends AbstractTestNGSpringCon
 
   }
 
+  @Listener(references = References.Strong)
   private class DownloadGloabForextVerification {
 
-    @Subscribe
+    @Handler
     public void onEvent(MarketData md) {
 
       assertNotNull(md.getSymbol());

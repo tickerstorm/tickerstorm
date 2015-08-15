@@ -7,6 +7,8 @@ import java.io.File;
 
 import javax.annotation.PostConstruct;
 
+import net.engio.mbassy.bus.MBassador;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.LineIterator;
 import org.apache.http.Header;
@@ -24,7 +26,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import com.google.common.base.Throwables;
-import com.google.common.eventbus.EventBus;
 import com.google.common.io.Files;
 
 @Service
@@ -32,7 +33,7 @@ public class DataQueryClient {
 
   @Qualifier("historical")
   @Autowired
-  public EventBus historical;
+  public MBassador<MarketData> historical;
 
   private static final Logger logger = LoggerFactory.getLogger(DataQueryClient.class);
 
@@ -41,13 +42,15 @@ public class DataQueryClient {
   @PostConstruct
   public void init() {
 
-    RequestConfig reqConfig = RequestConfig.custom().setSocketTimeout(30 * 1000).setConnectTimeout(3 * 1000)
-        .setConnectionRequestTimeout(3 * 1000).build();
+    RequestConfig reqConfig =
+        RequestConfig.custom().setSocketTimeout(30 * 1000).setConnectTimeout(3 * 1000)
+            .setConnectionRequestTimeout(3 * 1000).build();
 
     client = HttpClients.custom().setDefaultRequestConfig(reqConfig).build();
   }
 
-  private CloseableHttpResponse queryFile(QueryBuilder builder, CloseableHttpResponse response) throws Exception {
+  private CloseableHttpResponse queryFile(QueryBuilder builder, CloseableHttpResponse response)
+      throws Exception {
 
     logger.info("Downloading file...");
     byte[] array = IOUtils.toByteArray(response.getEntity().getContent());
@@ -104,7 +107,7 @@ public class DataQueryClient {
             if (md != null && md.length > 0) {
               for (MarketData d : md) {
                 count++;
-                historical.post(d);
+                historical.post(d).asynchronously();
               }
             }
           }
@@ -117,11 +120,11 @@ public class DataQueryClient {
           if (md != null && md.length > 0) {
             for (MarketData d : md) {
               count++;
-              historical.post(d);
+              historical.post(d).asynchronously();
             }
           }
         }
-        
+
         logger.info("Converted " + count + " lines from query " + query);
       }
 

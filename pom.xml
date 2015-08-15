@@ -30,12 +30,18 @@
 			<artifactId>slf4j-api</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>net.engio</groupId>
+			<artifactId>mbassador</artifactId>
+			<version>1.2.1</version>
+		</dependency>
+		<dependency>
 			<groupId>ch.qos.logback</groupId>
 			<artifactId>logback-classic</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.data</groupId>
 			<artifactId>spring-data-cassandra</artifactId>
+			
 		</dependency>
 		<dependency>
 			<groupId>net.sf.dozer</groupId>
@@ -64,6 +70,7 @@
 			<groupId>com.datastax.cassandra</groupId>
 			<artifactId>cassandra-driver-core</artifactId>
 			<version>2.1.6</version>
+		
 		</dependency>
 		<dependency>
 			<groupId>org.neo4j</groupId>
@@ -92,12 +99,12 @@
 		<dependency>
 			<groupId>org.apache.storm</groupId>
 			<artifactId>storm-core</artifactId>
-			<version>0.9.5</version>			
+			<version>0.9.5</version>
 		</dependency>
 		<dependency>
 			<groupId>eu.verdelhan</groupId>
 			<artifactId>ta4j</artifactId>
-			<version>0.7</version>			
+			<version>0.7</version>
 		</dependency>
 		<dependency>
 			<groupId>net.sf.ehcache</groupId>
@@ -156,9 +163,7 @@
 					<includes>
 						<include>**/Test*.java</include>
 					</includes>
-					<!--systemPropertyVariables>
-						<hostname>${hostname}</hostname>
-					</systemPropertyVariables-->
+					<!--systemPropertyVariables> <hostname>${hostname}</hostname> </systemPropertyVariables -->
 				</configuration>
 			</plugin>
 			<plugin>
@@ -176,9 +181,7 @@
 					<includes>
 						<include>**/*ITCase.java</include>
 					</includes>
-					<!-- systemPropertyVariables>
-						<hostname>${hostname}</hostname>
-					</systemPropertyVariables-->
+					<!-- systemPropertyVariables> <hostname>${hostname}</hostname> </systemPropertyVariables -->
 				</configuration>
 			</plugin>
 		</plugins>

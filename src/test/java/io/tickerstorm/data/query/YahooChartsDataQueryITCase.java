@@ -3,16 +3,15 @@ package io.tickerstorm.data.query;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
-import io.tickerstorm.data.query.DataQueryClient;
-import io.tickerstorm.data.query.YahooChartsDataQuery;
 import io.tickerstorm.entity.Candle;
 import io.tickerstorm.entity.MarketData;
+import net.engio.mbassy.bus.MBassador;
+import net.engio.mbassy.listener.Handler;
+import net.engio.mbassy.listener.Listener;
+import net.engio.mbassy.listener.References;
 
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import com.google.common.eventbus.EventBus;
-import com.google.common.eventbus.Subscribe;
 
 public class YahooChartsDataQueryITCase {
 
@@ -24,7 +23,7 @@ public class YahooChartsDataQueryITCase {
   public void setup() {
 
     client = new DataQueryClient();
-    client.historical = new EventBus();
+    client.historical = new MBassador<MarketData>();
     client.init();
     verified = false;
 
@@ -34,14 +33,15 @@ public class YahooChartsDataQueryITCase {
   public void testBasicSymbolQuery() {
 
     query = new YahooChartsDataQuery("AAPL");
-    client.historical.register(new BasicSymbolQueryVerification());
+    client.historical.subscribe(new BasicSymbolQueryVerification());
     client.query(query);
     assertTrue(verified);
   }
 
+  @Listener(references = References.Strong)
   private class BasicSymbolQueryVerification {
 
-    @Subscribe
+    @Handler
     public void onEvent(MarketData md) {
 
       assertEquals(md.getSymbol(), "AAPL");

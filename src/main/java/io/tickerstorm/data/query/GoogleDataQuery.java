@@ -14,6 +14,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
+import net.engio.mbassy.bus.MBassador;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.LineIterator;
 import org.apache.commons.lang3.StringUtils;
@@ -24,7 +26,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import com.google.common.base.Throwables;
-import com.google.common.eventbus.EventBus;
 import com.google.common.io.Files;
 
 @Component
@@ -37,12 +38,12 @@ public class GoogleDataQuery extends BaseFileConverter implements QueryBuilder {
 
   private String symbol;
   private Integer period = 15;
-  private String[] fields = new String[] { "d", "c", "h", "l", "o", "v" };
+  private String[] fields = new String[] {"d", "c", "h", "l", "o", "v"};
   private DataConverter converter;
 
   @Qualifier("historical")
   @Autowired
-  private EventBus historical;
+  private MBassador<MarketData> historical;
 
   public GoogleDataQuery(String symbol, DataConverter converter) {
     this.symbol = symbol;
@@ -54,11 +55,11 @@ public class GoogleDataQuery extends BaseFileConverter implements QueryBuilder {
     this.converter = this;
   }
 
-  private GoogleDataQuery() {
-  }
+  private GoogleDataQuery() {}
 
   public String build() {
-    return HOST + "?q=" + symbol + "&i=" + MIN_1 + "&p=" + period + "d&f=" + String.join(",", fields);
+    return HOST + "?q=" + symbol + "&i=" + MIN_1 + "&p=" + period + "d&f="
+        + String.join(",", fields);
   }
 
   public String type() {
@@ -130,7 +131,7 @@ public class GoogleDataQuery extends BaseFileConverter implements QueryBuilder {
       md.add(c);
 
       if (historical != null)
-        historical.post(c);
+        historical.post(c).asynchronously();
 
     }
 
