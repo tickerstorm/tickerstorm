@@ -25,9 +25,6 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.jms.annotation.EnableJms;
-import org.springframework.jms.core.JmsTemplate;
-import org.springframework.jms.listener.DefaultMessageListenerContainer;
-import org.springframework.jms.support.destination.DynamicDestinationResolver;
 
 import backtype.storm.contrib.jms.spout.JmsSpout;
 
@@ -51,29 +48,9 @@ public class BacktestConfig {
 
   @Qualifier("realtime")
   @Bean
-  public DefaultMessageListenerContainer jmsListenerContainer(ConnectionFactory f) {
-    DefaultMessageListenerContainer factory = new DefaultMessageListenerContainer();
-    factory.setConnectionFactory(f);
-    factory.setDestinationName(Destinations.TOPIC_REALTIME_MARKETDATA);
-    factory.setConcurrency("3-10");
-    return factory;
-  }
-
-  @Qualifier("realtime")
-  @Bean
   public Destination buildRealtimeDestination(ConnectionFactory factory) throws Exception {
     return factory.createConnection().createSession(false, Session.CLIENT_ACKNOWLEDGE)
         .createTopic(Destinations.TOPIC_REALTIME_MARKETDATA);
-  }
-
-  @Qualifier("query")
-  @Bean
-  public JmsTemplate buildQueryJmsTemplate(ConnectionFactory factory) {
-    JmsTemplate templte = new JmsTemplate(factory);
-    templte.setDefaultDestinationName(Destinations.QUEUE_QUERY);
-    templte.setDestinationResolver(new DynamicDestinationResolver());
-    templte.setSessionAcknowledgeMode(Session.CLIENT_ACKNOWLEDGE);
-    return templte;
   }
 
   @Qualifier("realtime")

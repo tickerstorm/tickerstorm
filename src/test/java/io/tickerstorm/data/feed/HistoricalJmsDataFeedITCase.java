@@ -3,8 +3,9 @@ package io.tickerstorm.data.feed;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
-import io.tickerstorm.data.MarketDataServiceConfig;
+import io.tickerstorm.data.TestMarketDataServiceConfig;
 import io.tickerstorm.data.dao.MarketDataDao;
+import io.tickerstorm.data.messaging.Destinations;
 import io.tickerstorm.entity.Candle;
 import io.tickerstorm.entity.MarketData;
 
@@ -12,15 +13,18 @@ import java.io.File;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 
-import net.engio.mbassy.bus.MBassador;
-import net.engio.mbassy.listener.Handler;
-import net.engio.mbassy.listener.Listener;
-import net.engio.mbassy.listener.References;
+import javax.jms.JMSException;
+import javax.jms.Message;
+import javax.jms.MessageListener;
+import javax.jms.ObjectMessage;
+import javax.jms.Session;
 
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.cassandra.core.CassandraOperations;
+import org.springframework.jms.core.JmsTemplate;
+import org.springframework.jms.core.MessageCreator;
+import org.springframework.jms.listener.DefaultMessageListenerContainer;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
@@ -29,19 +33,19 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import com.google.common.base.Throwables;
 import com.google.common.io.Files;
 
 @DirtiesContext
-@ContextConfiguration(classes = {MarketDataServiceConfig.class})
-public class HistoricalDataFeedITCase extends AbstractTestNGSpringContextTests {
+@ContextConfiguration(classes = {TestMarketDataServiceConfig.class})
+public class HistoricalJmsDataFeedITCase extends AbstractTestNGSpringContextTests implements
+    MessageListener {
 
-  @Qualifier("realtime")
   @Autowired
-  private MBassador<MarketData> realtimeBus;
+  private JmsTemplate jmsTemplate;
 
-  @Qualifier("query")
   @Autowired
-  private MBassador<HistoricalFeedQuery> queryBus;
+  private DefaultMessageListenerContainer container;
 
   @Autowired
   private CassandraOperations session;
@@ -55,7 +59,6 @@ public class HistoricalDataFeedITCase extends AbstractTestNGSpringContextTests {
 
   @BeforeClass
   public void dataSetup() throws Exception {
-    realtimeBus.subscribe(new HistoricalDataFeedVerifier());
     FileUtils.forceMkdir(new File("./data/Google"));
     Files.copy(new File("./src/test/resources/data/Google/TOL.csv"), new File(
         "./data/Google/TOL.csv"));
@@ -70,12 +73,13 @@ public class HistoricalDataFeedITCase extends AbstractTestNGSpringContextTests {
 
   @BeforeMethod
   public void setup() {
+    container.setMessageListener(this);
     count = 0;
     verified = false;
   }
 
   @Test
-  public void testSimpleCandleQuery() throws Exception {
+  public void testSimpleCandleQueryOverJMS() throws Exception {
 
     long st = System.currentTimeMillis();
 
@@ -85,21 +89,29 @@ public class HistoricalDataFeedITCase extends AbstractTestNGSpringContextTests {
     query.source = "google";
     query.periods.add(Candle.MIN_1_INTERVAL);
     query.zone = ZoneOffset.ofHours(-7);
-    queryBus.post(query).asynchronously();
 
-    Thread.sleep(61000);
+    jmsTemplate.send(Destinations.QUEUE_QUERY, new MessageCreator() {
+
+      @Override
+      public Message createMessage(Session session) throws JMSException {
+
+        Message m = session.createObjectMessage(query);
+        return m;
+      }
+    });
+
+    Thread.sleep(40000);
     assertEquals(count, expCount);
 
     System.out.print("Test time: " + (System.currentTimeMillis() - st));
 
   }
 
+  @Override
+  public void onMessage(Message m) {
 
-  @Listener(references = References.Strong)
-  public class HistoricalDataFeedVerifier {
-
-    @Handler
-    public void onMarketData(MarketData md) {
+    try {
+      MarketData md = (MarketData) ((ObjectMessage) m).getObject();
 
       assertNotNull(md.getSymbol());
       assertEquals(md.getSource(), "google");
@@ -119,8 +131,12 @@ public class HistoricalDataFeedITCase extends AbstractTestNGSpringContextTests {
       assertEquals(c.interval, Candle.MIN_1_INTERVAL);
       verified = true;
       count++;
+    } catch (Exception e) {
+      Throwables.propagate(e);
     }
 
   }
+
+
 
 }

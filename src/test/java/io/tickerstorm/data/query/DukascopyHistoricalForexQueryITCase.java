@@ -3,9 +3,9 @@ package io.tickerstorm.data.query;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
-import io.tickerstorm.data.DirectoryMonitor;
 import io.tickerstorm.data.MarketDataServiceConfig;
 import io.tickerstorm.data.dao.MarketDataDao;
+import io.tickerstorm.data.service.DirectoryMonitor;
 import io.tickerstorm.entity.Candle;
 import io.tickerstorm.entity.MarketData;
 

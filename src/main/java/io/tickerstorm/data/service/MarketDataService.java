@@ -1,4 +1,6 @@
-package io.tickerstorm.data;
+package io.tickerstorm.data.service;
+
+import io.tickerstorm.data.MarketDataServiceConfig;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

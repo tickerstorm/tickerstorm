@@ -1,4 +1,4 @@
-package io.tickerstorm.data;
+package io.tickerstorm.data.service;
 
 import io.tickerstorm.data.feed.HistoricalFeedQuery;
 import io.tickerstorm.data.query.DataQueryClient;

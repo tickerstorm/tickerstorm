@@ -27,7 +27,6 @@ public class EventBusToJMSBridge {
   @Autowired
   private MBassador<MarketData> realtimeBus;
 
-  @Qualifier("realtime")
   @Autowired
   private JmsTemplate relatimeTemplate;
 
@@ -39,7 +38,7 @@ public class EventBusToJMSBridge {
   @Handler
   public void onMarketData(MarketData data) {
 
-    relatimeTemplate.send(new MessageCreator() {
+    relatimeTemplate.send(Destinations.TOPIC_REALTIME_MARKETDATA, new MessageCreator() {
       @Override
       public Message createMessage(Session session) throws JMSException {
         Message m = session.createObjectMessage(data);

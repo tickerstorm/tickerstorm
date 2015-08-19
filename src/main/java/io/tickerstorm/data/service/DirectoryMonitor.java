@@ -1,4 +1,4 @@
-package io.tickerstorm.data;
+package io.tickerstorm.data.service;
 
 import io.tickerstorm.data.converter.BaseFileConverter;
 
