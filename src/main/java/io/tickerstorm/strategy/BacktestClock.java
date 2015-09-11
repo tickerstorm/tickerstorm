@@ -20,9 +20,14 @@ public class BacktestClock implements Clock, Serializable {
   }
 
   public Instant update(Instant dt) {
+
+    if (ref.get() == null) {
+      ref.set(dt);
+    }
+
     Instant c = ref.get();
 
-    if (dt.isAfter(c)) {
+    if (c != null && dt != null && dt.isAfter(c)) {
       ref.compareAndSet(c, dt);
       logger.debug("Time is now: " + ref.get().toString());
     }

@@ -4,22 +4,23 @@ import javax.jms.ConnectionFactory;
 import javax.jms.Destination;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Component;
 
 import backtype.storm.contrib.jms.JmsProvider;
 
-@Qualifier("realtime")
-@Component
 @SuppressWarnings("serial")
 public class RealtimeDestinationProvider implements JmsProvider {
+
+  public RealtimeDestinationProvider(ConnectionFactory factory, Destination realtime) {
+    this.factory = factory;
+    this.destination = realtime;
+  }
 
   @Autowired
   private ConnectionFactory factory;
 
-  @Qualifier("realtime")
+
   @Autowired
-  private Destination realtime;
+  private Destination destination;
 
   @Override
   public ConnectionFactory connectionFactory() throws Exception {
@@ -28,7 +29,7 @@ public class RealtimeDestinationProvider implements JmsProvider {
 
   @Override
   public Destination destination() throws Exception {
-    return realtime;
+    return destination;
   }
 
 }

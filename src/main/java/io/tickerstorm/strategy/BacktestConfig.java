@@ -1,11 +1,11 @@
 package io.tickerstorm.strategy;
 
-import io.tickerstorm.data.messaging.Destinations;
+import io.tickerstorm.data.jms.ByDestinationNameJmsResolver;
+import io.tickerstorm.data.jms.Destinations;
 import io.tickerstorm.strategy.spout.RealtimeDestinationProvider;
 import io.tickerstorm.strategy.spout.StormJmsTupleProducer;
 
 import javax.jms.ConnectionFactory;
-import javax.jms.Destination;
 import javax.jms.Session;
 
 import net.sf.ehcache.Cache;
@@ -25,6 +25,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.jms.annotation.EnableJms;
+import org.springframework.jms.core.JmsTemplate;
 
 import backtype.storm.contrib.jms.spout.JmsSpout;
 
@@ -46,24 +47,29 @@ public class BacktestConfig {
     return connectionFactory;
   }
 
-  @Qualifier("realtime")
   @Bean
-  public Destination buildRealtimeDestination(ConnectionFactory factory) throws Exception {
-    return factory.createConnection().createSession(false, Session.CLIENT_ACKNOWLEDGE)
-        .createTopic(Destinations.TOPIC_REALTIME_MARKETDATA);
+  public JmsTemplate buildJmsTemplate(ConnectionFactory factory) {
+    JmsTemplate template = new JmsTemplate(factory);
+    template.setDestinationResolver(new ByDestinationNameJmsResolver());
+    template.setSessionAcknowledgeMode(Session.CLIENT_ACKNOWLEDGE);
+    template.setDefaultDestinationName(Destinations.QUEUE_QUERY);
+    template.setTimeToLive(2000);
+    return template;
   }
 
   @Qualifier("realtime")
   @Bean
-  public JmsSpout buildJmsSpout(@Qualifier("realtime") RealtimeDestinationProvider provider,
-      StormJmsTupleProducer producer) {
+  public JmsSpout buildJmsSpout(ConnectionFactory factory) throws Exception {
 
     JmsSpout spout = new JmsSpout();
-    spout.setJmsProvider(provider);
-    spout.setJmsTupleProducer(producer);
+    spout.setJmsProvider(new RealtimeDestinationProvider(factory, factory.createConnection()
+        .createSession(false, Session.CLIENT_ACKNOWLEDGE)
+        .createTopic(Destinations.TOPIC_REALTIME_MARKETDATA)));
+    spout.setJmsTupleProducer(new StormJmsTupleProducer());
     spout.setJmsAcknowledgeMode(Session.CLIENT_ACKNOWLEDGE);
-    spout.setDistributed(false);
+    spout.setDistributed(true);
     spout.setRecoveryPeriod(1000);
+
     return spout;
 
   }

@@ -3,6 +3,8 @@ package io.tickerstorm.strategy.bolt;
 import io.tickerstorm.entity.MarketData;
 import io.tickerstorm.strategy.Clock;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +16,8 @@ import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
+
+import com.google.common.collect.Lists;
 
 @Component
 @SuppressWarnings("serial")
@@ -28,7 +32,11 @@ public class ClockBolt extends BaseRichBolt {
   public void execute(Tuple tuple) {
     MarketData data = (MarketData) tuple.getValueByField(Fields.MARKETDATA);
     clock.update(data.getTimestamp());
-    collector.emit(new Values(clock.now()));
+
+    List<Object> values = Lists.newArrayList(tuple.getValues());
+    values.add(clock.now());
+
+    collector.emit(tuple, new Values(values.toArray()));
     collector.ack(tuple);
   }
 
@@ -39,7 +47,8 @@ public class ClockBolt extends BaseRichBolt {
 
   @Override
   public void declareOutputFields(OutputFieldsDeclarer arg0) {
-    arg0.declare(new backtype.storm.tuple.Fields(Fields.NOW));
+    List<String> fields = new ArrayList<String>(Fields.MARKETADATA_FIELDS);
+    fields.add(Fields.NOW);
+    arg0.declare(new backtype.storm.tuple.Fields(fields));
   }
-
 }

@@ -1,4 +1,4 @@
-package io.tickerstorm.data.messaging;
+package io.tickerstorm.data.jms;
 
 import io.tickerstorm.entity.MarketData;
 

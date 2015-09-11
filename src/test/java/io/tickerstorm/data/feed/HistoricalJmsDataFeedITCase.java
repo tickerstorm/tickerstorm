@@ -5,7 +5,7 @@ import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 import io.tickerstorm.data.TestMarketDataServiceConfig;
 import io.tickerstorm.data.dao.MarketDataDao;
-import io.tickerstorm.data.messaging.Destinations;
+import io.tickerstorm.data.jms.Destinations;
 import io.tickerstorm.entity.Candle;
 import io.tickerstorm.entity.MarketData;
 

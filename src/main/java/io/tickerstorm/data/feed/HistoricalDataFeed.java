@@ -1,7 +1,7 @@
 package io.tickerstorm.data.feed;
 
 import io.tickerstorm.data.dao.MarketDataDto;
-import io.tickerstorm.data.messaging.Destinations;
+import io.tickerstorm.data.jms.Destinations;
 import io.tickerstorm.entity.Candle;
 import io.tickerstorm.entity.MarketData;
 

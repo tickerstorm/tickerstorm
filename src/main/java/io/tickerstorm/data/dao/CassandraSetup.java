@@ -2,6 +2,8 @@ package io.tickerstorm.data.dao;
 
 import javax.annotation.PostConstruct;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cassandra.core.Ordering;
@@ -16,6 +18,8 @@ import com.datastax.driver.core.ResultSet;
 @Repository
 public class CassandraSetup {
 
+  public final static Logger logger = LoggerFactory.getLogger(CassandraSetup.class);
+
   @Value("${cassandra.keyspace}")
   private String keyspace;
 
@@ -28,22 +32,31 @@ public class CassandraSetup {
   @PostConstruct
   public void init() {
 
-    CreateKeyspaceSpecification spec = CreateKeyspaceSpecification.createKeyspace(keyspace).ifNotExists().withSimpleReplication(3);
+    CreateKeyspaceSpecification spec =
+        CreateKeyspaceSpecification.createKeyspace(keyspace).ifNotExists().withSimpleReplication(3);
     ResultSet set = session.execute(spec);
 
+    logger.info("Cassandra keyspace: " + "USE " + keyspace);
     session.execute("USE " + keyspace);
 
-    CreateTableSpecification tableSpec = CreateTableSpecification.createTable("marketdata").partitionKeyColumn("symbol", DataType.text())
-        .partitionKeyColumn("date", DataType.text()).clusteredKeyColumn("type", DataType.text(), Ordering.ASCENDING)
-        .clusteredKeyColumn("source", DataType.text(), Ordering.ASCENDING)
-        .clusteredKeyColumn("interval", DataType.text(), Ordering.ASCENDING)
-        .clusteredKeyColumn("timestamp", DataType.timestamp(), Ordering.DESCENDING)
-        .clusteredKeyColumn("hour", DataType.cint(), Ordering.DESCENDING).clusteredKeyColumn("min", DataType.cint(), Ordering.DESCENDING)
-        .column("ask", DataType.decimal()).column("askSize", DataType.decimal()).column("bid", DataType.decimal())
-        .column("bidSize", DataType.decimal()).column("close", DataType.decimal()).column("high", DataType.decimal())
-        .column("low", DataType.decimal()).column("open", DataType.decimal()).column("price", DataType.decimal())
-        .column("properties", DataType.map(DataType.text(), DataType.text())).column("volume", DataType.decimal())
-        .column("quantity", DataType.decimal()).ifNotExists();
+    CreateTableSpecification tableSpec =
+        CreateTableSpecification.createTable("marketdata")
+            .partitionKeyColumn("symbol", DataType.text())
+            .partitionKeyColumn("date", DataType.text())
+            .clusteredKeyColumn("type", DataType.text(), Ordering.ASCENDING)
+            .clusteredKeyColumn("source", DataType.text(), Ordering.ASCENDING)
+            .clusteredKeyColumn("interval", DataType.text(), Ordering.ASCENDING)
+            .clusteredKeyColumn("timestamp", DataType.timestamp(), Ordering.DESCENDING)
+            .clusteredKeyColumn("hour", DataType.cint(), Ordering.DESCENDING)
+            .clusteredKeyColumn("min", DataType.cint(), Ordering.DESCENDING)
+            .column("ask", DataType.decimal()).column("askSize", DataType.decimal())
+            .column("bid", DataType.decimal()).column("bidSize", DataType.decimal())
+            .column("close", DataType.decimal()).column("high", DataType.decimal())
+            .column("low", DataType.decimal()).column("open", DataType.decimal())
+            .column("price", DataType.decimal())
+            .column("properties", DataType.map(DataType.text(), DataType.text()))
+            .column("volume", DataType.decimal()).column("quantity", DataType.decimal())
+            .ifNotExists();
 
     set = session.execute(tableSpec);
   }

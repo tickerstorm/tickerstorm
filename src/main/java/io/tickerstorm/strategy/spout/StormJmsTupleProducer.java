@@ -9,14 +9,11 @@ import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.ObjectMessage;
 
-import org.springframework.stereotype.Component;
-
 import backtype.storm.contrib.jms.JmsTupleProducer;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Values;
 
-@Component
 @SuppressWarnings("serial")
 public class StormJmsTupleProducer implements JmsTupleProducer {
 
@@ -26,7 +23,7 @@ public class StormJmsTupleProducer implements JmsTupleProducer {
     if (msg instanceof ObjectMessage) {
 
       MarketData data = (MarketData) ((ObjectMessage) msg).getObject();
-      MarketData[] arr = new MarketData[3];
+      MarketData[] arr = new MarketData[4];
 
       arr[0] = data;
 
@@ -48,11 +45,6 @@ public class StormJmsTupleProducer implements JmsTupleProducer {
 
   @Override
   public void declareOutputFields(OutputFieldsDeclarer declarer) {
-    declarer.declare(new Fields(
-        io.tickerstorm.strategy.bolt.Fields.MARKETDATA, 
-        io.tickerstorm.strategy.bolt.Fields.CANDEL,
-        io.tickerstorm.strategy.bolt.Fields.QUOTE, 
-        io.tickerstorm.strategy.bolt.Fields.TICK));
+    declarer.declare(new Fields(io.tickerstorm.strategy.bolt.Fields.MARKETADATA_FIELDS));
   }
-
 }

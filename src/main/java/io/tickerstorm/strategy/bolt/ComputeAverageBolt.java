@@ -37,47 +37,53 @@ public class ComputeAverageBolt extends BaseRichBolt {
 
   private final static String SMA_FIELD = "sma";
   private final static String EMA_FIELD = "ema";
-  
+
   @Autowired
   private CacheManager cacheManager;
 
   @Override
   public void execute(Tuple tuple) {
 
-    Candle candle = (Candle) tuple.getValueByField(Fields.CANDEL);
-    TimeSeries series = null;
+    if (tuple.contains(Fields.CANDEL)) {
+      Candle candle = (Candle) tuple.getValueByField(Fields.CANDEL);
+      TimeSeries series = null;
 
-    if (candle != null) {
+      if (candle != null) {
 
-      Tick tick = new Tick(new org.joda.time.Period(candle.duration()), new DateTime(candle.getTimestamp()), Decimal.valueOf(candle.open
-          .toPlainString()), Decimal.valueOf(candle.high.toPlainString()), Decimal.valueOf(candle.low.toPlainString()),
-          Decimal.valueOf(candle.close.toPlainString()), Decimal.valueOf(candle.volume.toPlainString()));
+        Tick tick =
+            new Tick(new org.joda.time.Period(candle.duration().toMillis()), new DateTime(candle
+                .getTimestamp().toEpochMilli()), Decimal.valueOf(candle.open.toPlainString()),
+                Decimal.valueOf(candle.high.toPlainString()), Decimal.valueOf(candle.low
+                    .toPlainString()), Decimal.valueOf(candle.close.toPlainString()),
+                Decimal.valueOf(candle.volume.toPlainString()));
 
-      String key = new StringBuffer(candle.symbol).append("-").append(candle.interval).append("-").append("-timeseries").toString();
+        String key =
+            new StringBuffer(candle.symbol).append("-").append(candle.interval).append("-")
+                .append("-timeseries").toString();
 
-      if (!cacheManager.getCache("timeseries").isKeyInCache(key)) {
+        if (!cacheManager.getCache("timeseries").isKeyInCache(key)) {
 
-        series = new TimeSeries(new org.joda.time.Period(candle.duration()));
-        series.addTick(tick);
-        cacheManager.getCache("timeseries").putIfAbsent(new Element(key, series));
+          series = new TimeSeries(new org.joda.time.Period(candle.duration().toMillis()));
+          series.addTick(tick);
+          cacheManager.getCache("timeseries").putIfAbsent(new Element(key, series));
 
-      } else {
+        } else {
 
-        series = ((TimeSeries) cacheManager.getCache("timeseries").get(key).getObjectValue());
-        series.addTick(tick);
+          series = ((TimeSeries) cacheManager.getCache("timeseries").get(key).getObjectValue());
+          series.addTick(tick);
 
+        }
       }
+
+      TimeSeries days30 = series.subseries(0, org.joda.time.Period.days(30));
+      int lastTick = days30.getEnd();
+      ClosePriceIndicator closeInd = new ClosePriceIndicator(days30);
+      SMAIndicator sma = new SMAIndicator(closeInd, lastTick);
+      EMAIndicator ema = new EMAIndicator(closeInd, lastTick);
+
+      coll.emit(tuple, Lists.newArrayList(sma.getValue(lastTick), ema.getValue(lastTick)));
+      coll.ack(tuple);
     }
-
-    TimeSeries days30 = series.subseries(0, org.joda.time.Period.days(30));
-    int lastTick = days30.getEnd();
-    ClosePriceIndicator closeInd = new ClosePriceIndicator(days30);
-    SMAIndicator sma = new SMAIndicator(closeInd, lastTick);
-    EMAIndicator ema = new EMAIndicator(closeInd, lastTick);
-
-    coll.emit(tuple, Lists.newArrayList(sma.getValue(lastTick), ema.getValue(lastTick)));
-    coll.ack(tuple);
-
   }
 
   @Override

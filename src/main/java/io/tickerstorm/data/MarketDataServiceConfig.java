@@ -1,6 +1,6 @@
 package io.tickerstorm.data;
 
-import io.tickerstorm.data.messaging.Destinations;
+import io.tickerstorm.data.jms.ByDestinationNameJmsResolver;
 
 import javax.jms.ConnectionFactory;
 import javax.jms.Session;
@@ -14,7 +14,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.jms.annotation.EnableJms;
 import org.springframework.jms.core.JmsTemplate;
-import org.springframework.jms.support.destination.DynamicDestinationResolver;
 
 @EnableJms
 @Configuration
@@ -38,9 +37,8 @@ public class MarketDataServiceConfig {
   @Bean
   public JmsTemplate buildJmsTemplate(ConnectionFactory factory) {
     JmsTemplate template = new JmsTemplate(factory);
-    template.setDestinationResolver(new DynamicDestinationResolver());
+    template.setDestinationResolver(new ByDestinationNameJmsResolver());
     template.setSessionAcknowledgeMode(Session.CLIENT_ACKNOWLEDGE);
-    template.setDefaultDestinationName(Destinations.TOPIC_REALTIME_MARKETDATA);
     template.setTimeToLive(2000);
     return template;
   }
