@@ -46,7 +46,6 @@ public class HistoricalJmsDataFeedITCase extends AbstractTestNGSpringContextTest
 
   @Autowired
   private DefaultMessageListenerContainer container;
-
   @Autowired
   private CassandraOperations session;
 
@@ -102,6 +101,7 @@ public class HistoricalJmsDataFeedITCase extends AbstractTestNGSpringContextTest
 
     Thread.sleep(40000);
     assertEquals(count, expCount);
+    assertTrue(verified);
 
     System.out.print("Test time: " + (System.currentTimeMillis() - st));
 
@@ -111,6 +111,7 @@ public class HistoricalJmsDataFeedITCase extends AbstractTestNGSpringContextTest
   public void onMessage(Message m) {
 
     try {
+
       MarketData md = (MarketData) ((ObjectMessage) m).getObject();
 
       assertNotNull(md.getSymbol());

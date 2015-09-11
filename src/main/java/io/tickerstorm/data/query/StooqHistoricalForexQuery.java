@@ -11,9 +11,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class StooqHistoricalForexQuery implements QueryBuilder {
 
-  private static final String HOST = "http://stooq.com/db/d/?b=";
+  private static final String HOST = "http://stooq.com/db/h/";
 
-  private String fileName = "_world_txt";
+  private String fileName = "_world_txt.zip";
   private Set<String> securityTypes = new HashSet<String>();
   private String interval = "5";
 
@@ -23,7 +23,7 @@ public class StooqHistoricalForexQuery implements QueryBuilder {
   }
 
   public StooqHistoricalForexQuery currencies() {
-    this.fileName = "_world_txt";
+    this.fileName = "_world_txt.zip";
     this.securityTypes.add("currencies");
     return this;
   }
@@ -42,14 +42,14 @@ public class StooqHistoricalForexQuery implements QueryBuilder {
     this.securityTypes.add("indicies");
     return this;
   }
-  
+
   public StooqHistoricalForexQuery etfs() {
     this.securityTypes.add("nasdaq etfs");
     this.securityTypes.add("nyse etfs");
     this.securityTypes.add("nysqmkt etfs");
     return this;
   }
-  
+
   public StooqHistoricalForexQuery stocks() {
     this.securityTypes.add("nasdaq stocks");
     this.securityTypes.add("nyse stocks");
@@ -58,12 +58,12 @@ public class StooqHistoricalForexQuery implements QueryBuilder {
   }
 
   public StooqHistoricalForexQuery forUS() {
-    this.fileName = "_us_txt";
+    this.fileName = "_us_txt.zip";
     return this;
   }
-  
+
   public StooqHistoricalForexQuery forWorld() {
-    this.fileName = "_world_txt";
+    this.fileName = "_world_txt.zip";
     return this;
   }
 

@@ -74,10 +74,10 @@ public class StooqHistoricalForexQueryITCase extends AbstractTestNGSpringContext
         "./data/Stooq/5_world_txt.zip"));
 
     Thread.sleep(60000);
-    assertTrue(verified);
 
     Long count = dao.count();
     assertTrue(count > 0);
+    assertTrue(verified);
 
   }
 
@@ -91,11 +91,10 @@ public class StooqHistoricalForexQueryITCase extends AbstractTestNGSpringContext
     client.query(query);
 
     Thread.sleep(60000);
-    assertTrue(verified);
 
     Long count = dao.count();
     assertTrue(count > 0);
-
+    assertTrue(verified);
   }
 
   @Listener(references = References.Strong)
