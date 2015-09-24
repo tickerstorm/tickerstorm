@@ -5,7 +5,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @SuppressWarnings("serial")
-public class Quote extends BaseMarketData implements Fields {
+public class Quote extends BaseMarketData {
 
   public static final String TYPE = "quote";
 
@@ -25,26 +25,26 @@ public class Quote extends BaseMarketData implements Fields {
     this.ask = ask;
   }
 
-  public BigDecimal getAskSize() {
+  public Integer getAskSize() {
     return askSize;
   }
 
-  public void setAskSize(BigDecimal askSize) {
+  public void setAskSize(Integer askSize) {
     this.askSize = askSize;
   }
 
-  public BigDecimal getBidSize() {
+  public Integer getBidSize() {
     return bidSize;
   }
 
-  public void setBidSize(BigDecimal bidSize) {
+  public void setBidSize(Integer bidSize) {
     this.bidSize = bidSize;
   }
 
   public BigDecimal bid;
   public BigDecimal ask;
-  public BigDecimal askSize;
-  public BigDecimal bidSize;
+  public Integer askSize;
+  public Integer bidSize;
 
   @Override
   public int hashCode() {
@@ -99,13 +99,12 @@ public class Quote extends BaseMarketData implements Fields {
   }
 
   @Override
-  public Set<NumericField> explode() {
-
-    Set<NumericField> fields = new HashSet<NumericField>();
-    fields.add(new Amount(symbol, timestamp, "USD", ask, ASK));
-    fields.add(new Amount(symbol, timestamp, "USD", bid, BID));
-    fields.add(new Quantity(symbol, timestamp, askSize, ASK_SIZE));
-    fields.add(new Quantity(symbol, timestamp, bidSize, BID_SIZE));
+  public Set<Field<?>> getFields() {
+    Set<Field<?>> fields = new HashSet<Field<?>>();
+    fields.add(new ContinousField(symbol, timestamp, "USD", ask, Field.ASK));
+    fields.add(new ContinousField(symbol, timestamp, "USD", bid, Field.BID));
+    fields.add(new DiscreteField(symbol, timestamp, askSize, Field.ASK_SIZE));
+    fields.add(new DiscreteField(symbol, timestamp, bidSize, Field.BID_SIZE));
     return fields;
   }
 }

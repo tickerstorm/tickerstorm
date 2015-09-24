@@ -1,7 +1,7 @@
 package io.tickerstorm.strategy.bolt;
 
-import io.tickerstorm.entity.Amount;
-import io.tickerstorm.entity.Fields;
+import io.tickerstorm.entity.Field;
+import io.tickerstorm.entity.ContinousField;
 
 import java.util.Map;
 
@@ -25,7 +25,7 @@ public class CSVOutputBolt extends BaseRichBolt {
   @Override
   public void execute(Tuple tuple) {
 
-    Amount open = (Amount) tuple.getValueByField(Fields.OPEN);
+    ContinousField open = (ContinousField) tuple.getValueByField(Field.OPEN);
     coll.ack(tuple);
   }
 

@@ -2,6 +2,7 @@ package io.tickerstorm.entity;
 
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.Set;
 
 import com.google.common.base.MoreObjects;
 
@@ -9,10 +10,10 @@ import com.google.common.base.MoreObjects;
 public abstract class BaseMarketData implements MarketData, Serializable {
 
   public String source;
-
   public Instant timestamp;
-
   public String symbol;
+
+  public abstract Set<Field<?>> getFields();
 
   @Override
   public boolean equals(Object obj) {

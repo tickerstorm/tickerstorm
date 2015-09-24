@@ -29,7 +29,7 @@ public class LogginBolt extends BaseRichBolt {
   @Override
   public void execute(Tuple tuple) {
 
-    MarketData e = (MarketData) tuple.getValueByField(Fields.MARKETDATA);
+    MarketData e = (MarketData) tuple.getValueByField(Fields.MARKETDATA.fieldName());
     logger.info("Market event at" + clock.now().toString() + " Event:  " + e.toString());
     coll.ack(tuple);
   }

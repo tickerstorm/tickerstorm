@@ -5,7 +5,6 @@ import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 import io.tickerstorm.data.MarketDataServiceConfig;
 import io.tickerstorm.data.dao.MarketDataDao;
-import io.tickerstorm.data.service.DirectoryMonitor;
 import io.tickerstorm.entity.Candle;
 import io.tickerstorm.entity.MarketData;
 
@@ -35,9 +34,6 @@ import com.google.common.io.Files;
 public class DukascopyHistoricalForexQueryITCase extends AbstractTestNGSpringContextTests {
 
   @Autowired
-  private DataQueryClient client;
-
-  @Autowired
   private MarketDataDao dao;
 
   @Qualifier("historical")
@@ -46,9 +42,6 @@ public class DukascopyHistoricalForexQueryITCase extends AbstractTestNGSpringCon
 
   @Autowired
   private CassandraOperations session;
-
-  @Autowired
-  private DirectoryMonitor monitor;
 
   Object verifier;
 
@@ -64,6 +57,8 @@ public class DukascopyHistoricalForexQueryITCase extends AbstractTestNGSpringCon
   public void tearDown() {
     bus.subscribe(verifier);
     session.getSession().execute("TRUNCATE marketdata");
+    FileUtils.deleteQuietly(new File(
+        "./data/Dukascopy/AUDCAD_Candlestick_1_m_BID_01.06.2015-06.06.2015.csv"));
   }
 
   @Test
@@ -79,10 +74,10 @@ public class DukascopyHistoricalForexQueryITCase extends AbstractTestNGSpringCon
             new File("./data/Dukascopy/AUDCAD_Candlestick_1_m_BID_01.06.2015-06.06.2015.csv"));
 
     Thread.sleep(60000);
-    assertTrue(verified);
 
     Long count = dao.count();
     assertTrue(count > 0);
+    assertTrue(verified);
 
   }
 

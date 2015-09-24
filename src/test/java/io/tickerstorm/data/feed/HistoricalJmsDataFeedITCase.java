@@ -12,6 +12,7 @@ import io.tickerstorm.entity.MarketData;
 import java.io.File;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.jms.JMSException;
 import javax.jms.Message;
@@ -50,7 +51,7 @@ public class HistoricalJmsDataFeedITCase extends AbstractTestNGSpringContextTest
   private CassandraOperations session;
 
   boolean verified = false;
-  int count = 0;
+  AtomicInteger count = new AtomicInteger(0);
   long expCount = 778;
 
   @Autowired
@@ -73,7 +74,7 @@ public class HistoricalJmsDataFeedITCase extends AbstractTestNGSpringContextTest
   @BeforeMethod
   public void setup() {
     container.setMessageListener(this);
-    count = 0;
+    count = new AtomicInteger(0);
     verified = false;
   }
 
@@ -99,8 +100,8 @@ public class HistoricalJmsDataFeedITCase extends AbstractTestNGSpringContextTest
       }
     });
 
-    Thread.sleep(40000);
-    assertEquals(count, expCount);
+    Thread.sleep(3000);
+    assertEquals(count.get(), expCount);
     assertTrue(verified);
 
     System.out.print("Test time: " + (System.currentTimeMillis() - st));
@@ -131,7 +132,7 @@ public class HistoricalJmsDataFeedITCase extends AbstractTestNGSpringContextTest
       assertTrue(c.volume.longValue() > 0);
       assertEquals(c.interval, Candle.MIN_1_INTERVAL);
       verified = true;
-      count++;
+      count.incrementAndGet();
     } catch (Exception e) {
       Throwables.propagate(e);
     }

@@ -2,7 +2,6 @@ package io.tickerstorm.data.dao;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
-import io.tickerstorm.data.dao.MarketDataDto;
 import io.tickerstorm.entity.Candle;
 import io.tickerstorm.entity.Quote;
 import io.tickerstorm.entity.Tick;
@@ -27,7 +26,7 @@ public class TestMarketDataDto {
     c.symbol = "AAPL";
     c.interval = Candle.EOD;
     c.timestamp = Instant.now();
-    c.volume = BigDecimal.ZERO;
+    c.volume = 0;
 
     MarketDataDto dto = MarketDataDto.convert(c);
 
@@ -35,7 +34,7 @@ public class TestMarketDataDto {
     assertEquals(dto.low, c.low);
     assertEquals(dto.high, c.high);
     assertEquals(dto.open, c.open);
-    assertEquals(dto.volume, c.volume);
+    assertEquals(dto.volume, BigDecimal.valueOf(c.volume));
     assertEquals(dto.primarykey.source, c.source);
     assertEquals(dto.primarykey.interval, c.interval.toLowerCase());
     assertEquals(dto.primarykey.timestamp, Date.from(c.timestamp));
@@ -69,15 +68,15 @@ public class TestMarketDataDto {
     c.symbol = "AAPL";
 
     c.timestamp = Instant.now();
-    c.askSize = BigDecimal.ZERO;
-    c.bidSize = BigDecimal.ZERO;
+    c.askSize = 0;
+    c.bidSize = 0;
 
     MarketDataDto dto = MarketDataDto.convert(c);
 
     assertEquals(dto.ask, c.ask);
     assertEquals(dto.bid, c.bid);
-    assertEquals(dto.askSize, c.askSize);
-    assertEquals(dto.bidSize, c.bidSize);
+    assertEquals(dto.askSize, BigDecimal.valueOf(c.askSize));
+    assertEquals(dto.bidSize, BigDecimal.valueOf(c.bidSize));
     assertEquals(dto.primarykey.source, c.source.toLowerCase());
     assertEquals(dto.primarykey.timestamp, Date.from(c.timestamp));
     assertEquals(dto.primarykey.symbol, c.symbol.toLowerCase());

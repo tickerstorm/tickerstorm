@@ -11,6 +11,7 @@ import io.tickerstorm.entity.MarketData;
 import java.io.File;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import net.engio.mbassy.bus.MBassador;
 import net.engio.mbassy.listener.Handler;
@@ -47,7 +48,7 @@ public class HistoricalDataFeedITCase extends AbstractTestNGSpringContextTests {
   private CassandraOperations session;
 
   boolean verified = false;
-  int count = 0;
+  AtomicInteger count = new AtomicInteger(0);
   long expCount = 778;
 
   @Autowired
@@ -70,14 +71,12 @@ public class HistoricalDataFeedITCase extends AbstractTestNGSpringContextTests {
 
   @BeforeMethod
   public void setup() {
-    count = 0;
+    count = new AtomicInteger(0);
     verified = false;
   }
 
   @Test
   public void testSimpleCandleQuery() throws Exception {
-
-    long st = System.currentTimeMillis();
 
     HistoricalFeedQuery query = new HistoricalFeedQuery("TOL");
     query.from = LocalDateTime.of(2015, 6, 10, 0, 0);
@@ -87,11 +86,9 @@ public class HistoricalDataFeedITCase extends AbstractTestNGSpringContextTests {
     query.zone = ZoneOffset.ofHours(-7);
     queryBus.post(query).asynchronously();
 
-    Thread.sleep(61000);
-    assertEquals(count, expCount);
-
-    System.out.print("Test time: " + (System.currentTimeMillis() - st));
-
+    Thread.sleep(3000);
+    assertEquals(count.get(), expCount);
+    assertTrue(verified);
   }
 
 
@@ -118,7 +115,7 @@ public class HistoricalDataFeedITCase extends AbstractTestNGSpringContextTests {
       assertTrue(c.volume.longValue() > 0);
       assertEquals(c.interval, Candle.MIN_1_INTERVAL);
       verified = true;
-      count++;
+      count.incrementAndGet();
     }
 
   }

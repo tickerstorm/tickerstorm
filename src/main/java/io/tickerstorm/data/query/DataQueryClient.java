@@ -12,6 +12,8 @@ import net.engio.mbassy.bus.MBassador;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.LineIterator;
 import org.apache.http.Header;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -52,10 +54,12 @@ public class DataQueryClient {
   private CloseableHttpResponse queryFile(QueryBuilder builder, CloseableHttpResponse response)
       throws Exception {
 
+    String filename = new File(builder.build()).getName();
+
     logger.info("Downloading file...");
-    byte[] array = IOUtils.toByteArray(response.getEntity().getContent());
+    HttpEntity e = response.getEntity();
+    byte[] array = IOUtils.toByteArray(e.getContent());
     Header header = response.getFirstHeader("Content-disposition");
-    String filename = null;
 
     if (header != null)
       filename = header.getValue().split(";")[1].split("=")[1];
@@ -83,6 +87,14 @@ public class DataQueryClient {
     String query = builder.build();
 
     HttpGet get = new HttpGet(query);
+    get.addHeader(
+        HttpHeaders.USER_AGENT,
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/45.0.2454.85 Safari/537.36");
+    get.addHeader(HttpHeaders.ACCEPT,
+        "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8");
+    get.addHeader(HttpHeaders.ACCEPT_ENCODING, "gzip, deflate, sdch");
+    get.addHeader(HttpHeaders.ACCEPT_LANGUAGE, "en-US,en;q=0.8");
+    get.addHeader(HttpHeaders.REFERER, "https://www.google.com/");
 
     CloseableHttpResponse response = null;
     try {
@@ -91,7 +103,10 @@ public class DataQueryClient {
       int count = 0;
       if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
 
-        if (response.getFirstHeader("Content-disposition") != null) {
+        if ((response.getFirstHeader(HttpHeaders.CONTENT_TYPE) != null && response
+            .getFirstHeader(HttpHeaders.CONTENT_TYPE).getValue()
+            .equalsIgnoreCase("application/zip"))
+            || response.getFirstHeader("Content-disposition") != null) {
 
           response = queryFile(builder, response);
 

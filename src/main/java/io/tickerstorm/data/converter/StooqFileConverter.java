@@ -94,7 +94,7 @@ public class StooqFileConverter extends BaseFileConverter implements DataConvert
                 c.high = new BigDecimal(cols[3]);
                 c.low = new BigDecimal(cols[4]);
                 c.close = new BigDecimal(cols[5]);
-                c.volume = new BigDecimal(cols[6]);
+                c.volume = new Integer(cols[6]);
 
               } catch (Exception ex) {
 
@@ -104,7 +104,7 @@ public class StooqFileConverter extends BaseFileConverter implements DataConvert
                 c.high = new BigDecimal(cols[2]);
                 c.low = new BigDecimal(cols[3]);
                 c.close = new BigDecimal(cols[4]);
-                c.volume = new BigDecimal(cols[5]);
+                c.volume = new Integer(cols[5]);
               }
 
               if (BigInteger.ZERO.equals(c.volume))
@@ -156,7 +156,9 @@ public class StooqFileConverter extends BaseFileConverter implements DataConvert
 
     if (file.getPath().contains(provider()) && Files.getFileExtension(file.getPath()).equals("txt")) {
       logger.info("Converting " + file.getName());
+      long start = System.currentTimeMillis();
       convert(f.getPath());
+      logger.debug("Conversion took " + (System.currentTimeMillis() - start) + "ms");
       FileUtils.deleteQuietly(file);
     }
   }

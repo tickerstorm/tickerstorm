@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class StooqHistoricalForexQuery implements QueryBuilder {
 
-  private static final String HOST = "http://stooq.com/db/h/";
+  private static final String HOST = "http://s.stooq.pl/db/h/";
 
   private String fileName = "_world_txt.zip";
   private Set<String> securityTypes = new HashSet<String>();

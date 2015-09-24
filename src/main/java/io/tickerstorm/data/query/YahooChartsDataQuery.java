@@ -60,12 +60,12 @@ public class YahooChartsDataQuery implements QueryBuilder, DataConverter {
     c.high = new BigDecimal(args[2]);
     c.close = new BigDecimal(args[1]);
     c.open = new BigDecimal(args[4]);
-    c.volume = new BigDecimal(args[5]);
+    c.volume = new Integer(args[5]);
     c.symbol = symbol;
     c.interval = Candle.MIN_5_INTERVAL;
     c.source = "yahoo";
 
-    return new Candle[] { c };
+    return new Candle[] {c};
   }
 
   public String type() {

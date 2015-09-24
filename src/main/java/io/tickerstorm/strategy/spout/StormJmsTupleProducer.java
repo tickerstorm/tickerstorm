@@ -14,6 +14,8 @@ import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Values;
 
+import com.google.common.collect.Lists;
+
 @SuppressWarnings("serial")
 public class StormJmsTupleProducer implements JmsTupleProducer {
 
@@ -45,6 +47,7 @@ public class StormJmsTupleProducer implements JmsTupleProducer {
 
   @Override
   public void declareOutputFields(OutputFieldsDeclarer declarer) {
-    declarer.declare(new Fields(io.tickerstorm.strategy.bolt.Fields.MARKETADATA_FIELDS));
+    declarer.declare(new Fields(Lists.newArrayList(io.tickerstorm.strategy.bolt.Fields
+        .marketdataFields())));
   }
 }

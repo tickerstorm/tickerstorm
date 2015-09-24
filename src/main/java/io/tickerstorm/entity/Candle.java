@@ -8,7 +8,7 @@ import java.util.Set;
 import com.google.common.base.MoreObjects;
 
 @SuppressWarnings("serial")
-public class Candle extends BaseMarketData implements Fields {
+public class Candle extends BaseMarketData {
 
   public static final String TYPE = "candle";
   public static final String MIN_5_INTERVAL = "5m";
@@ -48,7 +48,7 @@ public class Candle extends BaseMarketData implements Fields {
 
   public BigDecimal close;
 
-  public BigDecimal volume;
+  public Integer volume;
 
   public String interval;
 
@@ -72,7 +72,6 @@ public class Candle extends BaseMarketData implements Fields {
     return open;
   }
 
-  @Override
   public String getType() {
     return TYPE;
   }
@@ -81,7 +80,7 @@ public class Candle extends BaseMarketData implements Fields {
     // nothing
   }
 
-  public BigDecimal getVolume() {
+  public Integer getVolume() {
     return volume;
   }
 
@@ -160,7 +159,7 @@ public class Candle extends BaseMarketData implements Fields {
     this.open = open;
   }
 
-  public void setVolume(BigDecimal volume) {
+  public void setVolume(Integer volume) {
     this.volume = volume;
   }
 
@@ -170,14 +169,13 @@ public class Candle extends BaseMarketData implements Fields {
   }
 
   @Override
-  public Set<NumericField> explode() {
-
-    Set<NumericField> fields = new HashSet<NumericField>();
-    fields.add(new Amount(symbol, timestamp, "USD", high, HIGH, interval));
-    fields.add(new Amount(symbol, timestamp, "USD", low, LOW, interval));
-    fields.add(new Amount(symbol, timestamp, "USD", open, OPEN, interval));
-    fields.add(new Amount(symbol, timestamp, "USD", close, CLOSE, interval));
-    fields.add(new Quantity(symbol, timestamp, volume, VOLUME, interval));
+  public Set<Field<?>> getFields() {
+    Set<Field<?>> fields = new HashSet<Field<?>>();
+    fields.add(new ContinousField(symbol, timestamp, "USD", high, Field.HIGH, interval));
+    fields.add(new ContinousField(symbol, timestamp, "USD", low, Field.LOW, interval));
+    fields.add(new ContinousField(symbol, timestamp, "USD", open, Field.OPEN, interval));
+    fields.add(new ContinousField(symbol, timestamp, "USD", close, Field.CLOSE, interval));
+    fields.add(new DiscreteField(symbol, timestamp, volume, Field.VOLUME, interval));
     return fields;
 
   }

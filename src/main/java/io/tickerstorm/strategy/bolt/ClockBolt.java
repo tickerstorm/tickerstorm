@@ -30,7 +30,7 @@ public class ClockBolt extends BaseRichBolt {
 
   @Override
   public void execute(Tuple tuple) {
-    MarketData data = (MarketData) tuple.getValueByField(Fields.MARKETDATA);
+    MarketData data = (MarketData) tuple.getValueByField(Fields.MARKETDATA.fieldName());
     clock.update(data.getTimestamp());
 
     List<Object> values = Lists.newArrayList(tuple.getValues());
@@ -47,8 +47,8 @@ public class ClockBolt extends BaseRichBolt {
 
   @Override
   public void declareOutputFields(OutputFieldsDeclarer arg0) {
-    List<String> fields = new ArrayList<String>(Fields.MARKETADATA_FIELDS);
-    fields.add(Fields.NOW);
+    List<String> fields = new ArrayList<String>(Fields.marketdataFields());
+    fields.add(Fields.NOW.fieldName());
     arg0.declare(new backtype.storm.tuple.Fields(fields));
   }
 }

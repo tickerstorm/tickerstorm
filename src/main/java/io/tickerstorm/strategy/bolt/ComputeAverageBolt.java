@@ -44,8 +44,8 @@ public class ComputeAverageBolt extends BaseRichBolt {
   @Override
   public void execute(Tuple tuple) {
 
-    if (tuple.contains(Fields.CANDEL)) {
-      Candle candle = (Candle) tuple.getValueByField(Fields.CANDEL);
+    if (tuple.contains(Fields.CANDEL.fieldName())) {
+      Candle candle = (Candle) tuple.getValueByField(Fields.CANDEL.fieldName());
       TimeSeries series = null;
 
       if (candle != null) {
@@ -55,7 +55,7 @@ public class ComputeAverageBolt extends BaseRichBolt {
                 .getTimestamp().toEpochMilli()), Decimal.valueOf(candle.open.toPlainString()),
                 Decimal.valueOf(candle.high.toPlainString()), Decimal.valueOf(candle.low
                     .toPlainString()), Decimal.valueOf(candle.close.toPlainString()),
-                Decimal.valueOf(candle.volume.toPlainString()));
+                Decimal.valueOf(candle.volume.toString()));
 
         String key =
             new StringBuffer(candle.symbol).append("-").append(candle.interval).append("-")

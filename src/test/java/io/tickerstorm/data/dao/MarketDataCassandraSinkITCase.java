@@ -44,7 +44,7 @@ public class MarketDataCassandraSinkITCase extends AbstractTestNGSpringContextTe
     c.interval = Candle.MIN_10_INTERVAL;
     c.open = BigDecimal.ZERO;
     c.timestamp = Instant.now();
-    c.volume = BigDecimal.TEN;
+    c.volume = 10;
     c.symbol = "AAPL";
     sink.onMarketData(c);
 
@@ -60,7 +60,7 @@ public class MarketDataCassandraSinkITCase extends AbstractTestNGSpringContextTe
       assertEquals(dto.low, c.low);
       assertEquals(dto.high, c.high);
       assertEquals(dto.open, c.open);
-      assertEquals(dto.volume, c.volume);
+      assertEquals(dto.volume, new BigDecimal(c.volume));
       assertEquals(dto.primarykey.source, c.source);
       assertEquals(dto.primarykey.interval, c.interval);
       assertEquals(dto.primarykey.timestamp, Date.from(c.timestamp));

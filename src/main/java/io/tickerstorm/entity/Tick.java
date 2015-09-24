@@ -1,6 +1,8 @@
 package io.tickerstorm.entity;
 
 import java.math.BigDecimal;
+import java.util.HashSet;
+import java.util.Set;
 
 @SuppressWarnings("serial")
 public class Tick extends BaseMarketData {
@@ -61,9 +63,17 @@ public class Tick extends BaseMarketData {
   public String getType() {
     return TYPE;
   }
-  
-  public void setType(String type){
-    //nothing
+
+  public void setType(String type) {
+    // nothing
+  }
+
+  @Override
+  public Set<Field<?>> getFields() {
+    Set<Field<?>> fields = new HashSet<Field<?>>();
+    fields.add(new ContinousField(symbol, timestamp, "USD", price, Field.PRICE));
+    fields.add(new ContinousField(symbol, timestamp, "USD", quantity, Field.QUANTITY));
+    return fields;
   }
 
 }

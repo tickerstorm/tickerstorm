@@ -124,7 +124,7 @@ public class GoogleDataQuery extends BaseFileConverter implements QueryBuilder {
       c.high = new BigDecimal(args[2]);
       c.low = new BigDecimal(args[3]);
       c.open = new BigDecimal(args[4]);
-      c.volume = new BigDecimal(args[4]);
+      c.volume = new BigDecimal(args[4]).multiply(new BigDecimal("1000")).intValue();
       c.timestamp = timestamp.plus(mins, ChronoUnit.MINUTES);
       c.interval = Candle.MIN_1_INTERVAL;
       c.source = "Google";

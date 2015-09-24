@@ -69,7 +69,7 @@ public class DukascopyFileConverter extends BaseFileConverter {
           c.high = new BigDecimal(cols[2]);
           c.low = new BigDecimal(cols[3]);
           c.close = new BigDecimal(cols[4]);
-          c.volume = new BigDecimal(cols[5]);
+          c.volume = new BigDecimal(cols[5]).multiply(new BigDecimal("1000000")).intValue();
           c.interval = getInterval(path);
           c.source = provider();
           historical.post(c).asynchronously();
@@ -115,7 +115,9 @@ public class DukascopyFileConverter extends BaseFileConverter {
 
     if (file.getPath().contains(provider()) && Files.getFileExtension(file.getPath()).equals("csv")) {
       logger.info("Converting " + file.getPath());
+      long start = System.currentTimeMillis();
       convert(file.getPath());
+      logger.debug("Conversion took " + (System.currentTimeMillis() - start) + "ms");
       file.delete();
     }
 

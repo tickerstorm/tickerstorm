@@ -69,6 +69,7 @@ public class HistoricalDataFeed {
 
     logger.debug("Historical feed query received");
 
+
     LocalDateTime start = query.from;
     LocalDateTime end = query.until;
     LocalDateTime date = start;
@@ -94,14 +95,17 @@ public class HistoricalDataFeed {
           .and(QueryBuilder.eq("interval", query.periods.iterator().next()));
 
       logger.debug(select.toString());
-
+      long startTimer = System.currentTimeMillis();
       List<MarketDataDto> dtos = cassandra.select(select, MarketDataDto.class);
-
+      logger.info("Query took " + (System.currentTimeMillis() - startTimer) + "ms");
       logger.info("Fetched " + dtos.size() + " results.");
 
+      startTimer = System.currentTimeMillis();
       for (MarketDataDto dto : dtos) {
         realtimeBus.post(dto.toMarketData()).asynchronously();
       }
+      logger.info("Dispatch historical data feed took " + (System.currentTimeMillis() - startTimer)
+          + "ms");
 
     }
   }

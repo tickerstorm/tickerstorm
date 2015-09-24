@@ -51,7 +51,7 @@ public class YahooRealtimeQuoteQuery implements QueryBuilder, DataConverter {
     else
       return null;
 
-    c.askSize = new BigDecimal(data[2]);
+    c.askSize = new Integer(data[2]);
 
     if (!data[3].equalsIgnoreCase("N/A"))
       c.bid = new BigDecimal(data[3]);
@@ -60,9 +60,9 @@ public class YahooRealtimeQuoteQuery implements QueryBuilder, DataConverter {
     else
       return null;
 
-    c.bidSize = new BigDecimal(data[5]);
+    c.bidSize = new Integer(data[5]);
 
-    return new Quote[] { c };
+    return new Quote[] {c};
   }
 
   public String build() {

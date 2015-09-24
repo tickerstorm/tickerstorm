@@ -9,7 +9,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoField;
-import java.util.TimeZone;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,9 +74,11 @@ public class YahooHistoricalQuoteQuery implements DataConverter, QueryBuilder {
   }
 
   public String build() {
-    String url = HOST + "&s=" + symbol + "&a=" + (from.get(ChronoField.YEAR) - 1) + "&b=" + from.get(ChronoField.MONTH_OF_YEAR) + "&c="
-        + from.get(ChronoField.YEAR) + "&d=" + (until.get(ChronoField.YEAR) - 1) + "&e=" + until.get(ChronoField.MONTH_OF_YEAR) + "&f="
-        + until.get(ChronoField.YEAR) + "&g=" + interval + "&ignore=.csv";
+    String url =
+        HOST + "&s=" + symbol + "&a=" + (from.get(ChronoField.YEAR) - 1) + "&b="
+            + from.get(ChronoField.MONTH_OF_YEAR) + "&c=" + from.get(ChronoField.YEAR) + "&d="
+            + (until.get(ChronoField.YEAR) - 1) + "&e=" + until.get(ChronoField.MONTH_OF_YEAR)
+            + "&f=" + until.get(ChronoField.YEAR) + "&g=" + interval + "&ignore=.csv";
 
     logger.info(url);
     return url;
@@ -91,12 +92,13 @@ public class YahooHistoricalQuoteQuery implements DataConverter, QueryBuilder {
     String[] args = line.split(",");
 
     Candle c = new Candle();
-    c.timestamp = LocalDate.parse(args[0], FORMATTER).atTime(0, 0).toInstant(ZoneOffset.ofHours(-7));
+    c.timestamp =
+        LocalDate.parse(args[0], FORMATTER).atTime(0, 0).toInstant(ZoneOffset.ofHours(-7));
     c.open = new BigDecimal(args[1]);
     c.high = new BigDecimal(args[2]);
     c.low = new BigDecimal(args[3]);
     c.close = new BigDecimal(args[4]);
-    c.volume = new BigDecimal(args[5]);
+    c.volume = new Integer(args[5]);
     c.symbol = symbol;
 
     if (interval.equals(EOD))
@@ -106,7 +108,7 @@ public class YahooHistoricalQuoteQuery implements DataConverter, QueryBuilder {
 
     c.source = "yahoo";
 
-    return new Candle[] { c };
+    return new Candle[] {c};
   }
 
   @Override
