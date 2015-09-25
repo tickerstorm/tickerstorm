@@ -41,7 +41,7 @@
 		<dependency>
 			<groupId>org.springframework.data</groupId>
 			<artifactId>spring-data-cassandra</artifactId>
-			
+
 		</dependency>
 		<dependency>
 			<groupId>net.sf.dozer</groupId>
@@ -70,7 +70,7 @@
 			<groupId>com.datastax.cassandra</groupId>
 			<artifactId>cassandra-driver-core</artifactId>
 			<version>2.1.6</version>
-		
+
 		</dependency>
 		<dependency>
 			<groupId>org.neo4j</groupId>
@@ -108,10 +108,6 @@
 		</dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>
-			<artifactId>spring-context</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework</groupId>
 			<artifactId>spring-context-support</artifactId>
 		</dependency>
 		<dependency>
@@ -139,26 +135,6 @@
 			<groupId>eu.verdelhan</groupId>
 			<artifactId>ta4j</artifactId>
 			<version>0.7</version>
-		</dependency>
-		<dependency>
-			<groupId>ai.h2o</groupId>
-			<artifactId>h2o-core</artifactId>
-			<version>3.0.0.16</version>
-		</dependency>
-		<dependency>
-			<groupId>ai.h2o</groupId>
-			<artifactId>h2o-algos</artifactId>
-			<version>3.0.0.16</version>
-		</dependency>
-		<dependency>
-			<groupId>ai.h2o</groupId>
-			<artifactId>h2o-app</artifactId>
-			<version>3.0.0.16</version>
-		</dependency>
-		<dependency>
-			<groupId>ai.h2o</groupId>
-			<artifactId>h2o-web</artifactId>
-			<version>3.0.0.16</version>
 		</dependency>
 	</dependencies>
 	<build>
@@ -199,11 +175,26 @@
 					<!-- systemPropertyVariables> <hostname>${hostname}</hostname> </systemPropertyVariables -->
 				</configuration>
 			</plugin>
+			<plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                        <configuration>
+                        <layout>JAR</layout>
+                        <mainClass>io.tickerstorm.data.service.MarketDataService</mainClass>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
 		</plugins>
 	</build>
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>1.2.4.RELEASE</version>
+		<version>1.2.6.RELEASE</version>
 	</parent>
 </project>
