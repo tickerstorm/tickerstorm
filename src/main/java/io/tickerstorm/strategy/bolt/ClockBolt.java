@@ -1,7 +1,8 @@
 package io.tickerstorm.strategy.bolt;
 
 import io.tickerstorm.entity.MarketData;
-import io.tickerstorm.strategy.Clock;
+import io.tickerstorm.strategy.util.Clock;
+import io.tickerstorm.strategy.util.TupleUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,10 +31,11 @@ public class ClockBolt extends BaseRichBolt {
 
   @Override
   public void execute(Tuple tuple) {
+
+    List<Object> values = TupleUtil.propagateTuple(tuple, Lists.newArrayList());
+
     MarketData data = (MarketData) tuple.getValueByField(Fields.MARKETDATA.fieldName());
     clock.update(data.getTimestamp());
-
-    List<Object> values = Lists.newArrayList(tuple.getValues());
     values.add(clock.now());
 
     collector.emit(tuple, new Values(values.toArray()));
@@ -48,7 +50,6 @@ public class ClockBolt extends BaseRichBolt {
   @Override
   public void declareOutputFields(OutputFieldsDeclarer arg0) {
     List<String> fields = new ArrayList<String>(Fields.marketdataFields());
-    fields.add(Fields.NOW.fieldName());
     arg0.declare(new backtype.storm.tuple.Fields(fields));
   }
 }

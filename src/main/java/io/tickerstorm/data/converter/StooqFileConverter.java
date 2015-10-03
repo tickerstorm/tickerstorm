@@ -1,8 +1,5 @@
 package io.tickerstorm.data.converter;
 
-import io.tickerstorm.entity.Candle;
-import io.tickerstorm.entity.MarketData;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.math.BigDecimal;
@@ -16,8 +13,6 @@ import java.util.Set;
 
 import javax.annotation.PostConstruct;
 
-import net.engio.mbassy.bus.MBassador;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -27,6 +22,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import com.google.common.io.Files;
+
+import io.tickerstorm.entity.Candle;
+import io.tickerstorm.entity.MarketData;
+import net.engio.mbassy.bus.MBassador;
 
 @Component
 public class StooqFileConverter extends BaseFileConverter implements DataConverter {
@@ -78,7 +77,7 @@ public class StooqFileConverter extends BaseFileConverter implements DataConvert
             if (line.startsWith("Date"))
               continue;
 
-            Candle c = new Candle();
+            Candle c = null;
             try {
 
               String[] cols = line.split(",");
@@ -87,31 +86,42 @@ public class StooqFileConverter extends BaseFileConverter implements DataConvert
 
               try {
 
-                c.timestamp =
-                    LocalDateTime.parse(cols[0] + " " + cols[1], formatter).toInstant(
-                        ZoneOffset.UTC);
-                c.open = new BigDecimal(cols[2]);
-                c.high = new BigDecimal(cols[3]);
-                c.low = new BigDecimal(cols[4]);
-                c.close = new BigDecimal(cols[5]);
-                c.volume = new Integer(cols[6]);
+                c = new Candle(symbol, provider(),
+                    LocalDateTime.parse(cols[0] + " " + cols[1], formatter)
+                        .toInstant(ZoneOffset.UTC),
+                    new BigDecimal(cols[2]), new BigDecimal(cols[5]), new BigDecimal(cols[3]),
+                    new BigDecimal(cols[4]), interval(path), new Integer(cols[6]));
+
+                // c.timestamp = LocalDateTime.parse(cols[0] + " " + cols[1], formatter)
+                // .toInstant(ZoneOffset.UTC);
+                // c.open = new BigDecimal(cols[2]);
+                // c.high = new BigDecimal(cols[3]);
+                // c.low = new BigDecimal(cols[4]);
+                // c.close = new BigDecimal(cols[5]);
+                // c.volume = new Integer(cols[6]);
 
               } catch (Exception ex) {
 
-                c.timestamp =
-                    LocalDateTime.from(dayFormatter.parse(cols[0])).toInstant(ZoneOffset.of("GMT"));
-                c.open = new BigDecimal(cols[1]);
-                c.high = new BigDecimal(cols[2]);
-                c.low = new BigDecimal(cols[3]);
-                c.close = new BigDecimal(cols[4]);
-                c.volume = new Integer(cols[5]);
+                c = new Candle(symbol, provider(),
+                    LocalDateTime.from(dayFormatter.parse(cols[0])).toInstant(ZoneOffset.of("GMT")),
+                    new BigDecimal(cols[1]), new BigDecimal(cols[4]), new BigDecimal(cols[2]),
+                    new BigDecimal(cols[3]), interval(path), new Integer(cols[5]));
+
+                // c.timestamp =
+                // LocalDateTime.from(dayFormatter.parse(cols[0])).toInstant(ZoneOffset.of("GMT"));
+                // c.open = new BigDecimal(cols[1]);
+                // c.high = new BigDecimal(cols[2]);
+                // c.low = new BigDecimal(cols[3]);
+                // c.close = new BigDecimal(cols[4]);
+                // c.volume = new Integer(cols[5]);
               }
 
-              if (BigInteger.ZERO.equals(c.volume))
-                c.volume = null;
+              if (BigInteger.ZERO.equals(c.volume)) {
+                c.setVolume(null);
+              }
 
-              c.interval = interval(path);
-              c.source = provider();
+              // c.interval = interval(path);
+              // c.source = provider();
 
             } catch (Exception e) {
               logger.error("Unable to parse symbol " + symbol, e.getMessage());
@@ -154,7 +164,8 @@ public class StooqFileConverter extends BaseFileConverter implements DataConvert
 
     File f = new File(file.getPath().replace("\\", "\\\\"));
 
-    if (file.getPath().contains(provider()) && Files.getFileExtension(file.getPath()).equals("txt")) {
+    if (file.getPath().contains(provider())
+        && Files.getFileExtension(file.getPath()).equals("txt")) {
       logger.info("Converting " + file.getName());
       long start = System.currentTimeMillis();
       convert(f.getPath());

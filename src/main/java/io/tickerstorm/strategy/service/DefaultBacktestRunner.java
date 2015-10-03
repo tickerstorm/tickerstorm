@@ -1,7 +1,8 @@
-package io.tickerstorm.strategy;
+package io.tickerstorm.strategy.service;
 
 import io.tickerstorm.data.feed.HistoricalFeedQuery;
 import io.tickerstorm.entity.Candle;
+import io.tickerstorm.strategy.BacktestConfig;
 import io.tickerstorm.strategy.backtest.BacktestRunner;
 
 import java.time.LocalDateTime;

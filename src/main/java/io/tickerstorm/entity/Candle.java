@@ -2,6 +2,7 @@ package io.tickerstorm.entity;
 
 import java.math.BigDecimal;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -17,6 +18,19 @@ public class Candle extends BaseMarketData {
   public static final String WEEK_INTERVAL = "7d";
   public static final String HOURLY_INTERVAL = "1h";
   public static final String EOD = "EOD";
+
+  public Candle() {}
+
+  public Candle(String symbol, String source, Instant timestamp, BigDecimal open, BigDecimal close,
+      BigDecimal high, BigDecimal low, String interval, int volume) {
+    super(symbol, source, timestamp);
+    this.close = close;
+    this.open = open;
+    this.high = high;
+    this.low = low;
+    this.interval = interval;
+    this.volume = volume;
+  }
 
   public Duration duration() {
 
@@ -171,11 +185,12 @@ public class Candle extends BaseMarketData {
   @Override
   public Set<Field<?>> getFields() {
     Set<Field<?>> fields = new HashSet<Field<?>>();
-    fields.add(new ContinousField(symbol, timestamp, "USD", high, Field.HIGH, interval));
-    fields.add(new ContinousField(symbol, timestamp, "USD", low, Field.LOW, interval));
-    fields.add(new ContinousField(symbol, timestamp, "USD", open, Field.OPEN, interval));
-    fields.add(new ContinousField(symbol, timestamp, "USD", close, Field.CLOSE, interval));
-    fields.add(new DiscreteField(symbol, timestamp, volume, Field.VOLUME, interval));
+    fields.addAll(super.getFields());
+    fields.add(new ContinousField(symbol, timestamp, high, Field.HIGH, source, interval));
+    fields.add(new ContinousField(symbol, timestamp, low, Field.LOW, source, interval));
+    fields.add(new ContinousField(symbol, timestamp, open, Field.OPEN, source, interval));
+    fields.add(new ContinousField(symbol, timestamp, close, Field.CLOSE, source, interval));
+    fields.add(new DiscreteField(symbol, timestamp, volume, Field.VOLUME, source, interval));
     return fields;
 
   }

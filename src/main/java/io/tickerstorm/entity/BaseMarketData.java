@@ -2,6 +2,7 @@ package io.tickerstorm.entity;
 
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.Set;
 
 import com.google.common.base.MoreObjects;
@@ -13,7 +14,13 @@ public abstract class BaseMarketData implements MarketData, Serializable {
   public Instant timestamp;
   public String symbol;
 
-  public abstract Set<Field<?>> getFields();
+  public BaseMarketData() {}
+
+  public BaseMarketData(String symbol, String source, Instant timestamp) {
+    this.source = source;
+    this.symbol = symbol;
+    this.timestamp = timestamp;
+  }
 
   @Override
   public boolean equals(Object obj) {
@@ -81,6 +88,17 @@ public abstract class BaseMarketData implements MarketData, Serializable {
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this).toString();
+  }
+
+  public Set<Field<?>> getFields() {
+
+    Set<Field<?>> fields = new HashSet<Field<?>>();
+    fields.add(new CategoricalField(symbol, timestamp, symbol, Field.SYMBOL, source));
+    fields.add(
+        new CategoricalField(symbol, timestamp, timestamp.toString(), Field.TIMESTAMP, source));
+    fields.add(new CategoricalField(symbol, timestamp, source, Field.SOURCE, source));
+    return fields;
+
   }
 
 }

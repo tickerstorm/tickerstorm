@@ -1,14 +1,14 @@
 package io.tickerstorm.data.query;
 
-import io.tickerstorm.data.converter.DataConverter;
-import io.tickerstorm.entity.Candle;
-
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.TimeZone;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.tickerstorm.data.converter.DataConverter;
+import io.tickerstorm.entity.Candle;
 
 public class YahooChartsDataQuery implements QueryBuilder, DataConverter {
 
@@ -54,16 +54,18 @@ public class YahooChartsDataQuery implements QueryBuilder, DataConverter {
 
     String[] args = line.split(",");
 
-    Candle c = new Candle();
-    c.timestamp = Instant.ofEpochSecond(Long.valueOf(args[0]));
-    c.low = new BigDecimal(args[3]);
-    c.high = new BigDecimal(args[2]);
-    c.close = new BigDecimal(args[1]);
-    c.open = new BigDecimal(args[4]);
-    c.volume = new Integer(args[5]);
-    c.symbol = symbol;
-    c.interval = Candle.MIN_5_INTERVAL;
-    c.source = "yahoo";
+    Candle c = new Candle(symbol, "yahoo", Instant.ofEpochSecond(Long.valueOf(args[0])),
+        new BigDecimal(args[4]), new BigDecimal(args[1]), new BigDecimal(args[2]),
+        new BigDecimal(args[3]), Candle.MIN_5_INTERVAL, new Integer(args[5]));
+    // c.timestamp = Instant.ofEpochSecond(Long.valueOf(args[0]));
+    // c.low = new BigDecimal(args[3]);
+    // c.high = new BigDecimal(args[2]);
+    // c.close = new BigDecimal(args[1]);
+    // c.open = new BigDecimal(args[4]);
+    // c.volume = new Integer(args[5]);
+    // c.symbol = symbol;
+    // c.interval = Candle.MIN_5_INTERVAL;
+    // c.source = "yahoo";
 
     return new Candle[] {c};
   }

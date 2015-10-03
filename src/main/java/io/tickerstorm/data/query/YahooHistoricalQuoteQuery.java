@@ -1,8 +1,5 @@
 package io.tickerstorm.data.query;
 
-import io.tickerstorm.data.converter.DataConverter;
-import io.tickerstorm.entity.Candle;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -12,6 +9,9 @@ import java.time.temporal.ChronoField;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.tickerstorm.data.converter.DataConverter;
+import io.tickerstorm.entity.Candle;
 
 public class YahooHistoricalQuoteQuery implements DataConverter, QueryBuilder {
 
@@ -74,11 +74,10 @@ public class YahooHistoricalQuoteQuery implements DataConverter, QueryBuilder {
   }
 
   public String build() {
-    String url =
-        HOST + "&s=" + symbol + "&a=" + (from.get(ChronoField.YEAR) - 1) + "&b="
-            + from.get(ChronoField.MONTH_OF_YEAR) + "&c=" + from.get(ChronoField.YEAR) + "&d="
-            + (until.get(ChronoField.YEAR) - 1) + "&e=" + until.get(ChronoField.MONTH_OF_YEAR)
-            + "&f=" + until.get(ChronoField.YEAR) + "&g=" + interval + "&ignore=.csv";
+    String url = HOST + "&s=" + symbol + "&a=" + (from.get(ChronoField.YEAR) - 1) + "&b="
+        + from.get(ChronoField.MONTH_OF_YEAR) + "&c=" + from.get(ChronoField.YEAR) + "&d="
+        + (until.get(ChronoField.YEAR) - 1) + "&e=" + until.get(ChronoField.MONTH_OF_YEAR) + "&f="
+        + until.get(ChronoField.YEAR) + "&g=" + interval + "&ignore=.csv";
 
     logger.info(url);
     return url;
@@ -91,22 +90,27 @@ public class YahooHistoricalQuoteQuery implements DataConverter, QueryBuilder {
 
     String[] args = line.split(",");
 
-    Candle c = new Candle();
-    c.timestamp =
-        LocalDate.parse(args[0], FORMATTER).atTime(0, 0).toInstant(ZoneOffset.ofHours(-7));
-    c.open = new BigDecimal(args[1]);
-    c.high = new BigDecimal(args[2]);
-    c.low = new BigDecimal(args[3]);
-    c.close = new BigDecimal(args[4]);
-    c.volume = new Integer(args[5]);
-    c.symbol = symbol;
+    String cInterval = Candle.EOD;
 
     if (interval.equals(EOD))
-      c.interval = Candle.EOD;
+      cInterval = Candle.EOD;
     if (interval.equals(WEEK))
-      c.interval = Candle.WEEK_INTERVAL;
+      cInterval = Candle.WEEK_INTERVAL;
 
-    c.source = "yahoo";
+    Candle c = new Candle(symbol, "yahoo",
+        LocalDate.parse(args[0], FORMATTER).atTime(0, 0).toInstant(ZoneOffset.ofHours(-7)),
+        new BigDecimal(args[1]), new BigDecimal(args[1]), new BigDecimal(args[2]),
+        new BigDecimal(args[3]), cInterval, new Integer(args[5]));
+
+    // c.timestamp =
+    // LocalDate.parse(args[0], FORMATTER).atTime(0, 0).toInstant(ZoneOffset.ofHours(-7));
+    // c.open = new BigDecimal(args[1]);
+    // c.high = new BigDecimal(args[2]);
+    // c.low = new BigDecimal(args[3]);
+    // c.close = new BigDecimal(args[4]);
+    // c.volume = new Integer(args[5]);
+    // c.symbol = symbol;
+    // c.source = "yahoo";
 
     return new Candle[] {c};
   }

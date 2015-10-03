@@ -71,8 +71,9 @@ public class Tick extends BaseMarketData {
   @Override
   public Set<Field<?>> getFields() {
     Set<Field<?>> fields = new HashSet<Field<?>>();
-    fields.add(new ContinousField(symbol, timestamp, "USD", price, Field.PRICE));
-    fields.add(new ContinousField(symbol, timestamp, "USD", quantity, Field.QUANTITY));
+    fields.addAll(super.getFields());
+    fields.add(new ContinousField(symbol, timestamp, price, source, Field.PRICE));
+    fields.add(new ContinousField(symbol, timestamp, quantity, source, Field.QUANTITY));
     return fields;
   }
 

@@ -4,17 +4,11 @@ import io.tickerstorm.data.jms.ByDestinationNameJmsResolver;
 import io.tickerstorm.data.jms.Destinations;
 import io.tickerstorm.strategy.spout.RealtimeDestinationProvider;
 import io.tickerstorm.strategy.spout.StormJmsTupleProducer;
+import io.tickerstorm.strategy.util.BacktestClock;
+import io.tickerstorm.strategy.util.Clock;
 
 import javax.jms.ConnectionFactory;
 import javax.jms.Session;
-
-import net.sf.ehcache.Cache;
-import net.sf.ehcache.CacheManager;
-import net.sf.ehcache.config.CacheConfiguration;
-import net.sf.ehcache.config.MemoryUnit;
-import net.sf.ehcache.config.PersistenceConfiguration;
-import net.sf.ehcache.config.PersistenceConfiguration.Strategy;
-import net.sf.ehcache.store.MemoryStoreEvictionPolicy;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.slf4j.Logger;
@@ -77,19 +71,5 @@ public class BacktestConfig {
   @Bean
   public Clock backtestClock() {
     return new BacktestClock();
-  }
-
-  @Bean
-  public CacheManager buildCache() {
-
-    CacheConfiguration config =
-        new CacheConfiguration().eternal(false).maxBytesLocalHeap(100, MemoryUnit.MEGABYTES)
-            .memoryStoreEvictionPolicy(MemoryStoreEvictionPolicy.FIFO)
-            .persistence(new PersistenceConfiguration().strategy(Strategy.NONE));
-    config.setName("timeseries");
-    CacheManager manager = CacheManager.create();
-    manager.addCache(new Cache(config));
-
-    return manager;
   }
 }

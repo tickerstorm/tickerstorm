@@ -1,4 +1,4 @@
-package io.tickerstorm.strategy;
+package io.tickerstorm.strategy.util;
 
 import java.time.Instant;
 

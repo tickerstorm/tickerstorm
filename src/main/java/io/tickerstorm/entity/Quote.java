@@ -101,10 +101,10 @@ public class Quote extends BaseMarketData {
   @Override
   public Set<Field<?>> getFields() {
     Set<Field<?>> fields = new HashSet<Field<?>>();
-    fields.add(new ContinousField(symbol, timestamp, "USD", ask, Field.ASK));
-    fields.add(new ContinousField(symbol, timestamp, "USD", bid, Field.BID));
-    fields.add(new DiscreteField(symbol, timestamp, askSize, Field.ASK_SIZE));
-    fields.add(new DiscreteField(symbol, timestamp, bidSize, Field.BID_SIZE));
+    fields.add(new ContinousField(symbol, timestamp, ask, source, Field.ASK));
+    fields.add(new ContinousField(symbol, timestamp, bid, source, Field.BID));
+    fields.add(new DiscreteField(symbol, timestamp, askSize, source, Field.ASK_SIZE));
+    fields.add(new DiscreteField(symbol, timestamp, bidSize, source, Field.BID_SIZE));
     return fields;
   }
 }

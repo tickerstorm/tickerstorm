@@ -4,6 +4,9 @@ import java.time.Instant;
 
 public interface Field<T> {
 
+  public static final String SYMBOL = "symbol";
+  public static final String TIMESTAMP = "timestamp";
+  public static final String SOURCE = "source";
   public static final String OPEN = "open";
   public static final String CLOSE = "close";
   public static final String HIGH = "high";
@@ -21,6 +24,12 @@ public interface Field<T> {
   public Instant getTimestamp();
 
   public String getName();
+
+  public String getSource();
+
+  public String getInterval();
+
+  public String getFieldType();
 
   public T getValue();
 

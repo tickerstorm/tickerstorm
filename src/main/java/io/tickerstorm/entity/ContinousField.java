@@ -3,7 +3,11 @@ package io.tickerstorm.entity;
 import java.math.BigDecimal;
 import java.time.Instant;
 
+import com.google.common.base.MoreObjects;
+
 public class ContinousField extends BaseField<BigDecimal> {
+
+  public static final String TYPE = "continous";
 
   @Override
   public int hashCode() {
@@ -30,20 +34,28 @@ public class ContinousField extends BaseField<BigDecimal> {
     return true;
   }
 
-  public String interval;
+  @Override
+  public String getFieldType() {
+    return TYPE;
+  }
 
-  public ContinousField(String symbol, Instant timestamp, String currency, BigDecimal amount,
-      String field, String interval) {
-    super(symbol, timestamp, currency, field, amount);
+  public ContinousField(String symbol, Instant timestamp, BigDecimal amount, String field,
+      String source, String interval) {
+    super(symbol, timestamp, field, source, amount);
     this.interval = interval;
   }
 
-  public ContinousField(String symbol, Instant timestamp, String currency, BigDecimal amount,
-      String field) {
-    super(symbol, timestamp, currency, field, amount);
+  public ContinousField(String symbol, Instant timestamp, BigDecimal amount, String field,
+      String source) {
+    super(symbol, timestamp, field, source, amount);
   }
 
   public String getInterval() {
     return interval;
+  }
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this).add("interval", this.interval).toString();
   }
 }

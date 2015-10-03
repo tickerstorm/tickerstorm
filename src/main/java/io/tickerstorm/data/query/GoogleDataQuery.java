@@ -1,10 +1,5 @@
 package io.tickerstorm.data.query;
 
-import io.tickerstorm.data.converter.BaseFileConverter;
-import io.tickerstorm.data.converter.DataConverter;
-import io.tickerstorm.entity.Candle;
-import io.tickerstorm.entity.MarketData;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.StringReader;
@@ -13,8 +8,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
-
-import net.engio.mbassy.bus.MBassador;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.LineIterator;
@@ -27,6 +20,12 @@ import org.springframework.stereotype.Component;
 
 import com.google.common.base.Throwables;
 import com.google.common.io.Files;
+
+import io.tickerstorm.data.converter.BaseFileConverter;
+import io.tickerstorm.data.converter.DataConverter;
+import io.tickerstorm.entity.Candle;
+import io.tickerstorm.entity.MarketData;
+import net.engio.mbassy.bus.MBassador;
 
 @Component
 public class GoogleDataQuery extends BaseFileConverter implements QueryBuilder {
@@ -118,16 +117,19 @@ public class GoogleDataQuery extends BaseFileConverter implements QueryBuilder {
         mins = Integer.valueOf(args[0]);
       }
 
-      Candle c = new Candle();
-      c.symbol = symbol;
-      c.close = new BigDecimal(args[1]);
-      c.high = new BigDecimal(args[2]);
-      c.low = new BigDecimal(args[3]);
-      c.open = new BigDecimal(args[4]);
-      c.volume = new BigDecimal(args[4]).multiply(new BigDecimal("1000")).intValue();
-      c.timestamp = timestamp.plus(mins, ChronoUnit.MINUTES);
-      c.interval = Candle.MIN_1_INTERVAL;
-      c.source = "Google";
+      Candle c = new Candle(symbol, "Google", timestamp.plus(mins, ChronoUnit.MINUTES),
+          new BigDecimal(args[4]), new BigDecimal(args[1]), new BigDecimal(args[2]),
+          new BigDecimal(args[3]), Candle.MIN_1_INTERVAL,
+          new BigDecimal(args[5]).multiply(new BigDecimal("1000")).intValue());
+      // c.symbol = symbol;
+      // c.close = new BigDecimal(args[1]);
+      // c.high = new BigDecimal(args[2]);
+      // c.low = new BigDecimal(args[3]);
+      // c.open = new BigDecimal(args[4]);
+      // c.volume = new BigDecimal(args[5]).multiply(new BigDecimal("1000")).intValue();
+      // c.timestamp = timestamp.plus(mins, ChronoUnit.MINUTES);
+      // c.interval = Candle.MIN_1_INTERVAL;
+      // c.source = "Google";
       md.add(c);
 
       if (historical != null)
@@ -146,7 +148,8 @@ public class GoogleDataQuery extends BaseFileConverter implements QueryBuilder {
   @Override
   public void onFileCreate(File file) {
 
-    if (file.getPath().contains(provider()) && Files.getFileExtension(file.getPath()).equals("csv")) {
+    if (file.getPath().contains(provider())
+        && Files.getFileExtension(file.getPath()).equals("csv")) {
       logger.info("Converting " + file.getPath());
 
       String symbol = Files.getNameWithoutExtension(file.getName());

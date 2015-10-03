@@ -1,7 +1,7 @@
 package io.tickerstorm.strategy.backtest;
 
 import io.tickerstorm.data.feed.HistoricalFeedQuery;
-import io.tickerstorm.strategy.bolt.CSVOutputBolt;
+import io.tickerstorm.strategy.bolt.CSVWriterBolt;
 import io.tickerstorm.strategy.bolt.ClockBolt;
 import io.tickerstorm.strategy.bolt.ComputeAverageBolt;
 import io.tickerstorm.strategy.bolt.LogginBolt;
@@ -40,10 +40,13 @@ public abstract class BacktestRunner {
   private final String NAME = "storm-topology";
 
   @Autowired
-  private CSVOutputBolt csvBolt;
+  private CSVWriterBolt csvBolt;
 
   @Autowired
   private JmsTemplate queryTemplate;
+
+  @Autowired
+  private ComputeAverageBolt aveBolt;
 
   @PostConstruct
   public void init() throws Exception {
@@ -51,7 +54,7 @@ public abstract class BacktestRunner {
     TopologyBuilder builder = new TopologyBuilder();
     builder.setSpout("marketdata", jmsSpout);
     builder.setBolt("clock", clockBolt).shuffleGrouping("marketdata");
-    builder.setBolt("ave", new ComputeAverageBolt()).shuffleGrouping("clock");
+    builder.setBolt("ave", aveBolt).shuffleGrouping("clock");
     builder.setBolt("logger", loggingBolt).shuffleGrouping("ave");
     builder.setBolt("csv", csvBolt).shuffleGrouping("ave");
 
