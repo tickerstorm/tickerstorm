@@ -3,11 +3,6 @@ package io.tickerstorm.data.feed;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
-import io.tickerstorm.data.TestMarketDataServiceConfig;
-import io.tickerstorm.data.dao.MarketDataDao;
-import io.tickerstorm.data.jms.Destinations;
-import io.tickerstorm.entity.Candle;
-import io.tickerstorm.entity.MarketData;
 
 import java.io.File;
 import java.time.LocalDateTime;
@@ -37,10 +32,16 @@ import org.testng.annotations.Test;
 import com.google.common.base.Throwables;
 import com.google.common.io.Files;
 
+import io.tickerstorm.data.TestMarketDataServiceConfig;
+import io.tickerstorm.data.dao.MarketDataDao;
+import io.tickerstorm.data.jms.Destinations;
+import io.tickerstorm.entity.Candle;
+import io.tickerstorm.entity.MarketData;
+
 @DirtiesContext
 @ContextConfiguration(classes = {TestMarketDataServiceConfig.class})
-public class HistoricalJmsDataFeedITCase extends AbstractTestNGSpringContextTests implements
-    MessageListener {
+public class HistoricalJmsDataFeedITCase extends AbstractTestNGSpringContextTests
+    implements MessageListener {
 
   @Autowired
   private JmsTemplate jmsTemplate;
@@ -60,8 +61,8 @@ public class HistoricalJmsDataFeedITCase extends AbstractTestNGSpringContextTest
   @BeforeClass
   public void dataSetup() throws Exception {
     FileUtils.forceMkdir(new File("./data/Google"));
-    Files.copy(new File("./src/test/resources/data/Google/TOL.csv"), new File(
-        "./data/Google/TOL.csv"));
+    Files.copy(new File("./src/test/resources/data/Google/TOL.csv"),
+        new File("./data/Google/TOL.csv"));
     Thread.sleep(10000);
   }
 
@@ -100,7 +101,7 @@ public class HistoricalJmsDataFeedITCase extends AbstractTestNGSpringContextTest
       }
     });
 
-    Thread.sleep(3000);
+    Thread.sleep(4000);
     assertEquals(count.get(), expCount);
     assertTrue(verified);
 

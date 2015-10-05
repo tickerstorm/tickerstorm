@@ -1,7 +1,5 @@
 package io.tickerstorm.data;
 
-import io.tickerstorm.data.jms.ByDestinationNameJmsResolver;
-
 import javax.jms.ConnectionFactory;
 import javax.jms.Session;
 
@@ -15,17 +13,19 @@ import org.springframework.context.annotation.Import;
 import org.springframework.jms.annotation.EnableJms;
 import org.springframework.jms.core.JmsTemplate;
 
+import io.tickerstorm.data.jms.ByDestinationNameJmsResolver;
+
 @EnableJms
 @Configuration
 @ComponentScan(basePackages = {"io.tickerstorm.data"})
 @Import({CommonConfig.class})
 public class MarketDataServiceConfig {
 
-  public static final Logger logger = org.slf4j.LoggerFactory
-      .getLogger(MarketDataServiceConfig.class);
+  public static final Logger logger =
+      org.slf4j.LoggerFactory.getLogger(MarketDataServiceConfig.class);
 
   @Value("${jms.transport}")
-  private String transport;
+  protected String transport;
 
   @Bean
   public ConnectionFactory buildActiveMQConnectionFactory() throws Exception {

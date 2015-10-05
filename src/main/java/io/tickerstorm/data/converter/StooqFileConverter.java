@@ -82,8 +82,6 @@ public class StooqFileConverter extends BaseFileConverter implements DataConvert
 
               String[] cols = line.split(",");
 
-              c.symbol = symbol;
-
               try {
 
                 c = new Candle(symbol, provider(),

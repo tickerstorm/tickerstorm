@@ -75,7 +75,7 @@ public class DukascopyFileConverter extends BaseFileConverter {
           // c.volume = new BigDecimal(cols[5]).multiply(new BigDecimal("1000000")).intValue();
           // c.interval = getInterval(path);
           // c.source = provider();
-          // historical.post(c).asynchronously();
+          historical.post(c).asynchronously();
           data.add(c);
 
         }

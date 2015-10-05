@@ -3,17 +3,8 @@ package io.tickerstorm.data.query;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
-import io.tickerstorm.data.MarketDataServiceConfig;
-import io.tickerstorm.data.dao.MarketDataDao;
-import io.tickerstorm.entity.Candle;
-import io.tickerstorm.entity.MarketData;
 
 import java.io.File;
-
-import net.engio.mbassy.bus.MBassador;
-import net.engio.mbassy.listener.Handler;
-import net.engio.mbassy.listener.Listener;
-import net.engio.mbassy.listener.References;
 
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,8 +19,17 @@ import org.testng.annotations.Test;
 
 import com.google.common.io.Files;
 
+import io.tickerstorm.data.TestMarketDataServiceConfig;
+import io.tickerstorm.data.dao.MarketDataDao;
+import io.tickerstorm.entity.Candle;
+import io.tickerstorm.entity.MarketData;
+import net.engio.mbassy.bus.MBassador;
+import net.engio.mbassy.listener.Handler;
+import net.engio.mbassy.listener.Listener;
+import net.engio.mbassy.listener.References;
+
 @DirtiesContext
-@ContextConfiguration(classes = {MarketDataServiceConfig.class})
+@ContextConfiguration(classes = {TestMarketDataServiceConfig.class})
 public class GoogleDataQueryITCase extends AbstractTestNGSpringContextTests {
 
   GoogleDataQuery query;
@@ -87,10 +87,10 @@ public class GoogleDataQueryITCase extends AbstractTestNGSpringContextTests {
     verifier = new GoogleDataVerifier();
     bus.subscribe(verifier);
 
-    Files.copy(new File("./src/test/resources/data/Google/TOL.csv"), new File(
-        "./data/Google/TOL.csv"));
+    Files.copy(new File("./src/test/resources/data/Google/TOL.csv"),
+        new File("./data/Google/TOL.csv"));
 
-    Thread.sleep(20000);
+    Thread.sleep(4000);
     assertTrue(verified);
 
     Long count = dao.count();

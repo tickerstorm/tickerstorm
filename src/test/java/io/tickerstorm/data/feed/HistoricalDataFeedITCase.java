@@ -3,20 +3,11 @@ package io.tickerstorm.data.feed;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
-import io.tickerstorm.data.MarketDataServiceConfig;
-import io.tickerstorm.data.dao.MarketDataDao;
-import io.tickerstorm.entity.Candle;
-import io.tickerstorm.entity.MarketData;
 
 import java.io.File;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import net.engio.mbassy.bus.MBassador;
-import net.engio.mbassy.listener.Handler;
-import net.engio.mbassy.listener.Listener;
-import net.engio.mbassy.listener.References;
 
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,8 +23,17 @@ import org.testng.annotations.Test;
 
 import com.google.common.io.Files;
 
+import io.tickerstorm.data.TestMarketDataServiceConfig;
+import io.tickerstorm.data.dao.MarketDataDao;
+import io.tickerstorm.entity.Candle;
+import io.tickerstorm.entity.MarketData;
+import net.engio.mbassy.bus.MBassador;
+import net.engio.mbassy.listener.Handler;
+import net.engio.mbassy.listener.Listener;
+import net.engio.mbassy.listener.References;
+
 @DirtiesContext
-@ContextConfiguration(classes = {MarketDataServiceConfig.class})
+@ContextConfiguration(classes = {TestMarketDataServiceConfig.class})
 public class HistoricalDataFeedITCase extends AbstractTestNGSpringContextTests {
 
   @Qualifier("realtime")
@@ -58,8 +58,8 @@ public class HistoricalDataFeedITCase extends AbstractTestNGSpringContextTests {
   public void dataSetup() throws Exception {
     realtimeBus.subscribe(new HistoricalDataFeedVerifier());
     FileUtils.forceMkdir(new File("./data/Google"));
-    Files.copy(new File("./src/test/resources/data/Google/TOL.csv"), new File(
-        "./data/Google/TOL.csv"));
+    Files.copy(new File("./src/test/resources/data/Google/TOL.csv"),
+        new File("./data/Google/TOL.csv"));
     Thread.sleep(10000);
   }
 
@@ -86,7 +86,7 @@ public class HistoricalDataFeedITCase extends AbstractTestNGSpringContextTests {
     query.zone = ZoneOffset.ofHours(-7);
     queryBus.post(query).asynchronously();
 
-    Thread.sleep(3000);
+    Thread.sleep(4000);
     assertEquals(count.get(), expCount);
     assertTrue(verified);
   }

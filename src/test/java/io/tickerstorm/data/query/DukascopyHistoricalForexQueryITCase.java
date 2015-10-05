@@ -3,18 +3,9 @@ package io.tickerstorm.data.query;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
-import io.tickerstorm.data.MarketDataServiceConfig;
-import io.tickerstorm.data.dao.MarketDataDao;
-import io.tickerstorm.entity.Candle;
-import io.tickerstorm.entity.MarketData;
 
 import java.io.File;
 import java.math.BigDecimal;
-
-import net.engio.mbassy.bus.MBassador;
-import net.engio.mbassy.listener.Handler;
-import net.engio.mbassy.listener.Listener;
-import net.engio.mbassy.listener.References;
 
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +19,15 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import com.google.common.io.Files;
+
+import io.tickerstorm.data.MarketDataServiceConfig;
+import io.tickerstorm.data.dao.MarketDataDao;
+import io.tickerstorm.entity.Candle;
+import io.tickerstorm.entity.MarketData;
+import net.engio.mbassy.bus.MBassador;
+import net.engio.mbassy.listener.Handler;
+import net.engio.mbassy.listener.Listener;
+import net.engio.mbassy.listener.References;
 
 @DirtiesContext
 @ContextConfiguration(classes = {MarketDataServiceConfig.class})
@@ -57,8 +57,8 @@ public class DukascopyHistoricalForexQueryITCase extends AbstractTestNGSpringCon
   public void tearDown() {
     bus.subscribe(verifier);
     session.getSession().execute("TRUNCATE marketdata");
-    FileUtils.deleteQuietly(new File(
-        "./data/Dukascopy/AUDCAD_Candlestick_1_m_BID_01.06.2015-06.06.2015.csv"));
+    FileUtils.deleteQuietly(
+        new File("./data/Dukascopy/AUDCAD_Candlestick_1_m_BID_01.06.2015-06.06.2015.csv"));
   }
 
   @Test
@@ -67,13 +67,12 @@ public class DukascopyHistoricalForexQueryITCase extends AbstractTestNGSpringCon
     verifier = new DownloadGloabForextVerification();
     bus.subscribe(verifier);
 
-    Files
-        .copy(
-            new File(
-                "./src/test/resources/data/Dukascopy/AUDCAD_Candlestick_1_m_BID_01.06.2015-06.06.2015.csv"),
-            new File("./data/Dukascopy/AUDCAD_Candlestick_1_m_BID_01.06.2015-06.06.2015.csv"));
+    Files.copy(
+        new File(
+            "./src/test/resources/data/Dukascopy/AUDCAD_Candlestick_1_m_BID_01.06.2015-06.06.2015.csv"),
+        new File("./data/Dukascopy/AUDCAD_Candlestick_1_m_BID_01.06.2015-06.06.2015.csv"));
 
-    Thread.sleep(60000);
+    Thread.sleep(4000);
 
     Long count = dao.count();
     assertTrue(count > 0);

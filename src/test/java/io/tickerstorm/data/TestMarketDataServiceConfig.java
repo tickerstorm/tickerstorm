@@ -1,14 +1,16 @@
 package io.tickerstorm.data;
 
-import io.tickerstorm.data.jms.ByDestinationNameJmsResolver;
-import io.tickerstorm.data.jms.Destinations;
-
 import javax.jms.ConnectionFactory;
 import javax.jms.Session;
 
+import org.apache.activemq.broker.BrokerService;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.jms.listener.DefaultMessageListenerContainer;
+
+import io.tickerstorm.data.jms.ByDestinationNameJmsResolver;
+import io.tickerstorm.data.jms.Destinations;
 
 
 
@@ -16,6 +18,7 @@ public class TestMarketDataServiceConfig extends MarketDataServiceConfig {
 
   @Qualifier("realtime")
   @Bean
+  @DependsOn(value = {"brokerService"})
   public DefaultMessageListenerContainer buildQueryListenerContainer(ConnectionFactory factory) {
 
     DefaultMessageListenerContainer container = null;
@@ -32,4 +35,10 @@ public class TestMarketDataServiceConfig extends MarketDataServiceConfig {
     return container;
   }
 
+  @Bean(initMethod = "start", destroyMethod = "stop", name = "brokerService")
+  public BrokerService activemqBroker() throws Exception {
+    BrokerService service = new BrokerService();
+    service.addConnector(transport);
+    return service;
+  }
 }

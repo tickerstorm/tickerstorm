@@ -3,8 +3,6 @@ package io.tickerstorm.data.dao;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
-import io.tickerstorm.data.MarketDataServiceConfig;
-import io.tickerstorm.entity.Candle;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -17,7 +15,10 @@ import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
-@ContextConfiguration(classes = {MarketDataServiceConfig.class})
+import io.tickerstorm.data.TestMarketDataServiceConfig;
+import io.tickerstorm.entity.Candle;
+
+@ContextConfiguration(classes = {TestMarketDataServiceConfig.class})
 public class MarketDataCassandraSinkITCase extends AbstractTestNGSpringContextTests {
 
   @Autowired
