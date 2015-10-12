@@ -1,44 +1,57 @@
 package io.tickerstorm.data.jms;
 
-import io.tickerstorm.entity.MarketData;
+import java.io.Serializable;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.Session;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.jms.core.JmsTemplate;
+import org.springframework.jms.core.MessageCreator;
 
 import net.engio.mbassy.bus.MBassador;
 import net.engio.mbassy.listener.Handler;
 import net.engio.mbassy.listener.Listener;
 import net.engio.mbassy.listener.References;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.jms.core.JmsTemplate;
-import org.springframework.jms.core.MessageCreator;
-import org.springframework.stereotype.Component;
-
-@Qualifier("realtime")
-@Component
 @Listener(references = References.Strong)
 public class EventBusToJMSBridge {
 
-  @Qualifier("realtime")
-  @Autowired
-  private MBassador<MarketData> realtimeBus;
+  private static final Logger logger = LoggerFactory.getLogger(EventBusToJMSBridge.class);
+  private AtomicLong count = new AtomicLong(0);
 
-  @Autowired
-  private JmsTemplate relatimeTemplate;
+  public EventBusToJMSBridge(MBassador<?> eventBus, String destination, JmsTemplate template) {
+    this.bus = eventBus;
+    this.destination = destination;
+    this.template = template;
+  }
+
+  private MBassador<?> bus;
+  private JmsTemplate template;
+  private String destination;
 
   @PostConstruct
   public void init() {
-    realtimeBus.subscribe(this);
+    bus.subscribe(this);
+  }
+
+  @PreDestroy
+  public void destroy() {
+    bus.unsubscribe(this);
   }
 
   @Handler
-  public void onMarketData(MarketData data) {
+  public void onEvent(Serializable data) {
 
-    relatimeTemplate.send(Destinations.TOPIC_REALTIME_MARKETDATA, new MessageCreator() {
+    logger.debug("Event bridge to " + destination + " dispatched a total of "
+        + count.incrementAndGet() + " events");
+
+    template.send(destination, new MessageCreator() {
       @Override
       public Message createMessage(Session session) throws JMSException {
         Message m = session.createObjectMessage(data);
@@ -46,6 +59,7 @@ public class EventBusToJMSBridge {
       }
     });
   }
+
 
 
 }

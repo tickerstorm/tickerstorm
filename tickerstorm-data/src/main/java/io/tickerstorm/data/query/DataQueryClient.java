@@ -1,13 +1,8 @@
 package io.tickerstorm.data.query;
 
-import io.tickerstorm.data.converter.DataConverter.Mode;
-import io.tickerstorm.entity.MarketData;
-
 import java.io.File;
 
 import javax.annotation.PostConstruct;
-
-import net.engio.mbassy.bus.MBassador;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.LineIterator;
@@ -30,6 +25,10 @@ import org.springframework.stereotype.Service;
 import com.google.common.base.Throwables;
 import com.google.common.io.Files;
 
+import io.tickerstorm.data.converter.DataConverter.Mode;
+import io.tickerstorm.entity.MarketData;
+import net.engio.mbassy.bus.MBassador;
+
 @Service
 public class DataQueryClient {
 
@@ -44,9 +43,8 @@ public class DataQueryClient {
   @PostConstruct
   public void init() {
 
-    RequestConfig reqConfig =
-        RequestConfig.custom().setSocketTimeout(30 * 1000).setConnectTimeout(3 * 1000)
-            .setConnectionRequestTimeout(3 * 1000).build();
+    RequestConfig reqConfig = RequestConfig.custom().setSocketTimeout(30 * 1000)
+        .setConnectTimeout(3 * 1000).setConnectionRequestTimeout(3 * 1000).build();
 
     client = HttpClients.custom().setDefaultRequestConfig(reqConfig).build();
   }
@@ -87,8 +85,7 @@ public class DataQueryClient {
     String query = builder.build();
 
     HttpGet get = new HttpGet(query);
-    get.addHeader(
-        HttpHeaders.USER_AGENT,
+    get.addHeader(HttpHeaders.USER_AGENT,
         "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/45.0.2454.85 Safari/537.36");
     get.addHeader(HttpHeaders.ACCEPT,
         "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8");
@@ -103,9 +100,9 @@ public class DataQueryClient {
       int count = 0;
       if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
 
-        if ((response.getFirstHeader(HttpHeaders.CONTENT_TYPE) != null && response
-            .getFirstHeader(HttpHeaders.CONTENT_TYPE).getValue()
-            .equalsIgnoreCase("application/zip"))
+        if ((response.getFirstHeader(HttpHeaders.CONTENT_TYPE) != null
+            && response.getFirstHeader(HttpHeaders.CONTENT_TYPE).getValue()
+                .equalsIgnoreCase("application/zip"))
             || response.getFirstHeader("Content-disposition") != null) {
 
           response = queryFile(builder, response);
@@ -122,7 +119,7 @@ public class DataQueryClient {
             if (md != null && md.length > 0) {
               for (MarketData d : md) {
                 count++;
-                historical.post(d).asynchronously();
+                historical.publish(d);
               }
             }
           }
@@ -135,7 +132,7 @@ public class DataQueryClient {
           if (md != null && md.length > 0) {
             for (MarketData d : md) {
               count++;
-              historical.post(d).asynchronously();
+              historical.publish(d);
             }
           }
         }

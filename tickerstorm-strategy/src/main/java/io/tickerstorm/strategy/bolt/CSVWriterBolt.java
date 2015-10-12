@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.io.IOUtils;
@@ -26,7 +27,10 @@ import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Tuple;
+import backtype.storm.tuple.Values;
 import io.tickerstorm.entity.Field;
+import io.tickerstorm.entity.Marker;
+import io.tickerstorm.entity.Markers;
 import io.tickerstorm.entity.MarketData;
 
 @Component
@@ -36,40 +40,13 @@ public class CSVWriterBolt extends BaseRichBolt {
   private final static Logger logger = LoggerFactory.getLogger(CSVWriterBolt.class);
   private OutputCollector coll;
   private Writer outputFile = null;
+  private File file = null;
   private AtomicBoolean firstLine = new AtomicBoolean(true);
 
   @Override
   public void execute(Tuple tuple) {
 
-    List<Field<?>> columns = new ArrayList<>();
-
-    for (Object o : tuple.getValues()) {
-
-      if (MarketData.class.isAssignableFrom(o.getClass())) {
-
-        columns.addAll(((MarketData) o).getFields());
-
-      } else if (Field.class.isAssignableFrom(o.getClass())) {
-
-        columns.add((Field<?>) o);
-
-      } else if (Collection.class.isAssignableFrom(o.getClass())) {
-
-        for (Object i : (Collection<?>) o) {
-          if (Field.class.isAssignableFrom(i.getClass())) {
-            columns.add((Field<?>) i);
-          }
-        }
-
-      }
-    }
-
-    columns.sort(new Comparator<Field<?>>() {
-      @Override
-      public int compare(Field<?> o1, Field<?> o2) {
-        return (o1.getName().toLowerCase().compareTo(o2.getName().toLowerCase()));
-      }
-    });
+    List<Field<?>> columns = sortFields(tuple);
 
     try {
 
@@ -83,6 +60,15 @@ public class CSVWriterBolt extends BaseRichBolt {
 
     } catch (IOException e) {
       logger.error(e.getMessage(), e);
+    }
+
+    if (tuple.contains(Fields.MARKER.fieldName())) {
+      Marker m = (Marker) tuple.getValueByField(Fields.MARKER.fieldName());
+      if (m.getMarkers().contains(Markers.SESSION_END.toString())) {
+
+        coll.emit(new Values(file.getAbsolutePath()));
+
+      }
     }
 
     coll.ack(tuple);
@@ -114,38 +100,76 @@ public class CSVWriterBolt extends BaseRichBolt {
     return line;
   }
 
-  @Override
-  public void prepare(Map config, TopologyContext arg1, OutputCollector arg2) {
-    this.coll = arg2;
-    String fileName = (String) config.get("output.file.csv.name");
-    firstLine = new AtomicBoolean(true);
+  private List<Field<?>> sortFields(Tuple tuple) {
 
-    if (!StringUtils.isEmpty(fileName)) {
-      File file = new File(fileName);
+    List<Field<?>> columns = new ArrayList<>();
 
-      try {
+    for (Object o : tuple.getValues()) {
 
-        if (file.exists()) {
+      if (MarketData.class.isAssignableFrom(o.getClass())
+          && !Marker.class.isAssignableFrom(o.getClass())) {
 
-          fileName =
-              Files.getNameWithoutExtension(fileName).concat("-" + Instant.now().getEpochSecond())
-                  .concat(Files.getFileExtension(fileName));
+        columns.addAll(((MarketData) o).getFields());
+
+      } else if (Field.class.isAssignableFrom(o.getClass())) {
+
+        columns.add((Field<?>) o);
+
+      } else if (Collection.class.isAssignableFrom(o.getClass())) {
+
+        for (Object i : (Collection<?>) o) {
+          if (Field.class.isAssignableFrom(i.getClass())) {
+            columns.add((Field<?>) i);
+          }
         }
-
-        Files.createParentDirs(file);
-        Files.touch(file);
-        outputFile = Files.newWriter(file, Charset.forName("UTF-8"));
-
-      } catch (Exception e) {
-        Throwables.propagate(e);
       }
     }
+
+    columns.sort(new Comparator<Field<?>>() {
+      @Override
+      public int compare(Field<?> o1, Field<?> o2) {
+        return (o1.getName().toLowerCase().compareTo(o2.getName().toLowerCase()));
+      }
+    });
+
+    return columns;
 
   }
 
   @Override
-  public void declareOutputFields(OutputFieldsDeclarer arg0) {
-    // none
+  public void prepare(Map config, TopologyContext context, OutputCollector collector) {
+
+    this.coll = collector;
+    String fileName = (String) config.get("output.file.csv.name");
+    firstLine = new AtomicBoolean(true);
+
+    if (StringUtils.isEmpty(fileName)) {
+      fileName = "/tmp/" + UUID.randomUUID().toString() + ".csv";
+    }
+
+    file = new File(fileName);
+
+    try {
+
+      if (file.exists()) {
+        fileName = Files.getNameWithoutExtension(fileName)
+            .concat("-" + Instant.now().getEpochSecond()).concat(Files.getFileExtension(fileName));
+      }
+
+      Files.createParentDirs(file);
+      Files.touch(file);
+      outputFile = Files.newWriter(file, Charset.forName("UTF-8"));
+
+    } catch (Exception e) {
+      Throwables.propagate(e);
+    }
+
+
+  }
+
+  @Override
+  public void declareOutputFields(OutputFieldsDeclarer declarer) {
+    declarer.declare(new backtype.storm.tuple.Fields("file.csv"));
   }
 
   @Override

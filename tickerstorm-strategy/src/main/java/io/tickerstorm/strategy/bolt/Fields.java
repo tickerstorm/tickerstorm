@@ -8,8 +8,8 @@ import com.google.common.collect.Sets;
 
 public enum Fields {
 
-  MARKETDATA("marketdata"), CANDEL("candel"), QUOTE("quote"), TICK("tick"), AVE("ave"), SMA("ma"), NOW(
-      "now");
+  MARKETDATA("marketdata"), CANDEL("candel"), QUOTE("quote"), TICK("tick"), AVE("ave"), SMA(
+      "ma"), NOW("now"), MARKER("marker");
 
   private final String fieldName;
 
@@ -22,8 +22,8 @@ public enum Fields {
   }
 
   public static Set<String> marketdataFields() {
-    return Collections.unmodifiableSet(Sets.newHashSet(
-        io.tickerstorm.strategy.bolt.Fields.MARKETDATA.fieldName(),
-        io.tickerstorm.strategy.bolt.Fields.NOW.fieldName()));
+    return Collections
+        .unmodifiableSet(Sets.newHashSet(io.tickerstorm.strategy.bolt.Fields.MARKETDATA.fieldName(),
+            io.tickerstorm.strategy.bolt.Fields.NOW.fieldName()));
   }
 }

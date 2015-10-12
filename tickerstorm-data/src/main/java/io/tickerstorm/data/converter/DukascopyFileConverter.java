@@ -75,7 +75,7 @@ public class DukascopyFileConverter extends BaseFileConverter {
           // c.volume = new BigDecimal(cols[5]).multiply(new BigDecimal("1000000")).intValue();
           // c.interval = getInterval(path);
           // c.source = provider();
-          historical.post(c).asynchronously();
+          historical.publishAsync(c);
           data.add(c);
 
         }
@@ -120,7 +120,8 @@ public class DukascopyFileConverter extends BaseFileConverter {
         && Files.getFileExtension(file.getPath()).equals("csv")) {
       logger.info("Converting " + file.getPath());
       long start = System.currentTimeMillis();
-      convert(file.getPath());
+      MarketData[] data = convert(file.getPath());
+      logger.info("Converted " + data.length + " records.");
       logger.debug("Conversion took " + (System.currentTimeMillis() - start) + "ms");
       file.delete();
     }

@@ -3,15 +3,16 @@ package io.tickerstorm.data.query;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
+
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
 import io.tickerstorm.entity.Candle;
 import io.tickerstorm.entity.MarketData;
 import net.engio.mbassy.bus.MBassador;
 import net.engio.mbassy.listener.Handler;
 import net.engio.mbassy.listener.Listener;
 import net.engio.mbassy.listener.References;
-
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 public class YahooChartsDataQueryITCase {
 

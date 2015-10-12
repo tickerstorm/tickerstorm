@@ -126,7 +126,7 @@ public class StooqFileConverter extends BaseFileConverter implements DataConvert
               continue;
             }
 
-            historical.post(c).asynchronously();;
+            historical.publishAsync(c);
             data.add(c);
           }
         }
@@ -166,7 +166,8 @@ public class StooqFileConverter extends BaseFileConverter implements DataConvert
         && Files.getFileExtension(file.getPath()).equals("txt")) {
       logger.info("Converting " + file.getName());
       long start = System.currentTimeMillis();
-      convert(f.getPath());
+      MarketData[] data = convert(f.getPath());
+      logger.info("Converted " + data.length + " records.");
       logger.debug("Conversion took " + (System.currentTimeMillis() - start) + "ms");
       FileUtils.deleteQuietly(file);
     }

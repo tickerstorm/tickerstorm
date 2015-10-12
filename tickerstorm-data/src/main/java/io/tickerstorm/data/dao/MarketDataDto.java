@@ -1,10 +1,5 @@
 package io.tickerstorm.data.dao;
 
-import io.tickerstorm.entity.Candle;
-import io.tickerstorm.entity.MarketData;
-import io.tickerstorm.entity.Quote;
-import io.tickerstorm.entity.Tick;
-
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -20,6 +15,11 @@ import org.springframework.data.cassandra.mapping.Table;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 
+import io.tickerstorm.entity.Candle;
+import io.tickerstorm.entity.MarketData;
+import io.tickerstorm.entity.Quote;
+import io.tickerstorm.entity.Tick;
+
 @Table("marketdata")
 @SuppressWarnings("serial")
 public class MarketDataDto implements Serializable {
@@ -33,27 +33,36 @@ public class MarketDataDto implements Serializable {
 
   public static MarketDataDto convert(MarketData data) {
 
-    MarketDataDto dto = new MarketDataDto();
-    PrimaryKey key = new PrimaryKey();
-    try {
+    if (Candle.TYPE.equals(data.getType()) || Tick.TYPE.equals(data.getType())
+        || Quote.TYPE.equals(data.getType())) {
 
-      mapper.map(data, dto);
-      mapper.map(data, key);
-      key.date = dateFormatter.format(LocalDateTime.ofInstant(data.getTimestamp(), ZoneOffset.UTC));
-      key.hour = LocalDateTime.ofInstant(data.getTimestamp(), ZoneOffset.UTC).get(ChronoField.HOUR_OF_DAY);
-      key.min = LocalDateTime.ofInstant(data.getTimestamp(), ZoneOffset.UTC).get(ChronoField.MINUTE_OF_HOUR);
-      dto.primarykey = key;
-      dto.primarykey.symbol = dto.primarykey.symbol.toLowerCase();
-      dto.primarykey.source = dto.primarykey.source.toLowerCase();
+      MarketDataDto dto = new MarketDataDto();
+      PrimaryKey key = new PrimaryKey();
+      try {
 
-      if (dto.primarykey.interval != null)
-        dto.primarykey.interval = dto.primarykey.interval.toLowerCase();
+        mapper.map(data, dto);
+        mapper.map(data, key);
+        key.date =
+            dateFormatter.format(LocalDateTime.ofInstant(data.getTimestamp(), ZoneOffset.UTC));
+        key.hour = LocalDateTime.ofInstant(data.getTimestamp(), ZoneOffset.UTC)
+            .get(ChronoField.HOUR_OF_DAY);
+        key.min = LocalDateTime.ofInstant(data.getTimestamp(), ZoneOffset.UTC)
+            .get(ChronoField.MINUTE_OF_HOUR);
+        dto.primarykey = key;
+        dto.primarykey.symbol = dto.primarykey.symbol.toLowerCase();
+        dto.primarykey.source = dto.primarykey.source.toLowerCase();
 
-    } catch (Exception e) {
-      Throwables.propagate(e);
+        if (dto.primarykey.interval != null)
+          dto.primarykey.interval = dto.primarykey.interval.toLowerCase();
+
+      } catch (Exception e) {
+        Throwables.propagate(e);
+      }
+
+      return dto;
     }
 
-    return dto;
+    return null;
 
   }
 

@@ -33,7 +33,6 @@ import com.google.common.base.Throwables;
 import com.google.common.io.Files;
 
 import io.tickerstorm.data.TestMarketDataServiceConfig;
-import io.tickerstorm.data.dao.MarketDataDao;
 import io.tickerstorm.data.jms.Destinations;
 import io.tickerstorm.entity.Candle;
 import io.tickerstorm.entity.MarketData;
@@ -48,15 +47,13 @@ public class HistoricalJmsDataFeedITCase extends AbstractTestNGSpringContextTest
 
   @Autowired
   private DefaultMessageListenerContainer container;
+
   @Autowired
   private CassandraOperations session;
 
   boolean verified = false;
   AtomicInteger count = new AtomicInteger(0);
   long expCount = 778;
-
-  @Autowired
-  private MarketDataDao dao;
 
   @BeforeClass
   public void dataSetup() throws Exception {
@@ -101,7 +98,7 @@ public class HistoricalJmsDataFeedITCase extends AbstractTestNGSpringContextTest
       }
     });
 
-    Thread.sleep(4000);
+    Thread.sleep(10000);
     assertEquals(count.get(), expCount);
     assertTrue(verified);
 
@@ -120,20 +117,24 @@ public class HistoricalJmsDataFeedITCase extends AbstractTestNGSpringContextTest
       assertEquals(md.getSource(), "google");
       assertNotNull(md.getTimestamp());
 
-      Candle c = (Candle) md;
-      assertNotNull(c.close);
-      assertTrue(c.close.longValue() > 0);
-      assertNotNull(c.open);
-      assertTrue(c.open.longValue() > 0);
-      assertNotNull(c.low);
-      assertTrue(c.low.longValue() > 0);
-      assertNotNull(c.high);
-      assertTrue(c.high.longValue() > 0);
-      assertNotNull(c.volume);
-      assertTrue(c.volume.longValue() > 0);
-      assertEquals(c.interval, Candle.MIN_1_INTERVAL);
-      verified = true;
-      count.incrementAndGet();
+      if (Candle.class.isAssignableFrom(md.getClass())) {
+
+        Candle c = (Candle) md;
+        assertNotNull(c.close);
+        assertTrue(c.close.longValue() > 0);
+        assertNotNull(c.open);
+        assertTrue(c.open.longValue() > 0);
+        assertNotNull(c.low);
+        assertTrue(c.low.longValue() > 0);
+        assertNotNull(c.high);
+        assertTrue(c.high.longValue() > 0);
+        assertNotNull(c.volume);
+        assertTrue(c.volume.longValue() > 0);
+        assertEquals(c.interval, Candle.MIN_1_INTERVAL);
+        verified = true;
+        count.incrementAndGet();
+      }
+
     } catch (Exception e) {
       Throwables.propagate(e);
     }

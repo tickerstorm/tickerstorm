@@ -14,6 +14,7 @@ public abstract class BaseMarketData implements MarketData, Serializable {
   public Instant timestamp;
   public String symbol;
 
+
   public BaseMarketData() {}
 
   public BaseMarketData(String symbol, String source, Instant timestamp) {

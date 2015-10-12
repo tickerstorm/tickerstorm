@@ -1,28 +1,23 @@
 package io.tickerstorm.strategy.backtest;
 
-import io.tickerstorm.data.feed.HistoricalFeedQuery;
-import io.tickerstorm.strategy.bolt.CSVWriterBolt;
-import io.tickerstorm.strategy.bolt.ClockBolt;
-import io.tickerstorm.strategy.bolt.ComputeAverageBolt;
-import io.tickerstorm.strategy.bolt.LogginBolt;
-
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import javax.jms.JMSException;
-import javax.jms.Message;
-import javax.jms.Session;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jms.core.JmsTemplate;
-import org.springframework.jms.core.MessageCreator;
+import org.springframework.boot.SpringApplication;
 
 import backtype.storm.Config;
 import backtype.storm.LocalCluster;
 import backtype.storm.contrib.jms.spout.JmsSpout;
 import backtype.storm.topology.TopologyBuilder;
+import io.tickerstorm.strategy.BacktestTopologyContext;
+import io.tickerstorm.strategy.bolt.CSVWriterBolt;
+import io.tickerstorm.strategy.bolt.ClockBolt;
+import io.tickerstorm.strategy.bolt.ComputeAverageBolt;
+import io.tickerstorm.strategy.bolt.LogginBolt;
 
 
-public abstract class BacktestRunner {
+public class BacktestTopology {
 
   private Config stormConfig = new Config();
 
@@ -43,10 +38,11 @@ public abstract class BacktestRunner {
   private CSVWriterBolt csvBolt;
 
   @Autowired
-  private JmsTemplate queryTemplate;
-
-  @Autowired
   private ComputeAverageBolt aveBolt;
+
+  public static void main(String[] args) throws Exception {
+    SpringApplication.run(BacktestTopologyContext.class, args);
+  }
 
   @PostConstruct
   public void init() throws Exception {
@@ -64,24 +60,7 @@ public abstract class BacktestRunner {
     cluster = new LocalCluster();
     cluster.submitTopology(NAME, stormConfig, builder.createTopology());
 
-    Thread.sleep(1000);
-
-    initData();
   }
-
-  protected abstract void initData();
-
-  protected void sendQuery(HistoricalFeedQuery query) {
-    queryTemplate.send(new MessageCreator() {
-
-      @Override
-      public Message createMessage(Session session) throws JMSException {
-        Message m = session.createObjectMessage(query);
-        return m;
-      }
-    });
-  }
-
 
   @PreDestroy
   private void destroy() {

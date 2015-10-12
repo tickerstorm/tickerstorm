@@ -1,14 +1,15 @@
 package io.tickerstorm.data.feed;
 
-import io.tickerstorm.entity.Candle;
-
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 import com.google.common.collect.Sets;
+
+import io.tickerstorm.entity.Candle;
 
 @SuppressWarnings("serial")
 public class HistoricalFeedQuery implements Serializable {
@@ -19,6 +20,7 @@ public class HistoricalFeedQuery implements Serializable {
   public LocalDateTime until = LocalDateTime.now();
   public String source = "google";
   public Set<String> periods = Sets.newHashSet(Candle.MIN_1_INTERVAL);
+  public final String id = UUID.randomUUID().toString();
 
   public HistoricalFeedQuery(LocalDateTime from, LocalDateTime until, String... symbols) {
     this.symbols.addAll(Sets.newHashSet(symbols));

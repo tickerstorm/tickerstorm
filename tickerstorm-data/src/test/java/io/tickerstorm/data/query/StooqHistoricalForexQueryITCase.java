@@ -5,6 +5,7 @@ import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
 import java.io.File;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,8 +33,6 @@ import net.engio.mbassy.listener.References;
 @ContextConfiguration(classes = {TestMarketDataServiceConfig.class})
 public class StooqHistoricalForexQueryITCase extends AbstractTestNGSpringContextTests {
 
-  StooqHistoricalForexQuery query;
-
   @Autowired
   private DataQueryClient client;
 
@@ -49,11 +48,12 @@ public class StooqHistoricalForexQueryITCase extends AbstractTestNGSpringContext
 
   Object verifier;
 
-  boolean verified = false;
+  private AtomicLong count = new AtomicLong(0);
 
   @BeforeMethod
   public void setup() throws Exception {
-    verified = false;
+    verifier = new DownloadGloabForextVerification();
+    bus.subscribe(verifier);
     FileUtils.forceMkdir(new File("./data/Stooq"));
   }
 
@@ -62,39 +62,34 @@ public class StooqHistoricalForexQueryITCase extends AbstractTestNGSpringContext
     bus.unsubscribe(verifier);
     session.getSession().execute("TRUNCATE marketdata");
     FileUtils.deleteQuietly(new File("./data/Stooq/5_world_txt.zip"));
+    count.set(0);
   }
 
   @Test
   public void parseGloabForext() throws Exception {
 
-    verifier = new DownloadGloabForextVerification();
-    bus.subscribe(verifier);
-
     Files.copy(new File("./src/test/resources/data/Stooq/5_world_txt.zip"),
         new File("./data/Stooq/5_world_txt.zip"));
 
-    Thread.sleep(4000);
+    Thread.sleep(15000);
 
-    Long count = dao.count();
-    assertTrue(count > 0);
-    assertTrue(verified);
+    Long daoCount = dao.count();
+    assertEquals(daoCount.longValue(), 62355L);
+    assertEquals(count.get(), 62355L);
 
   }
 
   @Test
   public void downloadGloabForext() throws Exception {
 
-    verifier = new DownloadGloabForextVerification();
-    bus.subscribe(verifier);
-
-    query = new StooqHistoricalForexQuery().currencies().min5();
+    StooqHistoricalForexQuery query = new StooqHistoricalForexQuery().currencies().min5();
     client.query(query);
 
-    Thread.sleep(60000);
+    Thread.sleep(15000);
 
     Long count = dao.count();
     assertTrue(count > 0);
-    assertTrue(verified);
+
   }
 
   @Listener(references = References.Strong)
@@ -117,7 +112,7 @@ public class StooqHistoricalForexQueryITCase extends AbstractTestNGSpringContext
       assertNotNull(c.high);
       assertTrue(c.high.longValue() > 0);
       assertEquals(c.interval, Candle.MIN_5_INTERVAL);
-      verified = true;
+      count.incrementAndGet();
 
     }
 

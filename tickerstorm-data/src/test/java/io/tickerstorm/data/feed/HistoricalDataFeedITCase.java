@@ -24,9 +24,10 @@ import org.testng.annotations.Test;
 import com.google.common.io.Files;
 
 import io.tickerstorm.data.TestMarketDataServiceConfig;
-import io.tickerstorm.data.dao.MarketDataDao;
 import io.tickerstorm.entity.Candle;
+import io.tickerstorm.entity.Markers;
 import io.tickerstorm.entity.MarketData;
+import io.tickerstorm.entity.MarketDataMarker;
 import net.engio.mbassy.bus.MBassador;
 import net.engio.mbassy.listener.Handler;
 import net.engio.mbassy.listener.Listener;
@@ -44,23 +45,21 @@ public class HistoricalDataFeedITCase extends AbstractTestNGSpringContextTests {
   @Autowired
   private MBassador<HistoricalFeedQuery> queryBus;
 
+  MarketDataMarker start;
+  MarketDataMarker end;
+
   @Autowired
   private CassandraOperations session;
 
-  boolean verified = false;
   AtomicInteger count = new AtomicInteger(0);
-  long expCount = 778;
-
-  @Autowired
-  private MarketDataDao dao;
+  int expCount = 778;
 
   @BeforeClass
   public void dataSetup() throws Exception {
-    realtimeBus.subscribe(new HistoricalDataFeedVerifier());
     FileUtils.forceMkdir(new File("./data/Google"));
     Files.copy(new File("./src/test/resources/data/Google/TOL.csv"),
         new File("./data/Google/TOL.csv"));
-    Thread.sleep(10000);
+    Thread.sleep(5000);
   }
 
   @AfterClass
@@ -71,12 +70,13 @@ public class HistoricalDataFeedITCase extends AbstractTestNGSpringContextTests {
 
   @BeforeMethod
   public void setup() {
-    count = new AtomicInteger(0);
-    verified = false;
+    realtimeBus.subscribe(new HistoricalDataFeedVerifier());
   }
 
   @Test
   public void testSimpleCandleQuery() throws Exception {
+
+    assertEquals(count.get(), 0L);
 
     HistoricalFeedQuery query = new HistoricalFeedQuery("TOL");
     query.from = LocalDateTime.of(2015, 6, 10, 0, 0);
@@ -84,11 +84,19 @@ public class HistoricalDataFeedITCase extends AbstractTestNGSpringContextTests {
     query.source = "google";
     query.periods.add(Candle.MIN_1_INTERVAL);
     query.zone = ZoneOffset.ofHours(-7);
-    queryBus.post(query).asynchronously();
+    queryBus.publish(query);
 
-    Thread.sleep(4000);
+    Thread.sleep(3000);
+
     assertEquals(count.get(), expCount);
-    assertTrue(verified);
+
+    assertNotNull(start);
+    assertNotNull(end);
+    assertEquals(start.id, query.id);
+    assertEquals(end.id, query.id);
+    assertEquals(start.expect, Integer.valueOf(expCount));
+    assertEquals(end.expect, Integer.valueOf(0));
+
   }
 
 
@@ -102,20 +110,30 @@ public class HistoricalDataFeedITCase extends AbstractTestNGSpringContextTests {
       assertEquals(md.getSource(), "google");
       assertNotNull(md.getTimestamp());
 
-      Candle c = (Candle) md;
-      assertNotNull(c.close);
-      assertTrue(c.close.longValue() > 0);
-      assertNotNull(c.open);
-      assertTrue(c.open.longValue() > 0);
-      assertNotNull(c.low);
-      assertTrue(c.low.longValue() > 0);
-      assertNotNull(c.high);
-      assertTrue(c.high.longValue() > 0);
-      assertNotNull(c.volume);
-      assertTrue(c.volume.longValue() > 0);
-      assertEquals(c.interval, Candle.MIN_1_INTERVAL);
-      verified = true;
-      count.incrementAndGet();
+      if (MarketDataMarker.class.isAssignableFrom(md.getClass())) {
+
+        if (((MarketDataMarker) md).getMarkers().contains(Markers.QUERY_START.toString()))
+          start = (MarketDataMarker) md;
+
+        if (((MarketDataMarker) md).getMarkers().contains(Markers.QUERY_END.toString()))
+          end = (MarketDataMarker) md;
+
+      } else if (Candle.class.isAssignableFrom(md.getClass())) {
+
+        Candle c = (Candle) md;
+        assertNotNull(c.close);
+        assertTrue(c.close.longValue() > 0);
+        assertNotNull(c.open);
+        assertTrue(c.open.longValue() > 0);
+        assertNotNull(c.low);
+        assertTrue(c.low.longValue() > 0);
+        assertNotNull(c.high);
+        assertTrue(c.high.longValue() > 0);
+        assertNotNull(c.volume);
+        assertTrue(c.volume.longValue() > 0);
+        assertEquals(c.interval, Candle.MIN_1_INTERVAL);
+        count.incrementAndGet();
+      }
     }
 
   }

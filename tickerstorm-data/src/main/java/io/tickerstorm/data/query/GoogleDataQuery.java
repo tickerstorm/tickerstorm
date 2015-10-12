@@ -130,11 +130,11 @@ public class GoogleDataQuery extends BaseFileConverter implements QueryBuilder {
       // c.timestamp = timestamp.plus(mins, ChronoUnit.MINUTES);
       // c.interval = Candle.MIN_1_INTERVAL;
       // c.source = "Google";
+
+      if (historical != null)// in case being invoked standalone (i.e. tests)
+        historical.publishAsync(c);
+
       md.add(c);
-
-      if (historical != null)
-        historical.post(c).asynchronously();
-
     }
 
     return md.toArray(new MarketData[] {});
@@ -150,14 +150,17 @@ public class GoogleDataQuery extends BaseFileConverter implements QueryBuilder {
 
     if (file.getPath().contains(provider())
         && Files.getFileExtension(file.getPath()).equals("csv")) {
-      logger.info("Converting " + file.getPath());
 
       String symbol = Files.getNameWithoutExtension(file.getName());
 
       try (java.io.InputStream s = new FileInputStream(file.getPath())) {
 
         String content = new String("SYMBOL=" + symbol + "\n").concat(IOUtils.toString(s));
-        convert(content);
+        logger.info("Converting " + file.getPath());
+        long start = System.currentTimeMillis();
+        MarketData[] data = convert(content);
+        logger.info("Converting " + data.length + " records took "
+            + (System.currentTimeMillis() - start) + "ms");
 
       } catch (Exception e) {
         Throwables.propagate(e);

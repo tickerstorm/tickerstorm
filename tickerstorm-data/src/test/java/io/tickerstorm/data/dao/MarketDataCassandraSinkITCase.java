@@ -10,6 +10,7 @@ import java.util.Date;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.cassandra.core.CassandraOperations;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.testng.annotations.AfterMethod;
@@ -18,6 +19,7 @@ import org.testng.annotations.Test;
 import io.tickerstorm.data.TestMarketDataServiceConfig;
 import io.tickerstorm.entity.Candle;
 
+@DirtiesContext
 @ContextConfiguration(classes = {TestMarketDataServiceConfig.class})
 public class MarketDataCassandraSinkITCase extends AbstractTestNGSpringContextTests {
 
@@ -36,7 +38,7 @@ public class MarketDataCassandraSinkITCase extends AbstractTestNGSpringContextTe
   }
 
   @Test
-  public void storeCandle() {
+  public void storeCandle() throws Exception {
 
     Candle c = new Candle();
     c.source = "test";
@@ -48,6 +50,8 @@ public class MarketDataCassandraSinkITCase extends AbstractTestNGSpringContextTe
     c.volume = 10;
     c.symbol = "AAPL";
     sink.onMarketData(c);
+
+    Thread.sleep(5000);
 
     long count = dao.count();
 

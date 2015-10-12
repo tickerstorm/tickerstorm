@@ -1,21 +1,8 @@
 package io.tickerstorm.data.feed;
 
-import io.tickerstorm.data.dao.MarketDataDto;
-import io.tickerstorm.data.jms.Destinations;
-import io.tickerstorm.entity.Candle;
-import io.tickerstorm.entity.MarketData;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-
-import net.engio.mbassy.bus.MBassador;
-import net.engio.mbassy.listener.Handler;
-import net.engio.mbassy.listener.Listener;
-import net.engio.mbassy.listener.References;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,18 +17,21 @@ import org.springframework.stereotype.Repository;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
 
+import io.tickerstorm.data.dao.MarketDataDto;
+import io.tickerstorm.data.jms.Destinations;
+import io.tickerstorm.entity.Candle;
+import io.tickerstorm.entity.Markers;
+import io.tickerstorm.entity.MarketData;
+import io.tickerstorm.entity.MarketDataMarker;
+import net.engio.mbassy.bus.MBassador;
+
 @Repository
-@Listener(references = References.Strong)
 public class HistoricalDataFeed {
 
   private static final java.time.format.DateTimeFormatter dateFormat =
       java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd");
 
   private static final Logger logger = LoggerFactory.getLogger(HistoricalDataFeed.class);
-
-  @Qualifier("query")
-  @Autowired
-  private MBassador<HistoricalFeedQuery> queryBus;
 
   @Qualifier("realtime")
   @Autowired
@@ -53,23 +43,10 @@ public class HistoricalDataFeed {
   @Value("${cassandra.keyspace}")
   private String keyspace;
 
-  @PostConstruct
-  public void init() {
-    queryBus.subscribe(this);
-  }
-
-  @PreDestroy
-  public void destroy() {
-    queryBus.unsubscribe(this);
-  }
-
   @JmsListener(destination = Destinations.QUEUE_QUERY)
-  @Handler
   public void onQuery(@Payload HistoricalFeedQuery query) {
 
     logger.debug("Historical feed query received");
-
-
     LocalDateTime start = query.from;
     LocalDateTime end = query.until;
     LocalDateTime date = start;
@@ -94,18 +71,49 @@ public class HistoricalDataFeed {
           .and(QueryBuilder.eq("source", query.source.toLowerCase()))
           .and(QueryBuilder.eq("interval", query.periods.iterator().next()));
 
-      logger.debug(select.toString());
+      logger.debug("Cassandra query: " + select.toString());
       long startTimer = System.currentTimeMillis();
       List<MarketDataDto> dtos = cassandra.select(select, MarketDataDto.class);
-      logger.info("Query took " + (System.currentTimeMillis() - startTimer) + "ms");
-      logger.info("Fetched " + dtos.size() + " results.");
+      logger.info("Query took " + (System.currentTimeMillis() - startTimer) + "ms to fetch "
+          + dtos.size() + " results.");
 
       startTimer = System.currentTimeMillis();
+      MarketData first = null;
+      MarketData last = null;
+      int count = 0;
       for (MarketDataDto dto : dtos) {
-        realtimeBus.post(dto.toMarketData()).asynchronously();
+
+        try {
+          MarketData m = dto.toMarketData();
+
+          if (null == first) {
+            first = m;
+            MarketDataMarker marker =
+                new MarketDataMarker(m.getSymbol(), m.getSource(), m.getTimestamp(), query.id);
+            marker.addMarker(Markers.QUERY_START.toString());
+            marker.expect = dtos.size();
+            realtimeBus.publish(marker);
+          }
+
+          realtimeBus.publish(m);
+          count++;
+
+          if (count == dtos.size() && null == last) {
+            last = m;
+            MarketDataMarker marker =
+                new MarketDataMarker(m.getSymbol(), m.getSource(), m.getTimestamp(), query.id);
+            marker.addMarker(Markers.QUERY_END.toString());
+            marker.expect = 0;
+            realtimeBus.publish(marker);
+          }
+        } catch (Exception e) {
+          logger.error(e.getMessage(), e);
+          // continue
+        }
       }
-      logger.info("Dispatch historical data feed took " + (System.currentTimeMillis() - startTimer)
-          + "ms");
+
+      logger.info(
+          "Dispatch historical data feed took " + (System.currentTimeMillis() - startTimer) + "ms");
 
     }
   }

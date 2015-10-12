@@ -23,11 +23,6 @@
 			<artifactId>activemq-broker</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.apache.activemq</groupId>
-			<artifactId>activemq-kahadb-store</artifactId>
-			<version>5.10.2</version>
-		</dependency>
-		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
 			<version>18.0</version>
@@ -49,11 +44,6 @@
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>net.engio</groupId>
-			<artifactId>mbassador</artifactId>
-			<version>1.2.1</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>
@@ -94,6 +84,11 @@
 			<artifactId>spring-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>net.engio</groupId>
+			<artifactId>mbassador</artifactId>
+			<version>1.2.3</version>
+		</dependency>
 	</dependencies>
 	<build>
 		<plugins>
@@ -128,4 +123,13 @@
 
 		</plugins>
 	</build>
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>net.sf.ehcache</groupId>
+				<artifactId>ehcache</artifactId>
+				<version>2.10.0</version>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 </project>
