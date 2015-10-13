@@ -10,8 +10,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.jms.listener.DefaultMessageListenerContainer;
 import org.springframework.util.ErrorHandler;
 
-import io.tickerstorm.data.jms.ByDestinationNameJmsResolver;
-import io.tickerstorm.data.jms.Destinations;
+import io.tickerstorm.data.eventbus.ByDestinationNameJmsResolver;
+import io.tickerstorm.data.eventbus.Destinations;
 
 @Configuration
 public class TestMarketDataServiceConfig extends MarketDataService {

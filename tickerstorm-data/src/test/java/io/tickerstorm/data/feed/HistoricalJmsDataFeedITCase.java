@@ -33,7 +33,7 @@ import com.google.common.base.Throwables;
 import com.google.common.io.Files;
 
 import io.tickerstorm.data.TestMarketDataServiceConfig;
-import io.tickerstorm.data.jms.Destinations;
+import io.tickerstorm.data.eventbus.Destinations;
 import io.tickerstorm.entity.Candle;
 import io.tickerstorm.entity.MarketData;
 

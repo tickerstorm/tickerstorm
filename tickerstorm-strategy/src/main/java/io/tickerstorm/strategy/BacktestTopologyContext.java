@@ -14,7 +14,7 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.jms.annotation.EnableJms;
 
 import backtype.storm.contrib.jms.spout.JmsSpout;
-import io.tickerstorm.data.jms.Destinations;
+import io.tickerstorm.data.eventbus.Destinations;
 import io.tickerstorm.strategy.spout.RealtimeDestinationProvider;
 import io.tickerstorm.strategy.spout.StormJmsTupleProducer;
 import io.tickerstorm.strategy.util.BacktestClock;

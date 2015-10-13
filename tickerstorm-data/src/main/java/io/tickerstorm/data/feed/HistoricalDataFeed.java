@@ -4,26 +4,27 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.cassandra.core.CassandraOperations;
-import org.springframework.jms.annotation.JmsListener;
-import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Repository;
 
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
 
 import io.tickerstorm.data.dao.MarketDataDto;
-import io.tickerstorm.data.jms.Destinations;
 import io.tickerstorm.entity.Candle;
 import io.tickerstorm.entity.Markers;
 import io.tickerstorm.entity.MarketData;
 import io.tickerstorm.entity.MarketDataMarker;
 import net.engio.mbassy.bus.MBassador;
+import net.engio.mbassy.listener.Handler;
 
 @Repository
 public class HistoricalDataFeed {
@@ -37,14 +38,28 @@ public class HistoricalDataFeed {
   @Autowired
   private MBassador<MarketData> realtimeBus;
 
+  @Qualifier("query")
+  @Autowired
+  private MBassador<HistoricalFeedQuery> queryBus;
+
   @Autowired
   private CassandraOperations cassandra;
 
   @Value("${cassandra.keyspace}")
   private String keyspace;
 
-  @JmsListener(destination = Destinations.QUEUE_QUERY)
-  public void onQuery(@Payload HistoricalFeedQuery query) {
+  @PostConstruct
+  public void setup() {
+    queryBus.subscribe(this);
+  }
+
+  @PreDestroy
+  public void destroy() {
+    queryBus.unsubscribe(this);
+  }
+
+  @Handler
+  public void onQuery(HistoricalFeedQuery query) {
 
     logger.debug("Historical feed query received");
     LocalDateTime start = query.from;

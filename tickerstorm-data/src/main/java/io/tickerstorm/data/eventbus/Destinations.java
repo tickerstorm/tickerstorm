@@ -1,4 +1,4 @@
-package io.tickerstorm.data.jms;
+package io.tickerstorm.data.eventbus;
 
 public interface Destinations {
 

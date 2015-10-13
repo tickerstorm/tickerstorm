@@ -17,10 +17,13 @@ import org.springframework.jms.core.JmsTemplate;
 
 import backtype.storm.contrib.jms.spout.JmsSpout;
 import io.tickerstorm.data.CommonContext;
-import io.tickerstorm.data.jms.ByDestinationNameJmsResolver;
-import io.tickerstorm.data.jms.Destinations;
+import io.tickerstorm.data.eventbus.ByDestinationNameJmsResolver;
+import io.tickerstorm.data.eventbus.Destinations;
+import io.tickerstorm.data.eventbus.EventBusToJMSBridge;
+import io.tickerstorm.data.feed.HistoricalFeedQuery;
 import io.tickerstorm.strategy.spout.RealtimeDestinationProvider;
 import io.tickerstorm.strategy.spout.StormJmsTupleProducer;
+import net.engio.mbassy.bus.MBassador;
 
 @EnableJms
 @Configuration
@@ -42,24 +45,17 @@ public class BacktestRunnerClientContext {
     return connectionFactory;
   }
 
-  @Qualifier("query")
   @Bean
-  public JmsTemplate buildQueryJmsTemplate(ConnectionFactory factory) {
-    JmsTemplate template = new JmsTemplate(factory);
-    template.setDestinationResolver(new ByDestinationNameJmsResolver());
-    template.setSessionAcknowledgeMode(Session.CLIENT_ACKNOWLEDGE);
-    template.setDefaultDestinationName(Destinations.QUEUE_QUERY);
-    template.setTimeToLive(2000);
-    return template;
+  public EventBusToJMSBridge buildQueryJmsBridge(
+      @Qualifier("query") MBassador<HistoricalFeedQuery> eventbus, JmsTemplate template) {
+    return new EventBusToJMSBridge(eventbus, Destinations.QUEUE_QUERY, template);
   }
 
-  @Qualifier("realtime")
   @Bean
   public JmsTemplate buildRealtimeJmsTemplate(ConnectionFactory factory) {
     JmsTemplate template = new JmsTemplate(factory);
     template.setDestinationResolver(new ByDestinationNameJmsResolver());
     template.setSessionAcknowledgeMode(Session.CLIENT_ACKNOWLEDGE);
-    template.setDefaultDestinationName(Destinations.TOPIC_REALTIME_MARKETDATA);
     template.setTimeToLive(2000);
     return template;
   }
