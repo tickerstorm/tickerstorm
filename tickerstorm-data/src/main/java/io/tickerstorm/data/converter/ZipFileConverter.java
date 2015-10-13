@@ -1,17 +1,16 @@
 package io.tickerstorm.data.converter;
 
-import io.tickerstorm.entity.MarketData;
-
 import java.io.File;
 import java.util.UUID;
-
-import net.lingala.zip4j.core.ZipFile;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import com.google.common.io.Files;
+
+import io.tickerstorm.entity.MarketData;
+import net.lingala.zip4j.core.ZipFile;
 
 @Component
 public class ZipFileConverter extends BaseFileConverter {

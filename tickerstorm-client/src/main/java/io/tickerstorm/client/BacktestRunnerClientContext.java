@@ -1,4 +1,4 @@
-package io.tickerstorm.strategy;
+package io.tickerstorm.client;
 
 import javax.jms.ConnectionFactory;
 import javax.jms.Session;
@@ -15,14 +15,12 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.jms.annotation.EnableJms;
 import org.springframework.jms.core.JmsTemplate;
 
-import backtype.storm.contrib.jms.spout.JmsSpout;
 import io.tickerstorm.data.CommonContext;
 import io.tickerstorm.data.eventbus.ByDestinationNameJmsResolver;
 import io.tickerstorm.data.eventbus.Destinations;
 import io.tickerstorm.data.eventbus.EventBusToJMSBridge;
+import io.tickerstorm.data.eventbus.JMStoRealtimeEventBusBridge;
 import io.tickerstorm.data.feed.HistoricalFeedQuery;
-import io.tickerstorm.strategy.spout.RealtimeDestinationProvider;
-import io.tickerstorm.strategy.spout.StormJmsTupleProducer;
 import net.engio.mbassy.bus.MBassador;
 
 @EnableJms
@@ -52,6 +50,11 @@ public class BacktestRunnerClientContext {
   }
 
   @Bean
+  public JMStoRealtimeEventBusBridge buildReamtimeBridge() {
+    return new JMStoRealtimeEventBusBridge();
+  }
+
+  @Bean
   public JmsTemplate buildRealtimeJmsTemplate(ConnectionFactory factory) {
     JmsTemplate template = new JmsTemplate(factory);
     template.setDestinationResolver(new ByDestinationNameJmsResolver());
@@ -60,20 +63,4 @@ public class BacktestRunnerClientContext {
     return template;
   }
 
-  @Qualifier("realtime")
-  @Bean
-  public JmsSpout buildJmsSpout(ConnectionFactory factory) throws Exception {
-
-    JmsSpout spout = new JmsSpout();
-    spout.setJmsProvider(new RealtimeDestinationProvider(factory,
-        factory.createConnection().createSession(false, Session.CLIENT_ACKNOWLEDGE)
-            .createTopic(Destinations.TOPIC_REALTIME_MARKETDATA)));
-    spout.setJmsTupleProducer(new StormJmsTupleProducer());
-    spout.setJmsAcknowledgeMode(Session.CLIENT_ACKNOWLEDGE);
-    spout.setDistributed(true);
-    spout.setRecoveryPeriod(1000);
-
-    return spout;
-
-  }
 }

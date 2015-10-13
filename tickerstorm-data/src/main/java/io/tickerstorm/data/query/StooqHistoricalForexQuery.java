@@ -1,26 +1,32 @@
 package io.tickerstorm.data.query;
 
-import io.tickerstorm.data.converter.DataConverter;
-import io.tickerstorm.data.converter.StooqFileConverter;
-
 import java.util.HashSet;
 import java.util.Set;
 
-import org.springframework.stereotype.Component;
+import io.tickerstorm.entity.Candle;
 
-@Component
-public class StooqHistoricalForexQuery implements QueryBuilder {
+
+public class StooqHistoricalForexQuery implements QueryBuilder, DataQuery {
+
+  public String getInterval() {
+    return Candle.MIN_5_INTERVAL;
+  }
+
+  @Override
+  public String namespace() {
+    return HOST;
+  }
+
+  @Override
+  public String getSymbol() {
+    throw new IllegalAccessError("Not supported");
+  }
 
   private static final String HOST = "http://s.stooq.pl/db/h/";
 
   private String fileName = "_world_txt.zip";
   private Set<String> securityTypes = new HashSet<String>();
   private String interval = "5";
-
-  @Override
-  public DataConverter converter() {
-    return new StooqFileConverter();
-  }
 
   public StooqHistoricalForexQuery currencies() {
     this.fileName = "_world_txt.zip";

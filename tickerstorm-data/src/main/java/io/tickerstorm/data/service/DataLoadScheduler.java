@@ -1,12 +1,5 @@
 package io.tickerstorm.data.service;
 
-import io.tickerstorm.data.feed.HistoricalFeedQuery;
-import io.tickerstorm.data.query.DataQueryClient;
-import io.tickerstorm.data.query.GoogleDataQuery;
-import io.tickerstorm.data.query.StooqHistoricalForexQuery;
-import io.tickerstorm.data.query.YahooChartsDataQuery;
-import io.tickerstorm.data.query.YahooHistoricalQuoteQuery;
-
 import java.time.Duration;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -17,6 +10,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import io.tickerstorm.data.converter.DataQueryClient;
+import io.tickerstorm.data.feed.HistoricalFeedQuery;
+import io.tickerstorm.data.query.GoogleDataQuery;
+import io.tickerstorm.data.query.StooqHistoricalForexQuery;
+import io.tickerstorm.data.query.YahooChartsDataQuery;
+import io.tickerstorm.data.query.YahooHistoricalQuoteQuery;
 
 @Service
 public class DataLoadScheduler {
@@ -30,9 +30,7 @@ public class DataLoadScheduler {
   @PostConstruct
   public void start() {
 
-    HistoricalFeedQuery query =
-        new HistoricalFeedQuery("ITB", "DHI", "LEN", "PHM", "TOL", "NVR", "HD", "LOW", "TPH",
-            "RYL", "MTH");
+    HistoricalFeedQuery query = new HistoricalFeedQuery("ITB", "DHI", "LEN", "PHM", "TOL", "NVR", "HD", "LOW", "TPH", "RYL", "MTH");
 
     timer = new Timer(true);
     // timer.scheduleAtFixedRate(new StooqTask(query), Date.from(Instant.now().plusSeconds(5)),
@@ -57,8 +55,7 @@ public class DataLoadScheduler {
 
       logger.info("Runnering Stooq data load task");
 
-      StooqHistoricalForexQuery query =
-          new StooqHistoricalForexQuery().forWorld().currencies().commodities().min5();
+      StooqHistoricalForexQuery query = new StooqHistoricalForexQuery().forWorld().currencies().commodities().min5();
       client.query(query);
 
       query = new StooqHistoricalForexQuery().forWorld().currencies().commodities().hourly();
@@ -94,8 +91,7 @@ public class DataLoadScheduler {
       logger.info("Runnering Yahoo data load task");
 
       for (String symbol : q.symbols) {
-        YahooHistoricalQuoteQuery query =
-            new YahooHistoricalQuoteQuery(symbol).eod().from(q.from).until(q.until);
+        YahooHistoricalQuoteQuery query = new YahooHistoricalQuoteQuery(symbol).eod().from(q.from).until(q.until);
         client.query(query);
 
         YahooChartsDataQuery query2 = new YahooChartsDataQuery(symbol);

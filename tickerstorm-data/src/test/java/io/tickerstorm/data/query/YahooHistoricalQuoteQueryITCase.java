@@ -3,44 +3,36 @@ package io.tickerstorm.data.query;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
-import io.tickerstorm.entity.Candle;
-import io.tickerstorm.entity.MarketData;
 
 import java.time.LocalDateTime;
-
-import net.engio.mbassy.bus.MBassador;
-import net.engio.mbassy.listener.Handler;
-import net.engio.mbassy.listener.Listener;
-import net.engio.mbassy.listener.References;
 
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-public class YahooHistoricalQuoteQueryITCase {
+import io.tickerstorm.entity.Candle;
+import io.tickerstorm.entity.MarketData;
+import net.engio.mbassy.listener.Handler;
+import net.engio.mbassy.listener.Listener;
+import net.engio.mbassy.listener.References;
+
+public class YahooHistoricalQuoteQueryITCase extends BaseDataQueryITCase {
 
   YahooHistoricalQuoteQuery query;
-  DataQueryClient client;
-  boolean verified = false;
 
   @BeforeMethod
-  public void setup() {
-
-    client = new DataQueryClient();
-    client.historical = new MBassador<MarketData>();
-    client.init();
-    verified = false;
-
+  public void setup() throws Exception {
+    verifier = new BasicSymbolQuery();
+    super.setup();
   }
 
   @Test
-  public void testBasicSymbolQuery() {
-    query =
-        new YahooHistoricalQuoteQuery("AAPL").eod().from(LocalDateTime.now().minusYears(1))
-            .until(LocalDateTime.now());
-
-    client.historical.subscribe(new BasicSymbolQuery());
+  public void testBasicSymbolQuery() throws Exception {
+    query = new YahooHistoricalQuoteQuery("AAPL").eod().from(LocalDateTime.now().minusYears(1)).until(LocalDateTime.now());
     client.query(query);
-    assertTrue(verified);
+
+    Thread.sleep(3000);
+
+    assertTrue(count.get() > 0);
 
   }
 
@@ -61,7 +53,7 @@ public class YahooHistoricalQuoteQueryITCase {
       assertNotNull(c.high);
       assertNotNull(c.volume);
       assertEquals(c.interval, Candle.EOD);
-      verified = true;
+      count.incrementAndGet();
     }
 
   }

@@ -7,13 +7,15 @@ import org.apache.activemq.ActiveMQConnectionFactory;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.jms.annotation.EnableJms;
 
 import backtype.storm.contrib.jms.spout.JmsSpout;
+import io.tickerstorm.data.CommonContext;
 import io.tickerstorm.data.eventbus.Destinations;
 import io.tickerstorm.strategy.spout.RealtimeDestinationProvider;
 import io.tickerstorm.strategy.spout.StormJmsTupleProducer;
@@ -21,9 +23,10 @@ import io.tickerstorm.strategy.util.BacktestClock;
 import io.tickerstorm.strategy.util.Clock;
 
 @EnableJms
-@Configuration
+@SpringBootApplication
 @ComponentScan(basePackages = {"io.tickerstorm.strategy"})
 @PropertySource({"classpath:default.properties"})
+@Import({CommonContext.class})
 public class BacktestTopologyContext {
 
   public static final Logger logger =
@@ -60,4 +63,6 @@ public class BacktestTopologyContext {
   public Clock backtestClock() {
     return new BacktestClock();
   }
+
+
 }

@@ -6,8 +6,17 @@ import org.apache.commons.io.monitor.FileAlterationListener;
 import org.apache.commons.io.monitor.FileAlterationObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 
-public abstract class BaseFileConverter implements FileAlterationListener, DataConverter {
+import io.tickerstorm.entity.MarketData;
+import net.engio.mbassy.bus.MBassador;
+
+public abstract class BaseFileConverter implements FileAlterationListener, FileConverter {
+
+  @Qualifier("historical")
+  @Autowired
+  protected MBassador<MarketData> historical;
 
   private final static Logger logger = LoggerFactory.getLogger(BaseFileConverter.class);
 
@@ -52,7 +61,7 @@ public abstract class BaseFileConverter implements FileAlterationListener, DataC
     // TODO Auto-generated method stub
 
   }
-  
+
   @Override
   public Mode mode() {
     return Mode.file;

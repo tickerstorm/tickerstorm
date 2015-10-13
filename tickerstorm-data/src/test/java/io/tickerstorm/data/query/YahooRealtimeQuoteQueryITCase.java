@@ -3,40 +3,35 @@ package io.tickerstorm.data.query;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
-import io.tickerstorm.entity.MarketData;
-import io.tickerstorm.entity.Quote;
-import net.engio.mbassy.bus.MBassador;
-import net.engio.mbassy.listener.Handler;
-import net.engio.mbassy.listener.Listener;
-import net.engio.mbassy.listener.References;
 
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-public class YahooRealtimeQuoteQueryITCase {
+import io.tickerstorm.entity.MarketData;
+import io.tickerstorm.entity.Quote;
+import net.engio.mbassy.listener.Handler;
+import net.engio.mbassy.listener.Listener;
+import net.engio.mbassy.listener.References;
+
+public class YahooRealtimeQuoteQueryITCase extends BaseDataQueryITCase {
 
   YahooRealtimeQuoteQuery query;
-  DataQueryClient client;
-  boolean verified = false;
 
   @BeforeMethod
-  public void setup() {
-
-    client = new DataQueryClient();
-    client.historical = new MBassador<MarketData>();
-    client.init();
-    verified = false;
-
+  public void setup() throws Exception {
+    verifier = new BasicSymbolQuery();
+    super.setup();
   }
 
   @Test
   public void testBasicSymbolQuery() throws Exception {
 
     query = new YahooRealtimeQuoteQuery("AAPL");
-    client.historical.subscribe(new BasicSymbolQuery());
     client.query(query);
+
     Thread.sleep(2000);
-    assertTrue(verified);
+
+    assertTrue(count.get() > 0);
   }
 
   @Listener(references = References.Strong)
@@ -54,7 +49,7 @@ public class YahooRealtimeQuoteQueryITCase {
       assertNotNull(c.bid);
       assertNotNull(c.askSize);
       assertNotNull(c.bidSize);
-      verified = true;
+      count.incrementAndGet();
     }
 
   }

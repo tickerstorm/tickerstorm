@@ -75,14 +75,12 @@ public class MarketDataService {
   @Bean(destroyMethod = "shutdown")
   public MBassador<MarketData> buildEventBus(IPublicationErrorHandler handler) {
     return new MBassador<MarketData>(new BusConfiguration().addFeature(Feature.SyncPubSub.Default())
-        .addFeature(Feature.AsynchronousHandlerInvocation.Default(1, 4))
-        .addFeature(Feature.AsynchronousMessageDispatch.Default())
+        .addFeature(Feature.AsynchronousHandlerInvocation.Default(1, 4)).addFeature(Feature.AsynchronousMessageDispatch.Default())
         .addPublicationErrorHandler(handler).setProperty(Properties.Common.Id, "historical bus"));
   }
 
   @Bean
-  public EventBusToJMSBridge buildRealtimeJmsBridge(
-      @Qualifier("realtime") MBassador<MarketData> eventbus, JmsTemplate template) {
+  public EventBusToJMSBridge buildRealtimeJmsBridge(@Qualifier("realtime") MBassador<MarketData> eventbus, JmsTemplate template) {
     return new EventBusToJMSBridge(eventbus, Destinations.TOPIC_REALTIME_MARKETDATA, template);
   }
 

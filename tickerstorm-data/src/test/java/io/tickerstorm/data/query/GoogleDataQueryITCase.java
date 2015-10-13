@@ -5,15 +5,8 @@ import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
 import java.io.File;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.io.FileUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.cassandra.core.CassandraOperations;
-import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -21,65 +14,40 @@ import org.testng.annotations.Test;
 
 import com.google.common.io.Files;
 
-import io.tickerstorm.data.TestMarketDataServiceConfig;
-import io.tickerstorm.data.dao.MarketDataDao;
 import io.tickerstorm.entity.Candle;
 import io.tickerstorm.entity.MarketData;
-import net.engio.mbassy.bus.MBassador;
 import net.engio.mbassy.listener.Handler;
 import net.engio.mbassy.listener.Listener;
 import net.engio.mbassy.listener.References;
 
-@DirtiesContext
-@ContextConfiguration(classes = {TestMarketDataServiceConfig.class})
-public class GoogleDataQueryITCase extends AbstractTestNGSpringContextTests {
+public class GoogleDataQueryITCase extends BaseDataQueryITCase {
 
   GoogleDataQuery query;
-
-  @Autowired
-  private DataQueryClient client;
-
-  @Qualifier("historical")
-  @Autowired
-  MBassador<MarketData> bus;
-
-  @Autowired
-  private MarketDataDao dao;
-
-  @Autowired
-  private CassandraOperations session;
-
-  private AtomicLong count = new AtomicLong(0);
-
-  GoogleDataVerifier verifier;
 
   @BeforeMethod
   public void setup() throws Exception {
     FileUtils.forceMkdir(new File("./data/Google"));
     verifier = new GoogleDataVerifier();
-    bus.subscribe(verifier);
+    super.setup();
   }
 
   @AfterMethod(alwaysRun = true)
   public void tearDown() throws Exception {
-
-    bus.unsubscribe(verifier);
-    session.getSession().execute("TRUNCATE marketdata");
     FileUtils.deleteQuietly(new File("./data/Google/TOL.csv"));
-    count.set(0);
+    super.tearDown();
   }
 
   @Test
   public void downloadGloabForext() throws Exception {
 
-    Long count = dao.count();
-    Assert.assertEquals(count, new Long(0));
+    Long daoCount = dao.count();
+    Assert.assertEquals(daoCount, new Long(0));
 
     query = new GoogleDataQuery("TOL");
     client.query(query);
 
-    count = dao.count();
-    assertTrue(count > 0);
+    daoCount = dao.count();
+    assertTrue(daoCount > 0);
 
     Thread.sleep(3000);// let things clear;
   }
@@ -90,8 +58,7 @@ public class GoogleDataQueryITCase extends AbstractTestNGSpringContextTests {
     Long daoCount = dao.count();
     Assert.assertEquals(daoCount, new Long(0));
 
-    Files.copy(new File("./src/test/resources/data/Google/TOL.csv"),
-        new File("./data/Google/TOL.csv"));
+    Files.copy(new File("./src/test/resources/data/Google/TOL.csv"), new File("./data/Google/TOL.csv"));
 
     Thread.sleep(10000);
 

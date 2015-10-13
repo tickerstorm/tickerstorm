@@ -6,15 +6,8 @@ import static org.testng.Assert.assertTrue;
 
 import java.io.File;
 import java.math.BigDecimal;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.io.FileUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.cassandra.core.CassandraOperations;
-import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -22,60 +15,31 @@ import org.testng.annotations.Test;
 
 import com.google.common.io.Files;
 
-import io.tickerstorm.data.TestMarketDataServiceConfig;
-import io.tickerstorm.data.dao.MarketDataDao;
 import io.tickerstorm.entity.Candle;
 import io.tickerstorm.entity.MarketData;
-import net.engio.mbassy.bus.MBassador;
 import net.engio.mbassy.listener.Handler;
 import net.engio.mbassy.listener.Listener;
 import net.engio.mbassy.listener.References;
 
-@DirtiesContext
-@ContextConfiguration(classes = {TestMarketDataServiceConfig.class})
-public class DukascopyHistoricalForexQueryITCase extends AbstractTestNGSpringContextTests {
-
-  @Autowired
-  private MarketDataDao dao;
-
-  @Qualifier("historical")
-  @Autowired
-  MBassador<MarketData> bus;
-
-  private AtomicLong count = new AtomicLong(0);
-
-  @Autowired
-  private CassandraOperations session;
-
-  Object verifier;
-
-  boolean verified = false;
+public class DukascopyHistoricalForexQueryITCase extends BaseDataQueryITCase {
 
   @BeforeMethod
   public void setup() throws Exception {
-    verified = false;
+    verifier = new DownloadGloabForextVerification();
     FileUtils.forceMkdir(new File("./data/Dukascopy"));
+    super.setup();
   }
 
   @AfterMethod
-  public void tearDown() {
-    bus.subscribe(verifier);
-    session.getSession().execute("TRUNCATE marketdata");
-    FileUtils.deleteQuietly(
-        new File("./data/Dukascopy/AUDCAD_Candlestick_1_m_BID_01.06.2015-06.06.2015.csv"));
-
-
+  public void tearDown() throws Exception {
+    FileUtils.deleteQuietly(new File("./data/Dukascopy/AUDCAD_Candlestick_1_m_BID_01.06.2015-06.06.2015.csv"));
+    super.tearDown();
   }
 
   @Test
   public void parseGloabForext() throws Exception {
 
-    verifier = new DownloadGloabForextVerification();
-    bus.subscribe(verifier);
-
-    Files.copy(
-        new File(
-            "./src/test/resources/data/Dukascopy/AUDCAD_Candlestick_1_m_BID_01.06.2015-06.06.2015.csv"),
+    Files.copy(new File("./src/test/resources/data/Dukascopy/AUDCAD_Candlestick_1_m_BID_01.06.2015-06.06.2015.csv"),
         new File("./data/Dukascopy/AUDCAD_Candlestick_1_m_BID_01.06.2015-06.06.2015.csv"));
 
     Thread.sleep(15000);
@@ -83,7 +47,6 @@ public class DukascopyHistoricalForexQueryITCase extends AbstractTestNGSpringCon
     Long daoCount = dao.count();
     Assert.assertEquals(daoCount, new Long(52860));
     Assert.assertEquals(count.get(), 52860L);
-    assertTrue(verified);
 
   }
 
@@ -108,7 +71,6 @@ public class DukascopyHistoricalForexQueryITCase extends AbstractTestNGSpringCon
       assertTrue(c.high.compareTo(BigDecimal.ZERO) > 0);
       assertNotNull(c.volume);
       assertEquals(c.interval, Candle.MIN_1_INTERVAL);
-      verified = true;
       count.incrementAndGet();
 
     }

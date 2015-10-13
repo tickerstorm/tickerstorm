@@ -17,31 +17,22 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import com.google.common.io.Files;
 
 import io.tickerstorm.entity.Candle;
 import io.tickerstorm.entity.MarketData;
-import net.engio.mbassy.bus.MBassador;
 
 @Component
-public class StooqFileConverter extends BaseFileConverter implements DataConverter {
+public class StooqFileConverter extends BaseFileConverter {
 
-  private static final java.time.format.DateTimeFormatter formatter =
-      java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-  private static final java.time.format.DateTimeFormatter dayFormatter =
-      java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd");
+  private static final java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+  private static final java.time.format.DateTimeFormatter dayFormatter = java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd");
 
   private static final Logger logger = LoggerFactory.getLogger(StooqFileConverter.class);
 
   private Set<String> securityTypes = new HashSet<String>();
-
-  @Qualifier("historical")
-  @Autowired
-  private MBassador<MarketData> historical;
 
   @PostConstruct
   private void init() {
@@ -84,11 +75,9 @@ public class StooqFileConverter extends BaseFileConverter implements DataConvert
 
               try {
 
-                c = new Candle(symbol, provider(),
-                    LocalDateTime.parse(cols[0] + " " + cols[1], formatter)
-                        .toInstant(ZoneOffset.UTC),
-                    new BigDecimal(cols[2]), new BigDecimal(cols[5]), new BigDecimal(cols[3]),
-                    new BigDecimal(cols[4]), interval(path), new Integer(cols[6]));
+                c = new Candle(symbol, provider(), LocalDateTime.parse(cols[0] + " " + cols[1], formatter).toInstant(ZoneOffset.UTC),
+                    new BigDecimal(cols[2]), new BigDecimal(cols[5]), new BigDecimal(cols[3]), new BigDecimal(cols[4]), interval(path),
+                    new Integer(cols[6]));
 
                 // c.timestamp = LocalDateTime.parse(cols[0] + " " + cols[1], formatter)
                 // .toInstant(ZoneOffset.UTC);
@@ -100,10 +89,9 @@ public class StooqFileConverter extends BaseFileConverter implements DataConvert
 
               } catch (Exception ex) {
 
-                c = new Candle(symbol, provider(),
-                    LocalDateTime.from(dayFormatter.parse(cols[0])).toInstant(ZoneOffset.of("GMT")),
-                    new BigDecimal(cols[1]), new BigDecimal(cols[4]), new BigDecimal(cols[2]),
-                    new BigDecimal(cols[3]), interval(path), new Integer(cols[5]));
+                c = new Candle(symbol, provider(), LocalDateTime.from(dayFormatter.parse(cols[0])).toInstant(ZoneOffset.of("GMT")),
+                    new BigDecimal(cols[1]), new BigDecimal(cols[4]), new BigDecimal(cols[2]), new BigDecimal(cols[3]), interval(path),
+                    new Integer(cols[5]));
 
                 // c.timestamp =
                 // LocalDateTime.from(dayFormatter.parse(cols[0])).toInstant(ZoneOffset.of("GMT"));
@@ -162,8 +150,7 @@ public class StooqFileConverter extends BaseFileConverter implements DataConvert
 
     File f = new File(file.getPath().replace("\\", "\\\\"));
 
-    if (file.getPath().contains(provider())
-        && Files.getFileExtension(file.getPath()).equals("txt")) {
+    if (file.getPath().contains(provider()) && Files.getFileExtension(file.getPath()).equals("txt")) {
       logger.info("Converting " + file.getName());
       long start = System.currentTimeMillis();
       MarketData[] data = convert(f.getPath());

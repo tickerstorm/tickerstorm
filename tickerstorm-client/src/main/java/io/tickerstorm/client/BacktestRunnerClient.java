@@ -1,4 +1,4 @@
-package io.tickerstorm.strategy;
+package io.tickerstorm.client;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -15,7 +15,7 @@ import io.tickerstorm.data.feed.HistoricalFeedQuery;
 import io.tickerstorm.entity.Candle;
 import io.tickerstorm.entity.Markers;
 import io.tickerstorm.entity.MarketData;
-import io.tickerstorm.strategy.entity.StrategyMarker;
+import io.tickerstorm.entity.StrategyMarker;
 import net.engio.mbassy.bus.MBassador;
 
 @Component

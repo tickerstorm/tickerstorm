@@ -1,12 +1,10 @@
-package io.tickerstorm.strategy.entity;
+package io.tickerstorm.entity;
 
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
-import io.tickerstorm.entity.Marker;
 
 @SuppressWarnings("serial")
 public class StrategyMarker implements Marker, Serializable {

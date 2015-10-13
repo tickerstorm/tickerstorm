@@ -11,8 +11,6 @@ import java.util.List;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import com.google.common.base.Throwables;
@@ -21,7 +19,6 @@ import com.google.common.io.Files;
 
 import io.tickerstorm.entity.Candle;
 import io.tickerstorm.entity.MarketData;
-import net.engio.mbassy.bus.MBassador;
 
 @Component
 public class DukascopyFileConverter extends BaseFileConverter {
@@ -30,10 +27,6 @@ public class DukascopyFileConverter extends BaseFileConverter {
       java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss.SSS");
 
   private static final Logger logger = LoggerFactory.getLogger(DukascopyFileConverter.class);
-
-  @Qualifier("historical")
-  @Autowired
-  private MBassador<MarketData> historical;
 
   @Override
   public MarketData[] convert(String path) {
@@ -61,20 +54,10 @@ public class DukascopyFileConverter extends BaseFileConverter {
             continue;
 
           String[] cols = l.split(",");
-          Candle c = new Candle(currency, provider(),
-              LocalDateTime.parse(cols[0], formatter).toInstant(ZoneOffset.UTC),
-              new BigDecimal(cols[1]), new BigDecimal(cols[4]), new BigDecimal(cols[2]),
-              new BigDecimal(cols[3]), getInterval(path),
+          Candle c = new Candle(currency, provider(), LocalDateTime.parse(cols[0], formatter).toInstant(ZoneOffset.UTC),
+              new BigDecimal(cols[1]), new BigDecimal(cols[4]), new BigDecimal(cols[2]), new BigDecimal(cols[3]), getInterval(path),
               new BigDecimal(cols[5]).multiply(new BigDecimal("1000000")).intValue());
-          // c.symbol = currency;
-          // c.timestamp = LocalDateTime.parse(cols[0], formatter).toInstant(ZoneOffset.UTC);
-          // c.open = new BigDecimal(cols[1]);
-          // c.high = new BigDecimal(cols[2]);
-          // c.low = new BigDecimal(cols[3]);
-          // c.close = new BigDecimal(cols[4]);
-          // c.volume = new BigDecimal(cols[5]).multiply(new BigDecimal("1000000")).intValue();
-          // c.interval = getInterval(path);
-          // c.source = provider();
+
           historical.publishAsync(c);
           data.add(c);
 
@@ -116,8 +99,7 @@ public class DukascopyFileConverter extends BaseFileConverter {
 
     file = new File(file.getPath().replace("\\", "\\\\"));
 
-    if (file.getPath().contains(provider())
-        && Files.getFileExtension(file.getPath()).equals("csv")) {
+    if (file.getPath().contains(provider()) && Files.getFileExtension(file.getPath()).equals("csv")) {
       logger.info("Converting " + file.getPath());
       long start = System.currentTimeMillis();
       MarketData[] data = convert(file.getPath());

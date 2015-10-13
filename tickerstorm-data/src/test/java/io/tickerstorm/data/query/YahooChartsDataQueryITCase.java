@@ -9,34 +9,29 @@ import org.testng.annotations.Test;
 
 import io.tickerstorm.entity.Candle;
 import io.tickerstorm.entity.MarketData;
-import net.engio.mbassy.bus.MBassador;
 import net.engio.mbassy.listener.Handler;
 import net.engio.mbassy.listener.Listener;
 import net.engio.mbassy.listener.References;
 
-public class YahooChartsDataQueryITCase {
+public class YahooChartsDataQueryITCase extends BaseDataQueryITCase {
 
   YahooChartsDataQuery query;
-  DataQueryClient client;
-  boolean verified = false;
 
   @BeforeMethod
-  public void setup() {
-
-    client = new DataQueryClient();
-    client.historical = new MBassador<MarketData>();
-    client.init();
-    verified = false;
-
+  public void setup() throws Exception {
+    verifier = new BasicSymbolQueryVerification();
+    super.setup();
   }
 
   @Test
-  public void testBasicSymbolQuery() {
+  public void testBasicSymbolQuery() throws Exception {
 
     query = new YahooChartsDataQuery("AAPL");
-    client.historical.subscribe(new BasicSymbolQueryVerification());
     client.query(query);
-    assertTrue(verified);
+
+    Thread.sleep(3000);
+
+    assertTrue(count.get() > 0);
   }
 
   @Listener(references = References.Strong)
@@ -57,7 +52,7 @@ public class YahooChartsDataQueryITCase {
       assertNotNull(c.high);
       assertNotNull(c.volume);
       assertEquals(c.interval, Candle.MIN_5_INTERVAL);
-      verified = true;
+      count.incrementAndGet();
 
     }
 
