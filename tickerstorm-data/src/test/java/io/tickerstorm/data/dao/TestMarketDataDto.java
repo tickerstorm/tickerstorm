@@ -2,15 +2,16 @@ package io.tickerstorm.data.dao;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
-import io.tickerstorm.entity.Candle;
-import io.tickerstorm.entity.Quote;
-import io.tickerstorm.entity.Tick;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Date;
 
 import org.testng.annotations.Test;
+
+import io.tickerstorm.common.entity.Candle;
+import io.tickerstorm.common.entity.Quote;
+import io.tickerstorm.common.entity.Tick;
 
 public class TestMarketDataDto {
 

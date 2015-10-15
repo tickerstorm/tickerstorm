@@ -5,22 +5,26 @@ import java.time.ZoneOffset;
 
 import javax.annotation.PostConstruct;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.stereotype.Component;
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.stereotype.Service;
 
-import io.tickerstorm.data.feed.HistoricalFeedQuery;
-import io.tickerstorm.entity.Candle;
-import io.tickerstorm.entity.Markers;
-import io.tickerstorm.entity.MarketData;
-import io.tickerstorm.entity.StrategyMarker;
+import io.tickerstorm.common.data.feed.HistoricalFeedQuery;
+import io.tickerstorm.common.entity.Candle;
+import io.tickerstorm.common.entity.Markers;
+import io.tickerstorm.common.entity.MarketData;
+import io.tickerstorm.common.entity.StrategyMarker;
 import net.engio.mbassy.bus.MBassador;
+import net.engio.mbassy.listener.Handler;
 
-@Component
-@SpringBootApplication
-public class BacktestRunnerClient {
+@Service
+public class BacktestRunnerClient implements ApplicationListener<ContextRefreshedEvent> {
+
+  private static final Logger logger = LoggerFactory.getLogger(BacktestRunnerClient.class);
 
   @Qualifier("query")
   @Autowired
@@ -30,13 +34,19 @@ public class BacktestRunnerClient {
   @Autowired
   private MBassador<MarketData> realtimeBus;
 
-  public static void main(String[] args) throws Exception {
-    SpringApplication.run(BacktestRunnerClientContext.class, args);
-  }
 
   @PostConstruct
-  protected void init() {
+  protected void init() throws Exception {
+    realtimeBus.subscribe(this);
+  }
 
+  @Handler
+  public void onMarketData(MarketData data) {
+    logger.debug(data.toString());
+  }
+
+  @Override
+  public void onApplicationEvent(ContextRefreshedEvent arg0) {
     StrategyMarker marker = new StrategyMarker();
     marker.addMarker(Markers.SESSION_START.toString());
 
@@ -46,8 +56,8 @@ public class BacktestRunnerClient {
     query.source = "google";
     query.periods.add(Candle.MIN_1_INTERVAL);
     query.zone = ZoneOffset.ofHours(-7);
+    logger.info("Dispatching query" + query.toString());
     queryBus.publish(query);
-
 
   }
 

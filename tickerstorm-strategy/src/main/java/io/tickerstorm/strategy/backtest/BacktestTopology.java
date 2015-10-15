@@ -5,6 +5,7 @@ import javax.annotation.PreDestroy;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
+import org.springframework.stereotype.Service;
 
 import backtype.storm.Config;
 import backtype.storm.LocalCluster;
@@ -16,7 +17,7 @@ import io.tickerstorm.strategy.bolt.ClockBolt;
 import io.tickerstorm.strategy.bolt.ComputeAverageBolt;
 import io.tickerstorm.strategy.bolt.LogginBolt;
 
-
+@Service
 public class BacktestTopology {
 
   private Config stormConfig = new Config();

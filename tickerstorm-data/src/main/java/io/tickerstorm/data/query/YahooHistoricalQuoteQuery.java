@@ -6,6 +6,8 @@ import java.time.temporal.ChronoField;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.tickerstorm.common.data.query.DataQuery;
+
 public class YahooHistoricalQuoteQuery implements QueryBuilder, DataQuery {
 
   public String getSymbol() {

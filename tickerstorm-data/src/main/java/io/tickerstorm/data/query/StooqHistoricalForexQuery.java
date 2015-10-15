@@ -3,7 +3,8 @@ package io.tickerstorm.data.query;
 import java.util.HashSet;
 import java.util.Set;
 
-import io.tickerstorm.entity.Candle;
+import io.tickerstorm.common.data.query.DataQuery;
+import io.tickerstorm.common.entity.Candle;
 
 
 public class StooqHistoricalForexQuery implements QueryBuilder, DataQuery {

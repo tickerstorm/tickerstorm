@@ -3,55 +3,49 @@ package io.tickerstorm.client;
 import javax.jms.ConnectionFactory;
 import javax.jms.Session;
 
-import org.apache.activemq.ActiveMQConnectionFactory;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.jms.annotation.EnableJms;
 import org.springframework.jms.core.JmsTemplate;
 
-import io.tickerstorm.data.CommonContext;
-import io.tickerstorm.data.eventbus.ByDestinationNameJmsResolver;
-import io.tickerstorm.data.eventbus.Destinations;
-import io.tickerstorm.data.eventbus.EventBusToJMSBridge;
-import io.tickerstorm.data.eventbus.JMStoRealtimeEventBusBridge;
-import io.tickerstorm.data.feed.HistoricalFeedQuery;
+import io.tickerstorm.common.data.CommonContext;
+import io.tickerstorm.common.data.eventbus.ByDestinationNameJmsResolver;
+import io.tickerstorm.common.data.eventbus.Destinations;
+import io.tickerstorm.common.data.eventbus.EventBusToJMSBridge;
+import io.tickerstorm.common.data.eventbus.JMSToEventBusBridge;
+import io.tickerstorm.common.data.feed.HistoricalFeedQuery;
+import io.tickerstorm.common.entity.MarketData;
 import net.engio.mbassy.bus.MBassador;
 
 @EnableJms
-@Configuration
-@ComponentScan(basePackages = {"io.tickerstorm.strategy"})
+@SpringBootApplication
+@ComponentScan(basePackages = {"io.tickerstorm.client"})
 @PropertySource({"classpath:default.properties"})
 @Import({CommonContext.class})
 public class BacktestRunnerClientContext {
 
-  public static final Logger logger =
-      org.slf4j.LoggerFactory.getLogger(BacktestRunnerClientContext.class);
+  public static final Logger logger = org.slf4j.LoggerFactory.getLogger(BacktestRunnerClientContext.class);
 
-  @Value("${jms.transport}")
-  private String transport;
-
-  @Bean
-  public ConnectionFactory buildActiveMQConnectionFactory() throws Exception {
-    logger.info("Creating Connection Factory");
-    ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(transport);
-    return connectionFactory;
+  public static void main(String[] args) throws Exception {
+    SpringApplication.run(BacktestRunnerClientContext.class, args);
   }
 
   @Bean
-  public EventBusToJMSBridge buildQueryJmsBridge(
-      @Qualifier("query") MBassador<HistoricalFeedQuery> eventbus, JmsTemplate template) {
+  public EventBusToJMSBridge buildQueryJmsBridge(@Qualifier("query") MBassador<HistoricalFeedQuery> eventbus, JmsTemplate template) {
     return new EventBusToJMSBridge(eventbus, Destinations.QUEUE_QUERY, template);
   }
 
   @Bean
-  public JMStoRealtimeEventBusBridge buildReamtimeBridge() {
-    return new JMStoRealtimeEventBusBridge();
+  public JMSToEventBusBridge buildRealtimeEventBridge(@Qualifier("realtime") MBassador<MarketData> realtimeBus) {
+    JMSToEventBusBridge bridge = new JMSToEventBusBridge();
+    bridge.setRealtimeBus(realtimeBus);
+    return bridge;
   }
 
   @Bean
@@ -62,5 +56,7 @@ public class BacktestRunnerClientContext {
     template.setTimeToLive(2000);
     return template;
   }
+
+
 
 }

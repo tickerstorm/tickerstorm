@@ -39,7 +39,7 @@
 	</configuration>
 
 	<mapping type="bi-directional" map-null="false">
-		<class-a>io.tickerstorm.entity.Candle</class-a>
+		<class-a>io.tickerstorm.common.entity.Candle</class-a>
 		<class-b>io.tickerstorm.data.dao.MarketDataDto</class-b>
 		<field>
 			<a>timestamp</a>
@@ -64,7 +64,7 @@
 	</mapping>
 
 	<mapping type="bi-directional" map-null="false">
-		<class-a>io.tickerstorm.entity.Quote</class-a>
+		<class-a>io.tickerstorm.common.entity.Quote</class-a>
 		<class-b>io.tickerstorm.data.dao.MarketDataDto</class-b>
 		<field>
 			<a>timestamp</a>
@@ -85,7 +85,7 @@
 	</mapping>
 
 	<mapping type="bi-directional" map-null="false">
-		<class-a>io.tickerstorm.entity.Tick</class-a>
+		<class-a>io.tickerstorm.common.entity.Tick</class-a>
 		<class-b>io.tickerstorm.data.dao.MarketDataDto</class-b>
 		<field>
 			<a>timestamp</a>

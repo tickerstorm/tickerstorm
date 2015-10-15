@@ -8,8 +8,8 @@ import backtype.storm.contrib.jms.JmsTupleProducer;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Values;
-import io.tickerstorm.entity.Marker;
-import io.tickerstorm.entity.MarketData;
+import io.tickerstorm.common.entity.Marker;
+import io.tickerstorm.common.entity.MarketData;
 
 @SuppressWarnings("serial")
 public class StormJmsTupleProducer implements JmsTupleProducer {

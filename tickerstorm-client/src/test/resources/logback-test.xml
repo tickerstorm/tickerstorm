@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+	<appender name="consoleAppender" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<Pattern>.%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg %n
+			</Pattern>
+		</encoder>
+		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+			<level>TRACE</level>
+		</filter>
+	</appender>
+
+	<root level="INFO">
+		<appender-ref ref="consoleAppender" />
+	</root>
+	<logger name="org.apache.http" level="ERROR" additivity="false">
+		<appender-ref ref="consoleAppender" />
+	</logger>
+	<logger name="io.tickerstorm" level="DEBUG" additivity="false">
+		<appender-ref ref="consoleAppender" />
+	</logger>
+</configuration>

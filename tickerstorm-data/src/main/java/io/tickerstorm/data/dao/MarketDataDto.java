@@ -15,10 +15,10 @@ import org.springframework.data.cassandra.mapping.Table;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 
-import io.tickerstorm.entity.Candle;
-import io.tickerstorm.entity.MarketData;
-import io.tickerstorm.entity.Quote;
-import io.tickerstorm.entity.Tick;
+import io.tickerstorm.common.entity.Candle;
+import io.tickerstorm.common.entity.MarketData;
+import io.tickerstorm.common.entity.Quote;
+import io.tickerstorm.common.entity.Tick;
 
 @Table("marketdata")
 @SuppressWarnings("serial")

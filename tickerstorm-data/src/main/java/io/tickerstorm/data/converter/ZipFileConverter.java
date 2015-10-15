@@ -9,7 +9,8 @@ import org.springframework.stereotype.Component;
 
 import com.google.common.io.Files;
 
-import io.tickerstorm.entity.MarketData;
+import io.tickerstorm.common.data.converter.BaseFileConverter;
+import io.tickerstorm.common.entity.MarketData;
 import net.lingala.zip4j.core.ZipFile;
 
 @Component

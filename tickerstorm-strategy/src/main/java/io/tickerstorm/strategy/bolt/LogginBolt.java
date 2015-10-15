@@ -1,7 +1,5 @@
 package io.tickerstorm.strategy.bolt;
 
-import io.tickerstorm.entity.MarketData;
-
 import java.time.Instant;
 import java.util.Map;
 
@@ -14,6 +12,7 @@ import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Tuple;
+import io.tickerstorm.common.entity.MarketData;
 
 @Component
 @SuppressWarnings("serial")

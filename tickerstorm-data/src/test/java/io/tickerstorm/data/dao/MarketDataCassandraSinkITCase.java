@@ -16,8 +16,8 @@ import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
+import io.tickerstorm.common.entity.Candle;
 import io.tickerstorm.data.TestMarketDataServiceConfig;
-import io.tickerstorm.entity.Candle;
 
 @DirtiesContext
 @ContextConfiguration(classes = {TestMarketDataServiceConfig.class})

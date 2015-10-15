@@ -17,8 +17,10 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 
-import io.tickerstorm.entity.Candle;
-import io.tickerstorm.entity.MarketData;
+import io.tickerstorm.common.data.converter.BaseFileConverter;
+import io.tickerstorm.common.data.converter.Mode;
+import io.tickerstorm.common.entity.Candle;
+import io.tickerstorm.common.entity.MarketData;
 
 @Component
 public class DukascopyFileConverter extends BaseFileConverter {

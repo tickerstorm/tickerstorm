@@ -21,8 +21,9 @@ import org.springframework.stereotype.Component;
 
 import com.google.common.io.Files;
 
-import io.tickerstorm.entity.Candle;
-import io.tickerstorm.entity.MarketData;
+import io.tickerstorm.common.data.converter.BaseFileConverter;
+import io.tickerstorm.common.entity.Candle;
+import io.tickerstorm.common.entity.MarketData;
 
 @Component
 public class StooqFileConverter extends BaseFileConverter {

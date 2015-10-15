@@ -1,11 +1,11 @@
 package io.tickerstorm.strategy.bolt;
 
-import io.tickerstorm.entity.CategoricalField;
-import io.tickerstorm.entity.ContinousField;
-import io.tickerstorm.entity.DiscreteField;
-import io.tickerstorm.entity.Field;
-import io.tickerstorm.entity.MarketData;
-import io.tickerstorm.entity.EmptyField;
+import io.tickerstorm.common.entity.CategoricalField;
+import io.tickerstorm.common.entity.ContinousField;
+import io.tickerstorm.common.entity.DiscreteField;
+import io.tickerstorm.common.entity.EmptyField;
+import io.tickerstorm.common.entity.Field;
+import io.tickerstorm.common.entity.MarketData;
 import io.tickerstorm.strategy.util.TupleUtil;
 
 import java.math.BigDecimal;

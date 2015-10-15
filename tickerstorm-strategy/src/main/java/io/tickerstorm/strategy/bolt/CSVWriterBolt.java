@@ -28,10 +28,10 @@ import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
-import io.tickerstorm.entity.Field;
-import io.tickerstorm.entity.Marker;
-import io.tickerstorm.entity.Markers;
-import io.tickerstorm.entity.MarketData;
+import io.tickerstorm.common.entity.Field;
+import io.tickerstorm.common.entity.Marker;
+import io.tickerstorm.common.entity.Markers;
+import io.tickerstorm.common.entity.MarketData;
 
 @Component
 @SuppressWarnings("serial")

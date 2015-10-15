@@ -9,9 +9,11 @@ import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Sets;
 
-import io.tickerstorm.data.query.DataQuery;
+import io.tickerstorm.common.data.converter.DataConverter;
+import io.tickerstorm.common.data.converter.Mode;
+import io.tickerstorm.common.data.query.DataQuery;
+import io.tickerstorm.common.entity.Candle;
 import io.tickerstorm.data.query.YahooChartsDataQuery;
-import io.tickerstorm.entity.Candle;
 
 @Component
 public class YahooChartsDataConverter implements DataConverter {

@@ -23,11 +23,12 @@ import org.testng.annotations.Test;
 
 import com.google.common.io.Files;
 
+import io.tickerstorm.common.data.feed.HistoricalFeedQuery;
+import io.tickerstorm.common.entity.Candle;
+import io.tickerstorm.common.entity.Markers;
+import io.tickerstorm.common.entity.MarketData;
+import io.tickerstorm.common.entity.MarketDataMarker;
 import io.tickerstorm.data.TestMarketDataServiceConfig;
-import io.tickerstorm.entity.Candle;
-import io.tickerstorm.entity.Markers;
-import io.tickerstorm.entity.MarketData;
-import io.tickerstorm.entity.MarketDataMarker;
 import net.engio.mbassy.bus.MBassador;
 import net.engio.mbassy.listener.Handler;
 import net.engio.mbassy.listener.Listener;

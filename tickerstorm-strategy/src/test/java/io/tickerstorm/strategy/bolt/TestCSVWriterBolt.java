@@ -22,9 +22,9 @@ import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.TupleImpl;
-import io.tickerstorm.entity.Candle;
-import io.tickerstorm.entity.CategoricalField;
-import io.tickerstorm.entity.ContinousField;
+import io.tickerstorm.common.entity.Candle;
+import io.tickerstorm.common.entity.CategoricalField;
+import io.tickerstorm.common.entity.ContinousField;
 
 public class TestCSVWriterBolt {
 

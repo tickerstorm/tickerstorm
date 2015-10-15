@@ -32,10 +32,11 @@ import org.testng.annotations.Test;
 import com.google.common.base.Throwables;
 import com.google.common.io.Files;
 
+import io.tickerstorm.common.data.eventbus.Destinations;
+import io.tickerstorm.common.data.feed.HistoricalFeedQuery;
+import io.tickerstorm.common.entity.Candle;
+import io.tickerstorm.common.entity.MarketData;
 import io.tickerstorm.data.TestMarketDataServiceConfig;
-import io.tickerstorm.data.eventbus.Destinations;
-import io.tickerstorm.entity.Candle;
-import io.tickerstorm.entity.MarketData;
 
 @DirtiesContext
 @ContextConfiguration(classes = {TestMarketDataServiceConfig.class})

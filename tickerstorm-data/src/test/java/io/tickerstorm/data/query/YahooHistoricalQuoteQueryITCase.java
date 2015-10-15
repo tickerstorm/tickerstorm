@@ -9,8 +9,8 @@ import java.time.LocalDateTime;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import io.tickerstorm.entity.Candle;
-import io.tickerstorm.entity.MarketData;
+import io.tickerstorm.common.entity.Candle;
+import io.tickerstorm.common.entity.MarketData;
 import net.engio.mbassy.listener.Handler;
 import net.engio.mbassy.listener.Listener;
 import net.engio.mbassy.listener.References;

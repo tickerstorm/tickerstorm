@@ -1,6 +1,6 @@
 package io.tickerstorm.strategy.bolt;
 
-import io.tickerstorm.entity.MarketData;
+import io.tickerstorm.common.entity.MarketData;
 import io.tickerstorm.strategy.util.Clock;
 import io.tickerstorm.strategy.util.TupleUtil;
 

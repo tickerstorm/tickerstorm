@@ -21,10 +21,14 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.Sets;
 import com.google.common.io.Files;
 
-import io.tickerstorm.data.query.DataQuery;
+import io.tickerstorm.common.data.converter.BaseFileConverter;
+import io.tickerstorm.common.data.converter.DataConverter;
+import io.tickerstorm.common.data.converter.FileConverter;
+import io.tickerstorm.common.data.converter.Mode;
+import io.tickerstorm.common.data.query.DataQuery;
+import io.tickerstorm.common.entity.Candle;
+import io.tickerstorm.common.entity.MarketData;
 import io.tickerstorm.data.query.GoogleDataQuery;
-import io.tickerstorm.entity.Candle;
-import io.tickerstorm.entity.MarketData;
 
 @Component
 public class GoogleFileConverter extends BaseFileConverter implements FileConverter, DataConverter {

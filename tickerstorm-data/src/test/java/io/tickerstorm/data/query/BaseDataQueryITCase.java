@@ -11,10 +11,10 @@ import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 
+import io.tickerstorm.common.entity.MarketData;
 import io.tickerstorm.data.TestMarketDataServiceConfig;
 import io.tickerstorm.data.converter.DataQueryClient;
 import io.tickerstorm.data.dao.MarketDataDao;
-import io.tickerstorm.entity.MarketData;
 import net.engio.mbassy.bus.MBassador;
 
 @DirtiesContext

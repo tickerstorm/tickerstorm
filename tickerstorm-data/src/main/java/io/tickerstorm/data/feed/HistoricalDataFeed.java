@@ -18,11 +18,12 @@ import org.springframework.stereotype.Repository;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
 
+import io.tickerstorm.common.data.feed.HistoricalFeedQuery;
+import io.tickerstorm.common.entity.Candle;
+import io.tickerstorm.common.entity.Markers;
+import io.tickerstorm.common.entity.MarketData;
+import io.tickerstorm.common.entity.MarketDataMarker;
 import io.tickerstorm.data.dao.MarketDataDto;
-import io.tickerstorm.entity.Candle;
-import io.tickerstorm.entity.Markers;
-import io.tickerstorm.entity.MarketData;
-import io.tickerstorm.entity.MarketDataMarker;
 import net.engio.mbassy.bus.MBassador;
 import net.engio.mbassy.listener.Handler;
 
