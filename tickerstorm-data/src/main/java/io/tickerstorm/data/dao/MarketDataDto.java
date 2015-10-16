@@ -5,7 +5,6 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoField;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,8 +32,7 @@ public class MarketDataDto implements Serializable {
 
   public static MarketDataDto convert(MarketData data) {
 
-    if (Candle.TYPE.equals(data.getType()) || Tick.TYPE.equals(data.getType())
-        || Quote.TYPE.equals(data.getType())) {
+    if (Candle.TYPE.equals(data.getType()) || Tick.TYPE.equals(data.getType()) || Quote.TYPE.equals(data.getType())) {
 
       MarketDataDto dto = new MarketDataDto();
       PrimaryKey key = new PrimaryKey();
@@ -42,12 +40,15 @@ public class MarketDataDto implements Serializable {
 
         mapper.map(data, dto);
         mapper.map(data, key);
-        key.date =
-            dateFormatter.format(LocalDateTime.ofInstant(data.getTimestamp(), ZoneOffset.UTC));
-        key.hour = LocalDateTime.ofInstant(data.getTimestamp(), ZoneOffset.UTC)
-            .get(ChronoField.HOUR_OF_DAY);
-        key.min = LocalDateTime.ofInstant(data.getTimestamp(), ZoneOffset.UTC)
-            .get(ChronoField.MINUTE_OF_HOUR);
+
+        long sec = data.getTimestamp().toEpochMilli() / 1000;
+
+        LocalDateTime dt = LocalDateTime.ofInstant(data.getTimestamp(), ZoneOffset.UTC);
+
+        key.date = dateFormatter.format(dt);
+        key.hour = dt.getHour();
+        key.min = dt.getMinute();
+
         dto.primarykey = key;
         dto.primarykey.symbol = dto.primarykey.symbol.toLowerCase();
         dto.primarykey.source = dto.primarykey.source.toLowerCase();

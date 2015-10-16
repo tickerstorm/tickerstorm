@@ -21,13 +21,13 @@ public class PrimaryKey implements Serializable {
   @PrimaryKeyColumn(name = "type", ordinal = 2, type = PrimaryKeyType.CLUSTERED)
   public String type;
 
-  @PrimaryKeyColumn(name = "source", ordinal = 3, type = PrimaryKeyType.CLUSTERED)
+  @PrimaryKeyColumn(name = "source", ordinal = 3, type = PrimaryKeyType.CLUSTERED, ordering = Ordering.ASCENDING)
   public String source;
 
-  @PrimaryKeyColumn(name = "interval", ordinal = 4, type = PrimaryKeyType.CLUSTERED)
+  @PrimaryKeyColumn(name = "interval", ordinal = 4, type = PrimaryKeyType.CLUSTERED, ordering = Ordering.ASCENDING)
   public String interval;
 
-  @PrimaryKeyColumn(name = "timestamp", ordinal = 5, type = PrimaryKeyType.CLUSTERED, ordering = Ordering.ASCENDING)
+  @PrimaryKeyColumn(name = "timestamp", ordinal = 5, type = PrimaryKeyType.CLUSTERED)
   public Date timestamp;
 
   @PrimaryKeyColumn(name = "hour", ordinal = 6, type = PrimaryKeyType.CLUSTERED, ordering = Ordering.ASCENDING)

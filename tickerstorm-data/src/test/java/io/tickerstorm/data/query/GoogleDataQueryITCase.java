@@ -60,7 +60,7 @@ public class GoogleDataQueryITCase extends BaseDataQueryITCase {
 
     Files.copy(new File("./src/test/resources/data/Google/TOL.csv"), new File("./data/Google/TOL.csv"));
 
-    Thread.sleep(10000);
+    Thread.sleep(1000000);
 
     daoCount = dao.count();
     assertEquals(count.get(), 5792, "Failed message broker count");

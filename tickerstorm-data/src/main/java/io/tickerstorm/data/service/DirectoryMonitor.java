@@ -11,6 +11,8 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.monitor.FileAlterationMonitor;
 import org.apache.commons.io.monitor.FileAlterationObserver;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +20,8 @@ import io.tickerstorm.common.data.converter.BaseFileConverter;
 
 @Service
 public class DirectoryMonitor {
+
+  public final static Logger logger = LoggerFactory.getLogger(DirectoryMonitor.class);
 
   @Autowired
   private List<BaseFileConverter> listeners = new ArrayList<BaseFileConverter>();
@@ -29,6 +33,8 @@ public class DirectoryMonitor {
 
     final File directory = new File("./data");
     FileAlterationObserver fao = new FileAlterationObserver(directory);
+
+    logger.info("Monitoring location: " + directory.getAbsolutePath());
 
     for (BaseFileConverter l : listeners) {
       fao.addListener(l);
