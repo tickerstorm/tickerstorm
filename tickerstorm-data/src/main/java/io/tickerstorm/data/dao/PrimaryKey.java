@@ -15,7 +15,7 @@ public class PrimaryKey implements Serializable {
   @PrimaryKeyColumn(name = "symbol", ordinal = 0, type = PrimaryKeyType.PARTITIONED)
   public String symbol;
 
-  @PrimaryKeyColumn(name = "date", ordinal = 1, type = PrimaryKeyType.PARTITIONED, ordering = Ordering.DESCENDING)
+  @PrimaryKeyColumn(name = "date", ordinal = 1, type = PrimaryKeyType.PARTITIONED, ordering = Ordering.ASCENDING)
   public String date;
 
   @PrimaryKeyColumn(name = "type", ordinal = 2, type = PrimaryKeyType.CLUSTERED)
@@ -27,13 +27,13 @@ public class PrimaryKey implements Serializable {
   @PrimaryKeyColumn(name = "interval", ordinal = 4, type = PrimaryKeyType.CLUSTERED)
   public String interval;
 
-  @PrimaryKeyColumn(name = "timestamp", ordinal = 5, type = PrimaryKeyType.CLUSTERED, ordering = Ordering.DESCENDING)
+  @PrimaryKeyColumn(name = "timestamp", ordinal = 5, type = PrimaryKeyType.CLUSTERED, ordering = Ordering.ASCENDING)
   public Date timestamp;
-  
-  @PrimaryKeyColumn(name = "hour", ordinal = 6, type = PrimaryKeyType.CLUSTERED, ordering = Ordering.DESCENDING)
+
+  @PrimaryKeyColumn(name = "hour", ordinal = 6, type = PrimaryKeyType.CLUSTERED, ordering = Ordering.ASCENDING)
   public Integer hour;
-  
-  @PrimaryKeyColumn(name = "min", ordinal = 6, type = PrimaryKeyType.CLUSTERED, ordering = Ordering.DESCENDING)
+
+  @PrimaryKeyColumn(name = "min", ordinal = 6, type = PrimaryKeyType.CLUSTERED, ordering = Ordering.ASCENDING)
   public Integer min;
 
   @Override

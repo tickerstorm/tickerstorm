@@ -1,9 +1,5 @@
 package io.tickerstorm.strategy.bolt;
 
-import io.tickerstorm.common.entity.MarketData;
-import io.tickerstorm.strategy.util.Clock;
-import io.tickerstorm.strategy.util.TupleUtil;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -11,14 +7,17 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.google.common.collect.Lists;
+
 import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
-
-import com.google.common.collect.Lists;
+import io.tickerstorm.common.entity.MarketData;
+import io.tickerstorm.strategy.util.Clock;
+import io.tickerstorm.strategy.util.TupleUtil;
 
 @Component
 @SuppressWarnings("serial")
@@ -32,13 +31,19 @@ public class ClockBolt extends BaseRichBolt {
   @Override
   public void execute(Tuple tuple) {
 
-    List<Object> values = TupleUtil.propagateTuple(tuple, Lists.newArrayList());
+    if (tuple.contains(Fields.MARKETDATA.fieldName())) {
 
-    MarketData data = (MarketData) tuple.getValueByField(Fields.MARKETDATA.fieldName());
-    clock.update(data.getTimestamp());
-    values.add(clock.now());
+      List<Object> values = TupleUtil.propagateTuple(tuple, Lists.newArrayList());
 
-    collector.emit(tuple, new Values(values.toArray()));
+      MarketData data = (MarketData) tuple.getValueByField(Fields.MARKETDATA.fieldName());
+
+      if (data != null) {
+        clock.update(data.getTimestamp());
+        values.add(clock.now());
+        collector.emit(tuple, new Values(values.toArray()));
+      }
+    }
+
     collector.ack(tuple);
   }
 

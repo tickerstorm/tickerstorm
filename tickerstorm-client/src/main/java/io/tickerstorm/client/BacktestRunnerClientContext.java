@@ -1,5 +1,7 @@
 package io.tickerstorm.client;
 
+import java.io.Serializable;
+
 import javax.jms.ConnectionFactory;
 import javax.jms.Session;
 
@@ -36,15 +38,30 @@ public class BacktestRunnerClientContext {
     SpringApplication.run(BacktestRunnerClientContext.class, args);
   }
 
+  // SENDERS
   @Bean
   public EventBusToJMSBridge buildQueryJmsBridge(@Qualifier("query") MBassador<HistoricalFeedQuery> eventbus, JmsTemplate template) {
     return new EventBusToJMSBridge(eventbus, Destinations.QUEUE_QUERY, template);
   }
 
   @Bean
+  public EventBusToJMSBridge buildCommandsJmsBridge(@Qualifier("commands") MBassador<Serializable> eventbus, JmsTemplate template) {
+    return new EventBusToJMSBridge(eventbus, Destinations.TOPIC_COMMANDS, template);
+  }
+
+
+  // RECEIVERS
+  @Bean
   public JMSToEventBusBridge buildRealtimeEventBridge(@Qualifier("realtime") MBassador<MarketData> realtimeBus) {
     JMSToEventBusBridge bridge = new JMSToEventBusBridge();
     bridge.setRealtimeBus(realtimeBus);
+    return bridge;
+  }
+
+  @Bean
+  public JMSToEventBusBridge buildNotificationsEventBridge(@Qualifier("notification") MBassador<Serializable> bus) {
+    JMSToEventBusBridge bridge = new JMSToEventBusBridge();
+    bridge.setNotificationBus(bus);
     return bridge;
   }
 
@@ -54,6 +71,7 @@ public class BacktestRunnerClientContext {
     template.setDestinationResolver(new ByDestinationNameJmsResolver());
     template.setSessionAcknowledgeMode(Session.CLIENT_ACKNOWLEDGE);
     template.setTimeToLive(2000);
+    template.setPubSubNoLocal(true);
     return template;
   }
 

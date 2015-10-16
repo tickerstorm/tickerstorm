@@ -21,8 +21,8 @@ public class Candle extends BaseMarketData {
 
   public Candle() {}
 
-  public Candle(String symbol, String source, Instant timestamp, BigDecimal open, BigDecimal close,
-      BigDecimal high, BigDecimal low, String interval, int volume) {
+  public Candle(String symbol, String source, Instant timestamp, BigDecimal open, BigDecimal close, BigDecimal high, BigDecimal low,
+      String interval, int volume) {
     super(symbol, source, timestamp);
     this.close = close;
     this.open = open;
@@ -179,7 +179,9 @@ public class Candle extends BaseMarketData {
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this).toString();
+    String v = super.toString();
+    return MoreObjects.toStringHelper(this).addValue(v).add("interval", interval).add("open", open).add("close", close).add("high", high)
+        .add("low", low).add("volume", volume).toString();
   }
 
   @Override

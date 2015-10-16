@@ -134,4 +134,5 @@
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
+	<name>TickerStorm Parent POM</name>
 </project>

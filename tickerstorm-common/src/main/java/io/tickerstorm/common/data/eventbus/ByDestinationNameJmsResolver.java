@@ -14,8 +14,7 @@ public class ByDestinationNameJmsResolver extends DynamicDestinationResolver {
   private final HashMap<String, Destination> cache = new HashMap<String, Destination>();
 
   @Override
-  public Destination resolveDestinationName(Session session, String destinationName,
-      boolean pubSubDomain) throws JMSException {
+  public Destination resolveDestinationName(Session session, String destinationName, boolean pubSubDomain) throws JMSException {
 
     Assert.notNull(session, "Session must not be null");
     Assert.notNull(destinationName, "Destination name must not be null");
@@ -32,9 +31,9 @@ public class ByDestinationNameJmsResolver extends DynamicDestinationResolver {
     Destination d = null;
 
     if (pubSubDomain) {
-      d = resolveTopic(session, destinationName);
+      d = resolveTopic(session, destinationName.toLowerCase());
     } else {
-      d = resolveQueue(session, destinationName);
+      d = resolveQueue(session, destinationName.toLowerCase());
     }
 
     cache.put(destinationName.toLowerCase(), d);

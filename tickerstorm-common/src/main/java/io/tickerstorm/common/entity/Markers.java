@@ -43,4 +43,12 @@ public enum Markers {
   public String toString() {
     return marker;
   }
+
+  public static boolean is(Marker marker, Markers m) {
+
+    if (marker != null && m != null)
+      return (marker.getMarkers().contains(m.toString()));
+
+    return false;
+  }
 }

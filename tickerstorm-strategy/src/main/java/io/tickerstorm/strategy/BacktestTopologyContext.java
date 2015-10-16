@@ -17,8 +17,9 @@ import org.springframework.jms.annotation.EnableJms;
 import backtype.storm.contrib.jms.spout.JmsSpout;
 import io.tickerstorm.common.data.CommonContext;
 import io.tickerstorm.common.data.eventbus.Destinations;
-import io.tickerstorm.strategy.spout.RealtimeDestinationProvider;
-import io.tickerstorm.strategy.spout.StormJmsTupleProducer;
+import io.tickerstorm.strategy.spout.CommandsTupleProducer;
+import io.tickerstorm.strategy.spout.DestinationProvider;
+import io.tickerstorm.strategy.spout.MarketDataTupleProducer;
 import io.tickerstorm.strategy.util.BacktestClock;
 import io.tickerstorm.strategy.util.Clock;
 
@@ -29,8 +30,7 @@ import io.tickerstorm.strategy.util.Clock;
 @Import({CommonContext.class})
 public class BacktestTopologyContext {
 
-  public static final Logger logger =
-      org.slf4j.LoggerFactory.getLogger(BacktestTopologyContext.class);
+  public static final Logger logger = org.slf4j.LoggerFactory.getLogger(BacktestTopologyContext.class);
 
   @Value("${jms.transport}")
   private String transport;
@@ -43,14 +43,29 @@ public class BacktestTopologyContext {
   }
 
   @Qualifier("realtime")
-  @Bean
+  @Bean(destroyMethod = "close")
   public JmsSpout buildJmsSpout(ConnectionFactory factory) throws Exception {
 
     JmsSpout spout = new JmsSpout();
-    spout.setJmsProvider(new RealtimeDestinationProvider(factory,
-        factory.createConnection().createSession(false, Session.CLIENT_ACKNOWLEDGE)
-            .createTopic(Destinations.TOPIC_REALTIME_MARKETDATA)));
-    spout.setJmsTupleProducer(new StormJmsTupleProducer());
+    spout.setJmsProvider(new DestinationProvider(factory,
+        factory.createConnection().createSession(false, Session.CLIENT_ACKNOWLEDGE).createTopic(Destinations.TOPIC_REALTIME_MARKETDATA)));
+    spout.setJmsTupleProducer(new MarketDataTupleProducer());
+    spout.setJmsAcknowledgeMode(Session.CLIENT_ACKNOWLEDGE);
+    spout.setDistributed(true);
+    spout.setRecoveryPeriod(1000);
+
+    return spout;
+
+  }
+
+  @Qualifier("commands")
+  @Bean(destroyMethod = "close")
+  public JmsSpout buildJmsCommandsSpout(ConnectionFactory factory) throws Exception {
+
+    JmsSpout spout = new JmsSpout();
+    spout.setJmsProvider(new DestinationProvider(factory,
+        factory.createConnection().createSession(false, Session.CLIENT_ACKNOWLEDGE).createTopic(Destinations.TOPIC_COMMANDS)));
+    spout.setJmsTupleProducer(new CommandsTupleProducer());
     spout.setJmsAcknowledgeMode(Session.CLIENT_ACKNOWLEDGE);
     spout.setDistributed(true);
     spout.setRecoveryPeriod(1000);

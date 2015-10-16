@@ -4,6 +4,7 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.SpringApplication;
 import org.springframework.stereotype.Service;
 
@@ -24,8 +25,13 @@ public class BacktestTopology {
 
   private LocalCluster cluster;
 
+  @Qualifier("realtime")
   @Autowired
   private JmsSpout jmsSpout;
+
+  @Qualifier("commands")
+  @Autowired
+  private JmsSpout commandsSpout;
 
   @Autowired
   private ClockBolt clockBolt;
@@ -50,10 +56,11 @@ public class BacktestTopology {
 
     TopologyBuilder builder = new TopologyBuilder();
     builder.setSpout("marketdata", jmsSpout);
-    builder.setBolt("clock", clockBolt).shuffleGrouping("marketdata");
-    builder.setBolt("ave", aveBolt).shuffleGrouping("clock");
-    builder.setBolt("logger", loggingBolt).shuffleGrouping("ave");
-    builder.setBolt("csv", csvBolt).shuffleGrouping("ave");
+    builder.setSpout("commands", commandsSpout);
+    builder.setBolt("clock", clockBolt).shuffleGrouping("marketdata").allGrouping("commands");
+    builder.setBolt("ave", aveBolt).shuffleGrouping("clock").allGrouping("commands");
+    builder.setBolt("logger", loggingBolt).shuffleGrouping("ave").allGrouping("commands");
+    builder.setBolt("csv", csvBolt).shuffleGrouping("ave").allGrouping("commands");
 
     stormConfig.setDebug(false);
     stormConfig.setNumWorkers(1);

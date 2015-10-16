@@ -8,9 +8,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import backtype.storm.contrib.jms.JmsProvider;
 
 @SuppressWarnings("serial")
-public class RealtimeDestinationProvider implements JmsProvider {
+public class DestinationProvider implements JmsProvider {
 
-  public RealtimeDestinationProvider(ConnectionFactory factory, Destination realtime) {
+  public DestinationProvider(ConnectionFactory factory, Destination realtime) {
     this.factory = factory;
     this.destination = realtime;
   }

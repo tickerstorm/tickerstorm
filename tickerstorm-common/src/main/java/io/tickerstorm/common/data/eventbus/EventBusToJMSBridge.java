@@ -1,7 +1,6 @@
 package io.tickerstorm.common.data.eventbus;
 
 import java.io.Serializable;
-import java.util.concurrent.atomic.AtomicLong;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -23,7 +22,6 @@ import net.engio.mbassy.listener.References;
 public class EventBusToJMSBridge {
 
   private static final Logger logger = LoggerFactory.getLogger(EventBusToJMSBridge.class);
-  private AtomicLong count = new AtomicLong(0);
 
   public EventBusToJMSBridge(MBassador<?> eventBus, String destination, JmsTemplate template) {
     this.bus = eventBus;
@@ -48,12 +46,10 @@ public class EventBusToJMSBridge {
   @Handler
   public void onEvent(Serializable data) {
 
-    logger.debug("Event bridge to " + destination + " dispatched a total of "
-        + count.incrementAndGet() + " events");
-
     template.send(destination, new MessageCreator() {
       @Override
       public Message createMessage(Session session) throws JMSException {
+        logger.debug("Dispatching " + data.toString());
         Message m = session.createObjectMessage(data);
         return m;
       }

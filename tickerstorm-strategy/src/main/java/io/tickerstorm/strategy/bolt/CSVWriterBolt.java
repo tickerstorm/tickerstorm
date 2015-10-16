@@ -14,12 +14,12 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.storm.commons.lang.StringUtils;
-import org.apache.storm.guava.base.Throwables;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import com.google.common.base.Throwables;
 import com.google.common.io.Files;
 
 import backtype.storm.task.OutputCollector;
@@ -28,6 +28,7 @@ import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
+import io.tickerstorm.common.entity.Command;
 import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.entity.Marker;
 import io.tickerstorm.common.entity.Markers;
@@ -46,31 +47,70 @@ public class CSVWriterBolt extends BaseRichBolt {
   @Override
   public void execute(Tuple tuple) {
 
-    List<Field<?>> columns = sortFields(tuple);
+    if (tuple.contains(Fields.MARKER.fieldName())) {
 
-    try {
+      Marker m = (Marker) tuple.getValueByField(Fields.MARKER.fieldName());
 
-      if (firstLine.get()) {
-        outputFile.append(writeHeader(columns));
-        firstLine.set(false);
+      if (Markers.is(m, Markers.SESSION_START) && Command.class.isAssignableFrom(m.getClass())) {
+
+        Command c = (Command) m;
+
+        String fileName = (String) c.config.get("output.file.csv.name");
+        firstLine = new AtomicBoolean(true);
+
+        if (StringUtils.isEmpty(fileName)) {
+          fileName = "/tmp/" + UUID.randomUUID().toString() + ".csv";
+        }
+
+        file = new File(fileName);
+
+        try {
+
+          if (file.exists()) {
+            fileName = Files.getNameWithoutExtension(fileName).concat("-" + Instant.now().getEpochSecond())
+                .concat(Files.getFileExtension(fileName));
+          }
+
+          logger.info("Creating CSV file " + fileName);
+          Files.createParentDirs(file);
+          Files.touch(file);
+          outputFile = Files.newWriter(file, Charset.forName("UTF-8"));
+
+        } catch (Exception e) {
+          Throwables.propagate(e);
+        }
       }
 
-      outputFile.append(writeLine(columns));
-      outputFile.flush();
+      if (Markers.is(m, Markers.SESSION_END) && Command.class.isAssignableFrom(m.getClass())) {
+        logger.info("Flush to CSV complete");
 
-    } catch (IOException e) {
-      logger.error(e.getMessage(), e);
-    }
-
-    if (tuple.contains(Fields.MARKER.fieldName())) {
-      Marker m = (Marker) tuple.getValueByField(Fields.MARKER.fieldName());
-      if (m.getMarkers().contains(Markers.SESSION_END.toString())) {
+        try {
+          outputFile.flush();
+        } catch (Exception e) {
+          logger.error(e.getMessage(), e);
+        }
 
         coll.emit(new Values(file.getAbsolutePath()));
+      }
 
+    } else if (tuple.contains(Fields.MARKETDATA.fieldName())) {
+
+      List<Field<?>> columns = sortFields(tuple);
+
+      try {
+
+        if (firstLine.get()) {
+          outputFile.append(writeHeader(columns));
+          firstLine.set(false);
+        }
+
+        outputFile.append(writeLine(columns));
+        outputFile.flush();
+
+      } catch (IOException e) {
+        logger.error(e.getMessage(), e);
       }
     }
-
     coll.ack(tuple);
   }
 
@@ -106,8 +146,10 @@ public class CSVWriterBolt extends BaseRichBolt {
 
     for (Object o : tuple.getValues()) {
 
-      if (MarketData.class.isAssignableFrom(o.getClass())
-          && !Marker.class.isAssignableFrom(o.getClass())) {
+      if (o == null)
+        continue;
+
+      if (MarketData.class.isAssignableFrom(o.getClass()) && !Marker.class.isAssignableFrom(o.getClass())) {
 
         columns.addAll(((MarketData) o).getFields());
 
@@ -140,29 +182,7 @@ public class CSVWriterBolt extends BaseRichBolt {
   public void prepare(Map config, TopologyContext context, OutputCollector collector) {
 
     this.coll = collector;
-    String fileName = (String) config.get("output.file.csv.name");
-    firstLine = new AtomicBoolean(true);
 
-    if (StringUtils.isEmpty(fileName)) {
-      fileName = "/tmp/" + UUID.randomUUID().toString() + ".csv";
-    }
-
-    file = new File(fileName);
-
-    try {
-
-      if (file.exists()) {
-        fileName = Files.getNameWithoutExtension(fileName)
-            .concat("-" + Instant.now().getEpochSecond()).concat(Files.getFileExtension(fileName));
-      }
-
-      Files.createParentDirs(file);
-      Files.touch(file);
-      outputFile = Files.newWriter(file, Charset.forName("UTF-8"));
-
-    } catch (Exception e) {
-      Throwables.propagate(e);
-    }
 
 
   }

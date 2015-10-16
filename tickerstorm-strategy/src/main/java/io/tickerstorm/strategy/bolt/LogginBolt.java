@@ -1,6 +1,5 @@
 package io.tickerstorm.strategy.bolt;
 
-import java.time.Instant;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -12,7 +11,6 @@ import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Tuple;
-import io.tickerstorm.common.entity.MarketData;
 
 @Component
 @SuppressWarnings("serial")
@@ -24,10 +22,11 @@ public class LogginBolt extends BaseRichBolt {
   @Override
   public void execute(Tuple tuple) {
 
-    MarketData e = (MarketData) tuple.getValueByField(Fields.MARKETDATA.fieldName());
-    Instant clock = (Instant) tuple.getValueByField(Fields.NOW.fieldName());
-
-    logger.info("Market event at" + clock.toString() + " Event:  " + e.toString());
+    StringBuffer buf = new StringBuffer("Tuple contains ");
+    for (String f : tuple.getFields()) {
+      buf = buf.append(f + ",");
+    }
+    logger.debug(buf.toString());
     coll.ack(tuple);
   }
 

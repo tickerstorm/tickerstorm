@@ -14,10 +14,7 @@
 	<root level="INFO">
 		<appender-ref ref="consoleAppender" />
 	</root>
-	<logger name="org.apache.http" level="ERROR">
-		<appender-ref ref="consoleAppender" />
-	</logger>
-	<logger name="io.ticketstorm" level="DEBUG">
+	<logger name="io.tickerstorm" level="DEBUG" additivity="false"> 
 		<appender-ref ref="consoleAppender" />
 	</logger>
 </configuration>

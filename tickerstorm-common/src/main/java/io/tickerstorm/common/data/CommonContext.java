@@ -1,5 +1,7 @@
 package io.tickerstorm.common.data;
 
+import java.io.Serializable;
+
 import javax.jms.ConnectionFactory;
 import javax.jms.Session;
 
@@ -40,6 +42,18 @@ public class CommonContext {
     return new MBassador<HistoricalFeedQuery>(handler);
   }
 
+  @Qualifier("commands")
+  @Bean(destroyMethod = "shutdown")
+  public MBassador<Serializable> buildCommandsEventBus(IPublicationErrorHandler handler) {
+    return new MBassador<Serializable>(handler);
+  }
+
+  @Qualifier("notification")
+  @Bean(destroyMethod = "shutdown")
+  public MBassador<Serializable> buildNotificaitonEventBus(IPublicationErrorHandler handler) {
+    return new MBassador<Serializable>(handler);
+  }
+
   @Bean
   public ConnectionFactory buildActiveMQConnectionFactory() throws Exception {
     ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(transport);
@@ -51,7 +65,7 @@ public class CommonContext {
     DefaultJmsListenerContainerFactory factory = new DefaultJmsListenerContainerFactory();
     factory.setConnectionFactory(cf);
     factory.setDestinationResolver(new ByDestinationNameJmsResolver());
-    factory.setConcurrency("3-10");
+    factory.setConcurrency("1");
     factory.setSessionAcknowledgeMode(Session.CLIENT_ACKNOWLEDGE);
     return factory;
   }

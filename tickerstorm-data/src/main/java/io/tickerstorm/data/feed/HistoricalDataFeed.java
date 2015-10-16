@@ -1,5 +1,6 @@
 package io.tickerstorm.data.feed;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
@@ -30,14 +31,17 @@ import net.engio.mbassy.listener.Handler;
 @Repository
 public class HistoricalDataFeed {
 
-  private static final java.time.format.DateTimeFormatter dateFormat =
-      java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd");
+  private static final java.time.format.DateTimeFormatter dateFormat = java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd");
 
   private static final Logger logger = LoggerFactory.getLogger(HistoricalDataFeed.class);
 
   @Qualifier("realtime")
   @Autowired
   private MBassador<MarketData> realtimeBus;
+
+  @Qualifier("notification")
+  @Autowired
+  private MBassador<Serializable> notificationBus;
 
   @Qualifier("query")
   @Autowired
@@ -81,17 +85,14 @@ public class HistoricalDataFeed {
       }
 
       Select select = QueryBuilder.select().from("marketdata");
-      select.where(QueryBuilder.eq("symbol", s.toLowerCase()))
-          .and(QueryBuilder.in("date", dates.toArray(new String[] {})))
-          .and(QueryBuilder.eq("type", Candle.TYPE.toLowerCase()))
-          .and(QueryBuilder.eq("source", query.source.toLowerCase()))
+      select.where(QueryBuilder.eq("symbol", s.toLowerCase())).and(QueryBuilder.in("date", dates.toArray(new String[] {})))
+          .and(QueryBuilder.eq("type", Candle.TYPE.toLowerCase())).and(QueryBuilder.eq("source", query.source.toLowerCase()))
           .and(QueryBuilder.eq("interval", query.periods.iterator().next()));
 
       logger.debug("Cassandra query: " + select.toString());
       long startTimer = System.currentTimeMillis();
       List<MarketDataDto> dtos = cassandra.select(select, MarketDataDto.class);
-      logger.info("Query took " + (System.currentTimeMillis() - startTimer) + "ms to fetch "
-          + dtos.size() + " results.");
+      logger.info("Query took " + (System.currentTimeMillis() - startTimer) + "ms to fetch " + dtos.size() + " results.");
 
       startTimer = System.currentTimeMillis();
       MarketData first = null;
@@ -104,11 +105,10 @@ public class HistoricalDataFeed {
 
           if (null == first) {
             first = m;
-            MarketDataMarker marker =
-                new MarketDataMarker(m.getSymbol(), m.getSource(), m.getTimestamp(), query.id);
+            MarketDataMarker marker = new MarketDataMarker(m.getSymbol(), m.getSource(), m.getTimestamp(), query.id);
             marker.addMarker(Markers.QUERY_START.toString());
             marker.expect = dtos.size();
-            realtimeBus.publish(marker);
+            notificationBus.publish(marker);
           }
 
           realtimeBus.publish(m);
@@ -116,11 +116,10 @@ public class HistoricalDataFeed {
 
           if (count == dtos.size() && null == last) {
             last = m;
-            MarketDataMarker marker =
-                new MarketDataMarker(m.getSymbol(), m.getSource(), m.getTimestamp(), query.id);
+            MarketDataMarker marker = new MarketDataMarker(m.getSymbol(), m.getSource(), m.getTimestamp(), query.id);
             marker.addMarker(Markers.QUERY_END.toString());
             marker.expect = 0;
-            realtimeBus.publish(marker);
+            notificationBus.publish(marker);
           }
         } catch (Exception e) {
           logger.error(e.getMessage(), e);
@@ -128,8 +127,7 @@ public class HistoricalDataFeed {
         }
       }
 
-      logger.info(
-          "Dispatch historical data feed took " + (System.currentTimeMillis() - startTimer) + "ms");
+      logger.info("Dispatch historical data feed took " + (System.currentTimeMillis() - startTimer) + "ms");
 
     }
   }

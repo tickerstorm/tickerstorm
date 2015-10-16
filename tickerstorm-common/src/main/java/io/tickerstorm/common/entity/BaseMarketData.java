@@ -23,6 +23,11 @@ public abstract class BaseMarketData implements MarketData, Serializable {
     this.timestamp = timestamp;
   }
 
+  public BaseMarketData(String source, Instant timestamp) {
+    this.source = source;
+    this.timestamp = timestamp;
+  }
+
   @Override
   public boolean equals(Object obj) {
     if (this == obj)
@@ -88,15 +93,14 @@ public abstract class BaseMarketData implements MarketData, Serializable {
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this).toString();
+    return MoreObjects.toStringHelper(this).add("symbol", symbol).add("source", source).add("timestamp", timestamp).toString();
   }
 
   public Set<Field<?>> getFields() {
 
     Set<Field<?>> fields = new HashSet<Field<?>>();
     fields.add(new CategoricalField(symbol, timestamp, symbol, Field.SYMBOL, source));
-    fields.add(
-        new CategoricalField(symbol, timestamp, timestamp.toString(), Field.TIMESTAMP, source));
+    fields.add(new CategoricalField(symbol, timestamp, timestamp.toString(), Field.TIMESTAMP, source));
     fields.add(new CategoricalField(symbol, timestamp, source, Field.SOURCE, source));
     return fields;
 
