@@ -62,6 +62,7 @@ public class BacktestRunnerClientContext {
   public JMSToEventBusBridge buildNotificationsEventBridge(@Qualifier("notification") MBassador<Serializable> bus) {
     JMSToEventBusBridge bridge = new JMSToEventBusBridge();
     bridge.setNotificationBus(bus);
+    bridge.setExplodeCollections(true);
     return bridge;
   }
 

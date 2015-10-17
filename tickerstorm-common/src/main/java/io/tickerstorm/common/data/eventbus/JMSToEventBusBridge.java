@@ -1,6 +1,7 @@
 package io.tickerstorm.common.data.eventbus;
 
 import java.io.Serializable;
+import java.util.Collection;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +24,16 @@ public class JMSToEventBusBridge {
 
   private MBassador<Serializable> notificationBus;
 
+  private boolean explodeCollections = false;
+
+  public boolean isExplodeCollections() {
+    return explodeCollections;
+  }
+
+  public void setExplodeCollections(boolean explodeCollections) {
+    this.explodeCollections = explodeCollections;
+  }
+
   public MBassador<Serializable> getCommandsBus() {
     return commandsBus;
   }
@@ -42,8 +53,20 @@ public class JMSToEventBusBridge {
   @JmsListener(destination = Destinations.TOPIC_COMMANDS)
   public void onCommandMessage(@Payload Serializable md) {
     if (commandsBus != null) {
-      logger.debug("Received command " + md.toString());
-      commandsBus.publishAsync(md);
+
+      if (Collection.class.isAssignableFrom(md.getClass()) && explodeCollections) {
+
+        for (Serializable s : (Collection<Serializable>) md) {
+          logger.debug("Received command  " + md.toString());
+          commandsBus.publishAsync(s);
+        }
+
+      } else {
+
+        logger.debug("Received command " + md.toString());
+        commandsBus.publishAsync(md);
+
+      }
     }
   }
 
@@ -66,8 +89,19 @@ public class JMSToEventBusBridge {
   @JmsListener(destination = Destinations.TOPIC_NOTIFICATIONS)
   public void onNotificationMessage(@Payload Serializable md) {
     if (notificationBus != null) {
-      logger.debug("Received notification " + md.toString());
-      notificationBus.publishAsync(md);
+
+      if (Collection.class.isAssignableFrom(md.getClass()) && explodeCollections) {
+
+        for (Serializable s : (Collection<Serializable>) md) {
+          logger.debug("Received notification " + md.toString());
+          notificationBus.publishAsync(s);
+        }
+
+      } else {
+
+        logger.debug("Received notification " + md.toString());
+        notificationBus.publishAsync(md);
+      }
     }
   }
 

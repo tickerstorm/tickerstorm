@@ -33,6 +33,7 @@ import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.entity.Marker;
 import io.tickerstorm.common.entity.Markers;
 import io.tickerstorm.common.entity.MarketData;
+import io.tickerstorm.common.entity.Notification;
 
 @Component
 @SuppressWarnings("serial")
@@ -55,7 +56,7 @@ public class CSVWriterBolt extends BaseRichBolt {
 
         Command c = (Command) m;
 
-        String fileName = (String) c.config.get("output.file.csv.name");
+        String fileName = (String) c.config.get("output.file.csv.path");
         firstLine = new AtomicBoolean(true);
 
         if (StringUtils.isEmpty(fileName)) {
@@ -90,7 +91,11 @@ public class CSVWriterBolt extends BaseRichBolt {
           logger.error(e.getMessage(), e);
         }
 
-        coll.emit(new Values(file.getAbsolutePath()));
+        Notification n = new Notification();
+        n.setSource(this.getClass().getSimpleName());
+        n.addMarker(Markers.CSV_CREATED.toString());
+        n.getProperties().put("output.file.csv.path", file.getAbsolutePath());
+        coll.emit(new Values(n));
       }
 
     } else if (tuple.contains(Fields.MARKETDATA.fieldName())) {
@@ -180,16 +185,12 @@ public class CSVWriterBolt extends BaseRichBolt {
 
   @Override
   public void prepare(Map config, TopologyContext context, OutputCollector collector) {
-
     this.coll = collector;
-
-
-
   }
 
   @Override
   public void declareOutputFields(OutputFieldsDeclarer declarer) {
-    declarer.declare(new backtype.storm.tuple.Fields("file.csv"));
+    declarer.declare(new backtype.storm.tuple.Fields("notification.output.file.csv.path"));
   }
 
   @Override

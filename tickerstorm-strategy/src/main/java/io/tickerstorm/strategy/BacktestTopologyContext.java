@@ -14,12 +14,14 @@ import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.jms.annotation.EnableJms;
 
+import backtype.storm.contrib.jms.bolt.JmsBolt;
 import backtype.storm.contrib.jms.spout.JmsSpout;
 import io.tickerstorm.common.data.CommonContext;
 import io.tickerstorm.common.data.eventbus.Destinations;
 import io.tickerstorm.strategy.spout.CommandsTupleProducer;
 import io.tickerstorm.strategy.spout.DestinationProvider;
 import io.tickerstorm.strategy.spout.MarketDataTupleProducer;
+import io.tickerstorm.strategy.spout.NotificationTupleProducer;
 import io.tickerstorm.strategy.util.BacktestClock;
 import io.tickerstorm.strategy.util.Clock;
 
@@ -47,8 +49,7 @@ public class BacktestTopologyContext {
   public JmsSpout buildJmsSpout(ConnectionFactory factory) throws Exception {
 
     JmsSpout spout = new JmsSpout();
-    spout.setJmsProvider(new DestinationProvider(factory,
-        factory.createConnection().createSession(false, Session.CLIENT_ACKNOWLEDGE).createTopic(Destinations.TOPIC_REALTIME_MARKETDATA)));
+    spout.setJmsProvider(new DestinationProvider(factory, Destinations.TOPIC_REALTIME_MARKETDATA));
     spout.setJmsTupleProducer(new MarketDataTupleProducer());
     spout.setJmsAcknowledgeMode(Session.CLIENT_ACKNOWLEDGE);
     spout.setDistributed(true);
@@ -58,13 +59,24 @@ public class BacktestTopologyContext {
 
   }
 
+  @Qualifier("notification")
+  @Bean
+  public JmsBolt buildNotificationJmsBolt(ConnectionFactory factory) throws Exception {
+
+    JmsBolt bolt = new JmsBolt();
+    bolt.setAutoAck(false);
+    bolt.setJmsAcknowledgeMode(Session.CLIENT_ACKNOWLEDGE);
+    bolt.setJmsMessageProducer(new NotificationTupleProducer());
+    bolt.setJmsProvider(new DestinationProvider(factory, Destinations.TOPIC_NOTIFICATIONS));
+    return bolt;
+  }
+
   @Qualifier("commands")
   @Bean(destroyMethod = "close")
   public JmsSpout buildJmsCommandsSpout(ConnectionFactory factory) throws Exception {
 
     JmsSpout spout = new JmsSpout();
-    spout.setJmsProvider(new DestinationProvider(factory,
-        factory.createConnection().createSession(false, Session.CLIENT_ACKNOWLEDGE).createTopic(Destinations.TOPIC_COMMANDS)));
+    spout.setJmsProvider(new DestinationProvider(factory, Destinations.TOPIC_COMMANDS));
     spout.setJmsTupleProducer(new CommandsTupleProducer());
     spout.setJmsAcknowledgeMode(Session.CLIENT_ACKNOWLEDGE);
     spout.setDistributed(true);

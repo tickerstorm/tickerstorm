@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import backtype.storm.Config;
 import backtype.storm.LocalCluster;
+import backtype.storm.contrib.jms.bolt.JmsBolt;
 import backtype.storm.contrib.jms.spout.JmsSpout;
 import backtype.storm.topology.TopologyBuilder;
 import io.tickerstorm.strategy.BacktestTopologyContext;
@@ -47,6 +48,10 @@ public class BacktestTopology {
   @Autowired
   private ComputeAverageBolt aveBolt;
 
+  @Qualifier("notification")
+  @Autowired
+  private JmsBolt notificationBolt;
+
   public static void main(String[] args) throws Exception {
     SpringApplication.run(BacktestTopologyContext.class, args);
   }
@@ -57,10 +62,11 @@ public class BacktestTopology {
     TopologyBuilder builder = new TopologyBuilder();
     builder.setSpout("marketdata", jmsSpout);
     builder.setSpout("commands", commandsSpout);
-    builder.setBolt("clock", clockBolt).shuffleGrouping("marketdata").allGrouping("commands");
-    builder.setBolt("ave", aveBolt).shuffleGrouping("clock").allGrouping("commands");
-    builder.setBolt("logger", loggingBolt).shuffleGrouping("ave").allGrouping("commands");
-    builder.setBolt("csv", csvBolt).shuffleGrouping("ave").allGrouping("commands");
+    builder.setBolt("clock", clockBolt).localOrShuffleGrouping("marketdata").allGrouping("commands");
+    builder.setBolt("ave", aveBolt).localOrShuffleGrouping("clock").allGrouping("commands");
+    builder.setBolt("logger", loggingBolt).localOrShuffleGrouping("ave").allGrouping("commands");
+    builder.setBolt("csv", csvBolt).localOrShuffleGrouping("ave").allGrouping("commands");
+    builder.setBolt("notification", notificationBolt).localOrShuffleGrouping("csv");
 
     stormConfig.setDebug(false);
     stormConfig.setNumWorkers(1);

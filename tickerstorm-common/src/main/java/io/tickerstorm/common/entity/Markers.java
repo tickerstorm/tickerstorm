@@ -30,7 +30,11 @@ public enum Markers {
   /**
    * Backtests session start
    */
-  SESSION_START("session_start");
+  SESSION_START("session_start"),
+  /**
+   * Backtest session end
+   */
+  CSV_CREATED("csv_created"),;
 
 
   public String marker;

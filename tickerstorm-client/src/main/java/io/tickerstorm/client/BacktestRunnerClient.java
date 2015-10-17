@@ -1,5 +1,6 @@
 package io.tickerstorm.client;
 
+import java.io.File;
 import java.io.Serializable;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -21,6 +22,7 @@ import io.tickerstorm.common.entity.Command;
 import io.tickerstorm.common.entity.Marker;
 import io.tickerstorm.common.entity.Markers;
 import io.tickerstorm.common.entity.MarketDataMarker;
+import io.tickerstorm.common.entity.Notification;
 import net.engio.mbassy.bus.MBassador;
 import net.engio.mbassy.listener.Handler;
 
@@ -64,12 +66,24 @@ public class BacktestRunnerClient implements ApplicationListener<ContextRefreshe
     }
   }
 
+  @Handler
+  public void onCommandNotification(Notification not) throws Exception {
+
+    logger.debug("Client recieved notification " + not.toString());
+
+    if (Markers.is((Marker) not, Markers.CSV_CREATED)) {
+      String path = not.getProperties().get("output.file.csv.path");
+
+      assert new File(path).exists() : "File " + path + " doesn't exist";
+    }
+  }
+
   @Override
   public void onApplicationEvent(ContextRefreshedEvent arg0) {
 
     Command marker = new Command(clientName);
     marker.addMarker(Markers.SESSION_START.toString());
-    marker.config.put("output.file.csv.name", "/tmp/MarketDataFile-" + Instant.now() + ".csv");
+    marker.config.put("output.file.csv.path", "/tmp/MarketDataFile-" + Instant.now() + ".csv");
     commandsBus.publish(marker);
 
     HistoricalFeedQuery query = new HistoricalFeedQuery("TOL");

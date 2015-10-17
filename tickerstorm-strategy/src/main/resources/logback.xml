@@ -25,7 +25,7 @@
 		</filter>
 	</appender>
 
-	<root level="INFO">
+	<root level="ERROR">
 		<appender-ref ref="consoleAppender" />
 	</root>
 	<logger name="io.tickerstorm" level="DEBUG" additivity="false">
