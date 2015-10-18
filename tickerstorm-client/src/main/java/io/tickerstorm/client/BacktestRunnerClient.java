@@ -16,6 +16,8 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.stereotype.Service;
 
+import com.appx.h2o.H2ORestClient;
+
 import io.tickerstorm.common.data.feed.HistoricalFeedQuery;
 import io.tickerstorm.common.entity.Candle;
 import io.tickerstorm.common.entity.Command;
@@ -43,6 +45,9 @@ public class BacktestRunnerClient implements ApplicationListener<ContextRefreshe
   @Qualifier("notification")
   @Autowired
   private MBassador<Serializable> notificationBus;
+
+  @Autowired
+  private H2ORestClient h2oClient;
 
 
   @PostConstruct
@@ -75,6 +80,8 @@ public class BacktestRunnerClient implements ApplicationListener<ContextRefreshe
       String path = not.getProperties().get("output.file.csv.path");
 
       assert new File(path).exists() : "File " + path + " doesn't exist";
+
+      h2oClient.importFiles(path);
     }
   }
 

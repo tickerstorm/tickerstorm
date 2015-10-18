@@ -16,6 +16,8 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.jms.annotation.EnableJms;
 import org.springframework.jms.core.JmsTemplate;
 
+import com.appx.h2o.H2ORestClient;
+
 import io.tickerstorm.common.data.CommonContext;
 import io.tickerstorm.common.data.eventbus.ByDestinationNameJmsResolver;
 import io.tickerstorm.common.data.eventbus.Destinations;
@@ -76,6 +78,12 @@ public class BacktestRunnerClientContext {
     return template;
   }
 
+  @Bean
+  public H2ORestClient buildRestClient() {
 
+    H2ORestClient client = new H2ORestClient("http://localhost:54321");
+    return client;
+
+  }
 
 }
