@@ -5,6 +5,7 @@ import java.io.Serializable;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.concurrent.Future;
 
 import javax.annotation.PostConstruct;
 
@@ -27,6 +28,9 @@ import io.tickerstorm.common.entity.MarketDataMarker;
 import io.tickerstorm.common.entity.Notification;
 import net.engio.mbassy.bus.MBassador;
 import net.engio.mbassy.listener.Handler;
+import water.bindings.pojos.ImportFilesV3;
+import water.bindings.pojos.ParseSetupV3;
+import water.bindings.pojos.ParseV3;
 
 @Service
 public class BacktestRunnerClient implements ApplicationListener<ContextRefreshedEvent> {
@@ -81,7 +85,10 @@ public class BacktestRunnerClient implements ApplicationListener<ContextRefreshe
 
       assert new File(path).exists() : "File " + path + " doesn't exist";
 
-      h2oClient.importFiles(path);
+      ImportFilesV3 importF = h2oClient.importFiles(path);
+      ParseSetupV3 setup = h2oClient.guessSetup(importF);
+      Future<ParseV3> parse = h2oClient.parse(setup);
+
     }
   }
 
