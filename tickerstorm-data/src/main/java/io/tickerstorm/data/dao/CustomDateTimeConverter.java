@@ -13,9 +13,8 @@ import org.joda.time.format.ISODateTimeFormat;
 
 public class CustomDateTimeConverter implements CustomConverter {
 
-  @Override
-  public Object convert(Object dest, Object source, Class<?> destClass, Class<?> sourceClass) {
-
+  public static Object convertDateTime(Object dest, Object source, Class<?> destClass, Class<?> sourceClass) {
+    
     if (source == null) {
       return null;
     }
@@ -121,5 +120,10 @@ public class CustomDateTimeConverter implements CustomConverter {
 
     throw new MappingException("Converter TestCustomConverter " + "used incorrectly. Arguments passed in were:" + dest + " and " + source);
 
+  }
+  
+  @Override
+  public Object convert(Object dest, Object source, Class<?> destClass, Class<?> sourceClass) {
+    return convertDateTime(dest, source, destClass, sourceClass);
   }
 }

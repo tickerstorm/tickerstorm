@@ -2,34 +2,28 @@ package io.tickerstorm.strategy.bolt;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Lists;
 
-import backtype.storm.task.OutputCollector;
-import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.OutputFieldsDeclarer;
-import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Tuple;
-import backtype.storm.tuple.Values;
 import io.tickerstorm.common.entity.MarketData;
+import io.tickerstorm.common.model.Fields;
 import io.tickerstorm.strategy.util.Clock;
 import io.tickerstorm.strategy.util.TupleUtil;
 
 @Component
 @SuppressWarnings("serial")
-public class ClockBolt extends BaseRichBolt {
+public class ClockBolt extends BaseBolt {
 
   @Autowired
   private Clock clock;
 
-  private OutputCollector collector;
-
   @Override
-  public void execute(Tuple tuple) {
+  public void process(Tuple tuple) {
 
     if (tuple.contains(Fields.MARKETDATA.fieldName())) {
 
@@ -40,16 +34,11 @@ public class ClockBolt extends BaseRichBolt {
       if (data != null) {
         clock.update(data.getTimestamp());
         values.add(clock.now());
-        collector.emit(tuple, new Values(values.toArray()));
+        emit(values.toArray());
       }
     }
 
-    collector.ack(tuple);
-  }
-
-  @Override
-  public void prepare(Map arg0, TopologyContext arg1, OutputCollector arg2) {
-    this.collector = arg2;
+    ack(tuple);
   }
 
   @Override

@@ -76,6 +76,8 @@ public class BacktestRunnerClientContext {
     template.setTimeToLive(2000);
     template.setPubSubNoLocal(true);
     return template;
+
+
   }
 
   @Bean

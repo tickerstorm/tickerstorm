@@ -34,6 +34,6 @@ public class CommandsTupleProducer implements JmsTupleProducer {
 
   @Override
   public void declareOutputFields(OutputFieldsDeclarer declarer) {
-    declarer.declare(new Fields(io.tickerstorm.strategy.bolt.Fields.MARKER.fieldName()));
+    declarer.declare(new Fields(io.tickerstorm.common.model.Fields.MARKER.fieldName()));
   }
 }

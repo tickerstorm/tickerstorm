@@ -57,8 +57,7 @@ public class TestBacktestRunnerClientContext {
   }
 
   @Bean
-  public H2ORestClient buildRestClient() {
-
+  public H2ORestClient buildRestClient() throws Exception {
     H2ORestClient client = new H2ORestClient("http://localhost:54321");
     return client;
 

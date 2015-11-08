@@ -10,7 +10,7 @@ import org.springframework.data.cassandra.mapping.PrimaryKeyColumn;
 
 @PrimaryKeyClass
 @SuppressWarnings("serial")
-public class PrimaryKey implements Serializable {
+public class MarketDataPrimaryKey implements Serializable {
 
   @PrimaryKeyColumn(name = "symbol", ordinal = 0, type = PrimaryKeyType.PARTITIONED)
   public String symbol;
@@ -44,7 +44,7 @@ public class PrimaryKey implements Serializable {
       return false;
     if (getClass() != obj.getClass())
       return false;
-    PrimaryKey other = (PrimaryKey) obj;
+    MarketDataPrimaryKey other = (MarketDataPrimaryKey) obj;
     if (date == null) {
       if (other.date != null)
         return false;

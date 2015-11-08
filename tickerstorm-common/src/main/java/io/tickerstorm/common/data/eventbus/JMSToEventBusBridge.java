@@ -2,6 +2,7 @@ package io.tickerstorm.common.data.eventbus;
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +24,16 @@ public class JMSToEventBusBridge {
   private MBassador<Serializable> commandsBus;
 
   private MBassador<Serializable> notificationBus;
+
+  private MBassador<Map<String, Object>> modelDataBus;
+
+  public MBassador<Map<String, Object>> getModelDataBus() {
+    return modelDataBus;
+  }
+
+  public void setModelDataBus(MBassador<Map<String, Object>> modelDataBus) {
+    this.modelDataBus = modelDataBus;
+  }
 
   private boolean explodeCollections = false;
 
@@ -83,6 +94,14 @@ public class JMSToEventBusBridge {
     if (realtimeBus != null) {
       logger.debug("Received market data " + md.toString());
       realtimeBus.publishAsync(md);
+    }
+  }
+
+  @JmsListener(destination = Destinations.QUEUE_MODEL_DATA)
+  public void onMessage(@Payload Map<String, Object> row) {
+    if (modelDataBus != null) {
+      logger.debug("Received model data " + row.toString());
+      modelDataBus.publishAsync(row);
     }
   }
 

@@ -35,7 +35,7 @@ public class MarketDataDto implements Serializable {
     if (Candle.TYPE.equals(data.getType()) || Tick.TYPE.equals(data.getType()) || Quote.TYPE.equals(data.getType())) {
 
       MarketDataDto dto = new MarketDataDto();
-      PrimaryKey key = new PrimaryKey();
+      MarketDataPrimaryKey key = new MarketDataPrimaryKey();
       try {
 
         mapper.map(data, dto);
@@ -68,7 +68,7 @@ public class MarketDataDto implements Serializable {
   }
 
   @org.springframework.data.cassandra.mapping.PrimaryKey
-  public PrimaryKey primarykey;
+  public MarketDataPrimaryKey primarykey;
 
   public BigDecimal ask;
   public BigDecimal bid;
@@ -124,7 +124,7 @@ public class MarketDataDto implements Serializable {
     return price;
   }
 
-  public PrimaryKey getPrimarykey() {
+  public MarketDataPrimaryKey getPrimarykey() {
     return primarykey;
   }
 
@@ -180,7 +180,7 @@ public class MarketDataDto implements Serializable {
     this.price = price;
   }
 
-  public void setPrimarykey(PrimaryKey primarykey) {
+  public void setPrimarykey(MarketDataPrimaryKey primarykey) {
     this.primarykey = primarykey;
   }
 

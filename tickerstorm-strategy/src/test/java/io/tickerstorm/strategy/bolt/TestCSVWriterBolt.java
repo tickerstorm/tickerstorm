@@ -24,7 +24,10 @@ import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.TupleImpl;
 import io.tickerstorm.common.entity.Candle;
 import io.tickerstorm.common.entity.CategoricalField;
+import io.tickerstorm.common.entity.Command;
 import io.tickerstorm.common.entity.ContinousField;
+import io.tickerstorm.common.entity.Markers;
+import io.tickerstorm.common.model.Fields;
 
 public class TestCSVWriterBolt {
 
@@ -36,7 +39,7 @@ public class TestCSVWriterBolt {
   @Mock
   private TopologyContext context;
 
-  private static final String fileName = "testfile.csv";
+  private static final String fileName = "/tmp/testfile.csv";
 
   @BeforeMethod
   public void init() throws Exception {
@@ -48,7 +51,7 @@ public class TestCSVWriterBolt {
     bolt.prepare(config, context, collector);
 
     backtype.storm.tuple.Fields f =
-        new backtype.storm.tuple.Fields("marketdata", "sma", "category");
+        new backtype.storm.tuple.Fields(Fields.MARKER.fieldName(), Fields.MARKETDATA.fieldName(), Fields.SMA.fieldName(), "category");
 
     Mockito.doReturn("1").when(context).getComponentId(1);
     Mockito.doReturn(f).when(context).getComponentOutputFields("1", "1");
@@ -60,13 +63,15 @@ public class TestCSVWriterBolt {
     Instant now = Instant.now();
 
     List<Object> values = new ArrayList<>();
-    values.add(new Candle("TOL", "Google", now, BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ZERO,
-        BigDecimal.TEN, Candle.MIN_1_INTERVAL, Integer.MAX_VALUE));
+    Command m = new Command("TestCase", Markers.SESSION_START.toString());
+    m.config.put("output.file.csv.path", fileName);
+    values.add(m);
+    values.add(new Candle("TOL", "Google", now, BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.TEN, Candle.MIN_1_INTERVAL,
+        Integer.MAX_VALUE));
 
     values.add(Sets.newHashSet(new ContinousField("TOL", now, BigDecimal.ONE, "sma", "Google")));
 
-    values.add(
-        Sets.newHashSet(new CategoricalField("TOL", now, "Some String", "category", "Google")));
+    values.add(Sets.newHashSet(new CategoricalField("TOL", now, "Some String", "category", "Google")));
 
     Tuple t = new TupleImpl(context, values, 1, "1");
     bolt.execute(t);
@@ -113,8 +118,8 @@ public class TestCSVWriterBolt {
 
   @AfterMethod
   public void cleanup() {
-    if (new File("testfile.csv").exists())
-      new File("testfile.csv").delete();
+    if (new File(fileName).exists())
+      new File(fileName).delete();
   }
 
 }

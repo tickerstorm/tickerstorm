@@ -14,11 +14,19 @@ public class MarketDataMarker extends BaseMarketData implements Marker {
 
   public Set<String> markers = new HashSet<>();
 
-  public final String id;
+  public String id = UUID.randomUUID().toString();;
 
   public MarketDataMarker(String source, Instant timestamp) {
     super(source, timestamp);
-    this.id = UUID.randomUUID().toString();
+  }
+
+  public MarketDataMarker(String symol, String source) {
+    super(symol, source, Instant.now());
+  }
+
+  public MarketDataMarker(String symol, String source, String marker) {
+    super(symol, source, Instant.now());
+    markers.add(marker);
   }
 
   public MarketDataMarker(String symol, String source, Instant timestamp, String id) {

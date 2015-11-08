@@ -2,6 +2,7 @@ package io.tickerstorm.data;
 
 import java.io.Serializable;
 import java.net.URI;
+import java.util.Map;
 
 import javax.jms.ConnectionFactory;
 import javax.jms.Session;
@@ -28,6 +29,7 @@ import io.tickerstorm.common.data.eventbus.JMSToEventBusBridge;
 import io.tickerstorm.common.data.feed.HistoricalFeedQuery;
 import io.tickerstorm.common.entity.MarketData;
 import io.tickerstorm.data.dao.MarketDataDao;
+import io.tickerstorm.data.dao.ModelDataDao;
 import net.engio.mbassy.bus.MBassador;
 import net.engio.mbassy.bus.common.Properties;
 import net.engio.mbassy.bus.config.BusConfiguration;
@@ -36,17 +38,17 @@ import net.engio.mbassy.bus.error.IPublicationErrorHandler;
 
 @EnableJms
 @SpringBootApplication
-@EnableCassandraRepositories(basePackageClasses = MarketDataDao.class)
+@EnableCassandraRepositories(basePackageClasses = {MarketDataDao.class, ModelDataDao.class})
 @ImportResource(value = {"classpath:/META-INF/spring/cassandra-beans.xml"})
 @ComponentScan(basePackages = {"io.tickerstorm.data"})
 @Import({CommonContext.class})
-public class MarketDataService {
+public class MarketDataApplicationContext {
 
   @Value("${jms.transport}")
   protected String transport;
 
   public static void main(String[] args) throws Exception {
-    SpringApplication.run(MarketDataService.class, args);
+    SpringApplication.run(MarketDataApplicationContext.class, args);
   }
 
   @Bean(initMethod = "start", destroyMethod = "stop")
@@ -93,16 +95,12 @@ public class MarketDataService {
 
   // RECEIVERS
   @Bean
-  public JMSToEventBusBridge buildQueryEventBridge(@Qualifier("query") MBassador<HistoricalFeedQuery> queryBus) {
+  public JMSToEventBusBridge buildQueryEventBridge(@Qualifier("query") MBassador<HistoricalFeedQuery> queryBus,
+      @Qualifier("commands") MBassador<Serializable> commandsBus, @Qualifier("modelData") MBassador<Map<String, Object>> modelDataBus) {
     JMSToEventBusBridge bridge = new JMSToEventBusBridge();
     bridge.setQueryBus(queryBus);
-    return bridge;
-  }
-
-  @Bean
-  public JMSToEventBusBridge buildCommandEventBridge(@Qualifier("commands") MBassador<Serializable> queryBus) {
-    JMSToEventBusBridge bridge = new JMSToEventBusBridge();
-    bridge.setCommandsBus(queryBus);
+    bridge.setCommandsBus(commandsBus);
+    bridge.setModelDataBus(modelDataBus);
     return bridge;
   }
 

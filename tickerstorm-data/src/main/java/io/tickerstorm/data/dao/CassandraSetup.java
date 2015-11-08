@@ -24,9 +24,6 @@ public class CassandraSetup {
   private String keyspace;
 
   @Autowired
-  private MarketDataDao dao;
-
-  @Autowired
   private CassandraOperations session;
 
   @PostConstruct
@@ -49,8 +46,14 @@ public class CassandraSetup {
         .column("low", DataType.decimal()).column("open", DataType.decimal()).column("price", DataType.decimal())
         .column("properties", DataType.map(DataType.text(), DataType.text())).column("volume", DataType.decimal())
         .column("quantity", DataType.decimal()).ifNotExists();
+    
+    CreateTableSpecification modelSpec = CreateTableSpecification.createTable("modeldata").partitionKeyColumn("modelname", DataType.text())
+        .partitionKeyColumn("date", DataType.text()).clusteredKeyColumn("type", DataType.text(), Ordering.DESCENDING)
+        .clusteredKeyColumn("timestamp", DataType.timestamp(), Ordering.DESCENDING)
+        .column("fields", DataType.map(DataType.text(), DataType.text())).ifNotExists();
 
     set = session.execute(tableSpec);
+    set = session.execute(modelSpec);
   }
 
 }

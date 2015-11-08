@@ -51,6 +51,10 @@ public class BacktestTopology {
   @Qualifier("notification")
   @Autowired
   private JmsBolt notificationBolt;
+  
+  @Qualifier("modelData")
+  @Autowired
+  private JmsBolt modelDataBolt;
 
   public static void main(String[] args) throws Exception {
     SpringApplication.run(BacktestTopologyContext.class, args);
@@ -65,8 +69,8 @@ public class BacktestTopology {
     builder.setBolt("clock", clockBolt).localOrShuffleGrouping("marketdata").allGrouping("commands");
     builder.setBolt("ave", aveBolt).localOrShuffleGrouping("clock").allGrouping("commands");
     builder.setBolt("logger", loggingBolt).localOrShuffleGrouping("ave").allGrouping("commands");
-    builder.setBolt("csv", csvBolt).localOrShuffleGrouping("ave").allGrouping("commands");
-    builder.setBolt("notification", notificationBolt).localOrShuffleGrouping("csv");
+    builder.setBolt("notification", notificationBolt).localOrShuffleGrouping("ave");
+    builder.setBolt("modelData", modelDataBolt).localOrShuffleGrouping("ave");
 
     stormConfig.setDebug(false);
     stormConfig.setNumWorkers(1);

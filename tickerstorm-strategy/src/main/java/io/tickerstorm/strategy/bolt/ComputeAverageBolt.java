@@ -4,7 +4,6 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
@@ -14,18 +13,15 @@ import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Lists;
 
-import backtype.storm.task.OutputCollector;
-import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.OutputFieldsDeclarer;
-import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Tuple;
-import backtype.storm.tuple.Values;
 import io.tickerstorm.common.entity.CategoricalField;
 import io.tickerstorm.common.entity.ContinousField;
 import io.tickerstorm.common.entity.DiscreteField;
 import io.tickerstorm.common.entity.EmptyField;
 import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.entity.MarketData;
+import io.tickerstorm.common.model.Fields;
 import io.tickerstorm.strategy.util.TupleUtil;
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
@@ -38,11 +34,10 @@ import net.sf.ehcache.store.MemoryStoreEvictionPolicy;
 
 @Component
 @SuppressWarnings("serial")
-public class ComputeAverageBolt extends BaseRichBolt {
+public class ComputeAverageBolt extends BaseBolt {
 
   private final static String MARKETDATA_CACHE = "md-cache";
-  private Logger logger = null;
-  private OutputCollector coll = null;
+  private final static Logger logger = LoggerFactory.getLogger(ComputeAverageBolt.class);
   private List<Integer> periods = null;
   private CacheManager cacheManager = null;
 
@@ -74,10 +69,10 @@ public class ComputeAverageBolt extends BaseRichBolt {
   }
 
   @Override
-  public void execute(Tuple tuple) {
+  public void process(Tuple tuple) {
 
     if (!tuple.contains(Fields.MARKETDATA.fieldName())) {
-      coll.ack(tuple);
+      ack(tuple);
       return;
     }
 
@@ -144,17 +139,20 @@ public class ComputeAverageBolt extends BaseRichBolt {
     List<Object> values = TupleUtil.propagateTuple(tuple, Lists.newArrayList());
     values.add(fields);
 
-    coll.emit(tuple, new Values(values.toArray()));
-    coll.ack(tuple);
+    emit(values.toArray());
+    ack(tuple);
 
   }
 
   @Override
-  public void prepare(Map arg0, TopologyContext arg1, OutputCollector arg2) {
-    this.coll = arg2;
-    init();
+  protected void init() {
 
-    logger = LoggerFactory.getLogger(ComputeAverageBolt.class);
+    CacheConfiguration config = new CacheConfiguration().eternal(false).maxBytesLocalHeap(100, MemoryUnit.MEGABYTES)
+        .memoryStoreEvictionPolicy(MemoryStoreEvictionPolicy.FIFO).persistence(new PersistenceConfiguration().strategy(Strategy.NONE));
+    config.setName("md-cache");
+    cacheManager = CacheManager.create();
+    cacheManager.addCache(new Cache(config));
+
     periods = Lists.newArrayList(10, 15, 30, 60, 90);
 
     periods.sort(new Comparator<Integer>() {
@@ -174,14 +172,4 @@ public class ComputeAverageBolt extends BaseRichBolt {
     });
 
   }
-
-  private void init() {
-
-    CacheConfiguration config = new CacheConfiguration().eternal(false).maxBytesLocalHeap(100, MemoryUnit.MEGABYTES)
-        .memoryStoreEvictionPolicy(MemoryStoreEvictionPolicy.FIFO).persistence(new PersistenceConfiguration().strategy(Strategy.NONE));
-    config.setName("md-cache");
-    cacheManager = CacheManager.create();
-    cacheManager.addCache(new Cache(config));
-  }
-
 }

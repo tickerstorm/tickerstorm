@@ -21,6 +21,7 @@ import io.tickerstorm.common.data.eventbus.Destinations;
 import io.tickerstorm.strategy.spout.CommandsTupleProducer;
 import io.tickerstorm.strategy.spout.DestinationProvider;
 import io.tickerstorm.strategy.spout.MarketDataTupleProducer;
+import io.tickerstorm.strategy.spout.ModelDataTupleProducer;
 import io.tickerstorm.strategy.spout.NotificationTupleProducer;
 import io.tickerstorm.strategy.util.BacktestClock;
 import io.tickerstorm.strategy.util.Clock;
@@ -68,6 +69,18 @@ public class BacktestTopologyContext {
     bolt.setJmsAcknowledgeMode(Session.CLIENT_ACKNOWLEDGE);
     bolt.setJmsMessageProducer(new NotificationTupleProducer());
     bolt.setJmsProvider(new DestinationProvider(factory, Destinations.TOPIC_NOTIFICATIONS));
+    return bolt;
+  }
+  
+  @Qualifier("modelData")
+  @Bean
+  public JmsBolt buildModelDataJmsBolt(ConnectionFactory factory) throws Exception {
+
+    JmsBolt bolt = new JmsBolt();
+    bolt.setAutoAck(false);
+    bolt.setJmsAcknowledgeMode(Session.CLIENT_ACKNOWLEDGE);
+    bolt.setJmsMessageProducer(new ModelDataTupleProducer());
+    bolt.setJmsProvider(new DestinationProvider(factory, Destinations.QUEUE_MODEL_DATA));
     return bolt;
   }
 

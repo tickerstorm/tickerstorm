@@ -14,7 +14,7 @@ import io.tickerstorm.common.data.eventbus.ByDestinationNameJmsResolver;
 import io.tickerstorm.common.data.eventbus.Destinations;
 
 @Configuration
-public class TestMarketDataServiceConfig extends MarketDataService {
+public class TestMarketDataServiceConfig extends MarketDataApplicationContext {
 
   public static void main(String[] args) throws Exception {
     SpringApplication.run(TestMarketDataServiceConfig.class, args);

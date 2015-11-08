@@ -1,26 +1,37 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <parent>
-    <groupId>io.tickerstorm</groupId>
-    <artifactId>pom</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
-    <relativePath>../pom.xml</relativePath>
-  </parent>
-  <artifactId>client</artifactId>
-  <name>TickerStorm Strategy &amp; MarketData Client</name>
-  <dependencies>
-  	<dependency>
-  		<groupId>io.tickerstorm</groupId>
-  		<artifactId>common</artifactId>
-  		<version>1.0.0-SNAPSHOT</version>  		
-  	</dependency>
-  	<dependency>
-  		<groupId>com.appx.h2o</groupId>
-  		<artifactId>h20-java-rest-client</artifactId>
-  		<version>3.2.0-SNAPSHOT</version>
-  	</dependency>
-  </dependencies>
-  <build>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>io.tickerstorm</groupId>
+		<artifactId>pom</artifactId>
+		<version>1.0.0-SNAPSHOT</version>
+		<relativePath>../pom.xml</relativePath>
+	</parent>
+	<repositories>
+		<repository>
+			<id>h2o</id>
+			<name>h2o-release</name>
+			<url>http://h2o-release.s3.amazonaws.com/h2o/rel-slater/9/maven/repo/</url>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+		</repository>
+	</repositories>
+	<artifactId>client</artifactId>
+	<name>TickerStorm Strategy &amp; MarketData Client</name>
+	<dependencies>
+		<dependency>
+			<groupId>io.tickerstorm</groupId>
+			<artifactId>common</artifactId>
+			<version>1.0.0-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>com.appx.h2o</groupId>
+			<artifactId>h20-java-rest-client</artifactId>
+			<version>3.2.0-SNAPSHOT</version>
+		</dependency>
+	</dependencies>
+	<build>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
@@ -39,4 +50,28 @@
 			</plugin>
 		</plugins>
 	</build>
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>ai.h2o</groupId>
+				<artifactId>h2o-app</artifactId>
+				<version>3.2.0.9</version>
+			</dependency>
+			<dependency>
+				<groupId>ai.h2o</groupId>
+				<artifactId>h2o-algos</artifactId>
+				<version>3.2.0.9</version>
+			</dependency>
+			<dependency>
+				<groupId>ai.h2o</groupId>
+				<artifactId>h2o-core</artifactId>
+				<version>3.2.0.9</version>
+			</dependency>
+			<dependency>
+				<groupId>ai.h2o</groupId>
+				<artifactId>h2o-web</artifactId>
+				<version>3.2.0.9</version>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 </project>

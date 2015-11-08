@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import com.google.common.base.MoreObjects;
+import com.google.common.collect.Lists;
 
 @SuppressWarnings("serial")
 public class Command implements Marker, Event, Serializable {
@@ -26,6 +27,11 @@ public class Command implements Marker, Event, Serializable {
 
   public Command(String source) {
     this.source = source;
+  }
+
+  public Command(String source, String... marker) {
+    this.source = source;
+    this.markers.addAll(Lists.newArrayList(marker));
   }
 
   public Command(String source, Instant timestamp) {

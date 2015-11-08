@@ -56,7 +56,7 @@ public class BacktestRunnerClient implements ApplicationListener<ContextRefreshe
 
   @PostConstruct
   protected void init() throws Exception {
-    commandsBus.subscribe(this);
+//    commandsBus.subscribe(this);
     notificationBus.subscribe(this);
   }
 

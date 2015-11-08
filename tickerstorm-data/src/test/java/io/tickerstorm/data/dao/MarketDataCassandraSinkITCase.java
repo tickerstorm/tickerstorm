@@ -9,6 +9,7 @@ import java.time.Instant;
 import java.util.Date;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.cassandra.core.CassandraOperations;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
@@ -17,17 +18,20 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 import io.tickerstorm.common.entity.Candle;
+import io.tickerstorm.common.entity.MarketData;
 import io.tickerstorm.data.TestMarketDataServiceConfig;
+import net.engio.mbassy.bus.MBassador;
 
 @DirtiesContext
 @ContextConfiguration(classes = {TestMarketDataServiceConfig.class})
 public class MarketDataCassandraSinkITCase extends AbstractTestNGSpringContextTests {
 
   @Autowired
-  private MarketDataCassandraSink sink;
-
-  @Autowired
   private CassandraOperations session;
+
+  @Qualifier("historical")
+  @Autowired
+  private MBassador<MarketData> historicalBus;
 
   @Autowired
   private MarketDataDao dao;
@@ -49,7 +53,7 @@ public class MarketDataCassandraSinkITCase extends AbstractTestNGSpringContextTe
     c.timestamp = Instant.now();
     c.volume = 10;
     c.symbol = "AAPL";
-    sink.onMarketData(c);
+    historicalBus.publish(c);
 
     Thread.sleep(5000);
 

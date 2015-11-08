@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -22,31 +21,28 @@ import org.springframework.stereotype.Component;
 import com.google.common.base.Throwables;
 import com.google.common.io.Files;
 
-import backtype.storm.task.OutputCollector;
-import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.OutputFieldsDeclarer;
-import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Tuple;
-import backtype.storm.tuple.Values;
 import io.tickerstorm.common.entity.Command;
 import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.entity.Marker;
 import io.tickerstorm.common.entity.Markers;
 import io.tickerstorm.common.entity.MarketData;
 import io.tickerstorm.common.entity.Notification;
+import io.tickerstorm.common.model.Fields;
+import io.tickerstorm.strategy.util.TupleUtil;
 
 @Component
 @SuppressWarnings("serial")
-public class CSVWriterBolt extends BaseRichBolt {
+public class CSVWriterBolt extends BaseBolt {
 
   private final static Logger logger = LoggerFactory.getLogger(CSVWriterBolt.class);
-  private OutputCollector coll;
   private Writer outputFile = null;
   private File file = null;
   private AtomicBoolean firstLine = new AtomicBoolean(true);
 
   @Override
-  public void execute(Tuple tuple) {
+  public void process(Tuple tuple) {
 
     if (tuple.contains(Fields.MARKER.fieldName())) {
 
@@ -80,9 +76,8 @@ public class CSVWriterBolt extends BaseRichBolt {
         } catch (Exception e) {
           Throwables.propagate(e);
         }
-      }
+      } else if (Markers.is(m, Markers.SESSION_END) && Command.class.isAssignableFrom(m.getClass())) {
 
-      if (Markers.is(m, Markers.SESSION_END) && Command.class.isAssignableFrom(m.getClass())) {
         logger.info("Flush to CSV complete");
 
         try {
@@ -95,12 +90,14 @@ public class CSVWriterBolt extends BaseRichBolt {
         n.setSource(this.getClass().getSimpleName());
         n.addMarker(Markers.CSV_CREATED.toString());
         n.getProperties().put("output.file.csv.path", file.getAbsolutePath());
-        coll.emit(new Values(n));
+        emit(n);
       }
 
-    } else if (tuple.contains(Fields.MARKETDATA.fieldName())) {
+    }
 
-      List<Field<?>> columns = sortFields(tuple);
+    if (tuple.contains(Fields.MARKETDATA.fieldName())) {
+
+      List<Field<?>> columns = TupleUtil.sortFields(TupleUtil.listFields(tuple));
 
       try {
 
@@ -116,7 +113,7 @@ public class CSVWriterBolt extends BaseRichBolt {
         logger.error(e.getMessage(), e);
       }
     }
-    coll.ack(tuple);
+    ack(tuple);
   }
 
   private String writeHeader(List<Field<?>> sorted) {
@@ -143,49 +140,6 @@ public class CSVWriterBolt extends BaseRichBolt {
     String line = org.apache.commons.lang3.StringUtils.removeEnd(valueLine.toString(), ",");
     line = line.concat("\n");
     return line;
-  }
-
-  private List<Field<?>> sortFields(Tuple tuple) {
-
-    List<Field<?>> columns = new ArrayList<>();
-
-    for (Object o : tuple.getValues()) {
-
-      if (o == null)
-        continue;
-
-      if (MarketData.class.isAssignableFrom(o.getClass()) && !Marker.class.isAssignableFrom(o.getClass())) {
-
-        columns.addAll(((MarketData) o).getFields());
-
-      } else if (Field.class.isAssignableFrom(o.getClass())) {
-
-        columns.add((Field<?>) o);
-
-      } else if (Collection.class.isAssignableFrom(o.getClass())) {
-
-        for (Object i : (Collection<?>) o) {
-          if (Field.class.isAssignableFrom(i.getClass())) {
-            columns.add((Field<?>) i);
-          }
-        }
-      }
-    }
-
-    columns.sort(new Comparator<Field<?>>() {
-      @Override
-      public int compare(Field<?> o1, Field<?> o2) {
-        return (o1.getName().toLowerCase().compareTo(o2.getName().toLowerCase()));
-      }
-    });
-
-    return columns;
-
-  }
-
-  @Override
-  public void prepare(Map config, TopologyContext context, OutputCollector collector) {
-    this.coll = collector;
   }
 
   @Override

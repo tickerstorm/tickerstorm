@@ -1,6 +1,7 @@
 package io.tickerstorm.common.data;
 
 import java.io.Serializable;
+import java.util.Map;
 
 import javax.jms.ConnectionFactory;
 import javax.jms.Session;
@@ -52,6 +53,12 @@ public class CommonContext {
   @Bean(destroyMethod = "shutdown")
   public MBassador<Serializable> buildNotificaitonEventBus(IPublicationErrorHandler handler) {
     return new MBassador<Serializable>(handler);
+  }
+
+  @Qualifier("modelData")
+  @Bean(destroyMethod = "shutdown")
+  public MBassador<Map<String, Object>> buildModelDataEventBus(IPublicationErrorHandler handler) {
+    return new MBassador<Map<String, Object>>(handler);
   }
 
   @Bean

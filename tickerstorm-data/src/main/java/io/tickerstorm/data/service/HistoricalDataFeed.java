@@ -1,4 +1,4 @@
-package io.tickerstorm.data.feed;
+package io.tickerstorm.data.service;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;

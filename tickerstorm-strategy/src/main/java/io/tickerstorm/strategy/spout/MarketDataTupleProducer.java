@@ -35,6 +35,6 @@ public class MarketDataTupleProducer implements JmsTupleProducer {
 
   @Override
   public void declareOutputFields(OutputFieldsDeclarer declarer) {
-    declarer.declare(new Fields(io.tickerstorm.strategy.bolt.Fields.MARKETDATA.fieldName()));
+    declarer.declare(new Fields(io.tickerstorm.common.model.Fields.MARKETDATA.fieldName()));
   }
 }

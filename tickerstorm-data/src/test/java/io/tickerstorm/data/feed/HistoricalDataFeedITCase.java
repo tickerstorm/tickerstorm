@@ -5,6 +5,7 @@ import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
 import java.io.File;
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -42,6 +43,10 @@ public class HistoricalDataFeedITCase extends AbstractTestNGSpringContextTests {
   @Autowired
   private MBassador<MarketData> realtimeBus;
 
+  @Qualifier("notification")
+  @Autowired
+  private MBassador<Serializable> notificationsBus;
+
   @Qualifier("query")
   @Autowired
   private MBassador<HistoricalFeedQuery> queryBus;
@@ -58,8 +63,7 @@ public class HistoricalDataFeedITCase extends AbstractTestNGSpringContextTests {
   @BeforeClass
   public void dataSetup() throws Exception {
     FileUtils.forceMkdir(new File("./data/Google"));
-    Files.copy(new File("./src/test/resources/data/Google/TOL.csv"),
-        new File("./data/Google/TOL.csv"));
+    Files.copy(new File("./src/test/resources/data/Google/TOL.csv"), new File("./data/Google/TOL.csv"));
     Thread.sleep(5000);
   }
 
@@ -71,7 +75,9 @@ public class HistoricalDataFeedITCase extends AbstractTestNGSpringContextTests {
 
   @BeforeMethod
   public void setup() {
-    realtimeBus.subscribe(new HistoricalDataFeedVerifier());
+    HistoricalDataFeedVerifier verifier = new HistoricalDataFeedVerifier();
+    realtimeBus.subscribe(verifier);
+    notificationsBus.subscribe(verifier);
   }
 
   @Test
