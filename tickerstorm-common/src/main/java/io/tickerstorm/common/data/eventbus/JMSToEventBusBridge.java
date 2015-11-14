@@ -9,7 +9,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.jms.annotation.JmsListener;
 import org.springframework.messaging.handler.annotation.Payload;
 
-import io.tickerstorm.common.data.feed.HistoricalFeedQuery;
+import io.tickerstorm.common.data.query.DataFeedQuery;
+import io.tickerstorm.common.data.query.HistoricalFeedQuery;
 import io.tickerstorm.common.entity.MarketData;
 import net.engio.mbassy.bus.MBassador;
 
@@ -17,7 +18,7 @@ public class JMSToEventBusBridge {
 
   public static final Logger logger = LoggerFactory.getLogger(JMSToEventBusBridge.class);
 
-  private MBassador<HistoricalFeedQuery> queryBus;
+  private MBassador<DataFeedQuery> queryBus;
 
   private MBassador<MarketData> realtimeBus;
 
@@ -53,7 +54,7 @@ public class JMSToEventBusBridge {
     return notificationBus;
   }
 
-  public MBassador<HistoricalFeedQuery> getQueryBus() {
+  public MBassador<DataFeedQuery> getQueryBus() {
     return queryBus;
   }
 
@@ -132,7 +133,7 @@ public class JMSToEventBusBridge {
     this.notificationBus = notificationBus;
   }
 
-  public void setQueryBus(MBassador<HistoricalFeedQuery> queryBus) {
+  public void setQueryBus(MBassador<DataFeedQuery> queryBus) {
     this.queryBus = queryBus;
   }
 

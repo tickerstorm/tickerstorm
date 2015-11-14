@@ -26,7 +26,7 @@ import io.tickerstorm.common.data.eventbus.ByDestinationNameJmsResolver;
 import io.tickerstorm.common.data.eventbus.Destinations;
 import io.tickerstorm.common.data.eventbus.EventBusToJMSBridge;
 import io.tickerstorm.common.data.eventbus.JMSToEventBusBridge;
-import io.tickerstorm.common.data.feed.HistoricalFeedQuery;
+import io.tickerstorm.common.data.query.DataFeedQuery;
 import io.tickerstorm.common.entity.MarketData;
 import io.tickerstorm.data.dao.MarketDataDao;
 import io.tickerstorm.data.dao.ModelDataDao;
@@ -85,6 +85,11 @@ public class MarketDataApplicationContext {
   public EventBusToJMSBridge buildRealtimeJmsBridge(@Qualifier("realtime") MBassador<MarketData> eventbus, JmsTemplate template) {
     return new EventBusToJMSBridge(eventbus, Destinations.TOPIC_REALTIME_MARKETDATA, template);
   }
+  
+  @Bean
+  public EventBusToJMSBridge buildRetroModelDataJmsBridge(@Qualifier("retroModelData") MBassador<Map<String, Object>> eventbus, JmsTemplate template) {
+    return new EventBusToJMSBridge(eventbus, Destinations.QUEUE_RETRO_MODEL_DATA, template);
+  }
 
   @Bean
   public EventBusToJMSBridge buildNotificationsJmsBridge(@Qualifier("notification") MBassador<Serializable> eventbus,
@@ -95,7 +100,7 @@ public class MarketDataApplicationContext {
 
   // RECEIVERS
   @Bean
-  public JMSToEventBusBridge buildQueryEventBridge(@Qualifier("query") MBassador<HistoricalFeedQuery> queryBus,
+  public JMSToEventBusBridge buildQueryEventBridge(@Qualifier("query") MBassador<DataFeedQuery> queryBus,
       @Qualifier("commands") MBassador<Serializable> commandsBus, @Qualifier("modelData") MBassador<Map<String, Object>> modelDataBus) {
     JMSToEventBusBridge bridge = new JMSToEventBusBridge();
     bridge.setQueryBus(queryBus);

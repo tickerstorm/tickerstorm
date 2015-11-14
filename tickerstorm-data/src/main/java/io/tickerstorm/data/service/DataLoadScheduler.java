@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import io.tickerstorm.common.data.feed.HistoricalFeedQuery;
+import io.tickerstorm.common.data.query.HistoricalFeedQuery;
 import io.tickerstorm.data.converter.DataQueryClient;
 import io.tickerstorm.data.query.GoogleDataQuery;
 import io.tickerstorm.data.query.StooqHistoricalForexQuery;

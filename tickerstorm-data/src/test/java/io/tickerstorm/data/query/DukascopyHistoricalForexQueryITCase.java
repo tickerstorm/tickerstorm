@@ -42,7 +42,7 @@ public class DukascopyHistoricalForexQueryITCase extends BaseDataQueryITCase {
     Files.copy(new File("./src/test/resources/data/Dukascopy/AUDCAD_Candlestick_1_m_BID_01.06.2015-06.06.2015.csv"),
         new File("./data/Dukascopy/AUDCAD_Candlestick_1_m_BID_01.06.2015-06.06.2015.csv"));
 
-    Thread.sleep(15000);
+    Thread.sleep(16000);
 
     Long daoCount = dao.count();
     Assert.assertEquals(daoCount, new Long(52860));

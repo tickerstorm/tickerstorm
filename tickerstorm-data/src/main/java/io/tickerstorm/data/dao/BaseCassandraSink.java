@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.cassandra.core.CassandraOperations;
 
 import net.engio.mbassy.listener.Handler;
+import net.engio.mbassy.listener.Synchronized;
 
 public abstract class BaseCassandraSink {
 
@@ -23,8 +24,10 @@ public abstract class BaseCassandraSink {
     @Override
     public void run() {
 
-      if (!batch.get().isEmpty())
-        persist(nextBatch());
+      List<Object> b = nextBatch();
+      if (!b.isEmpty())
+        persist(b);
+
     }
   }
 
@@ -61,11 +64,18 @@ public abstract class BaseCassandraSink {
 
       Object d = convert(data);
 
-      if (d != null)
+      if (d != null) {
         batch.get().add(d);
-
-      if (batch.get().size() > batchSize)
-        persist(nextBatch());
+      } else {
+        logger.error(data + "was null");
+      }
+      
+      if (batch.get().size() > batchSize) {
+        List<Object> b = nextBatch();
+        if (!b.isEmpty()) {
+          persist(b);
+        }
+      }
 
     } catch (Exception e) {
       logger.error(e.getMessage(), e);
@@ -79,7 +89,8 @@ public abstract class BaseCassandraSink {
     return data;
   }
 
-  protected List<Object> nextBatch() {
+  
+  protected synchronized List<Object> nextBatch() {
     List<Object> data = batch.getAndSet(Collections.synchronizedList(new ArrayList<>()));
     return data;
   }

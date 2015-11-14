@@ -51,7 +51,7 @@ public class MarketDataCassandraSink extends BaseCassandraSink {
   protected void persist(List<Object> data) {
     try {
       synchronized (data) {
-        dao.save((List) data);
+        dao.save((List) data);        
         logger.debug(
             "Persisting " + data.size() + " records, " + count.addAndGet(data.size()) + " total saved and " + received.get() + " received");
       }

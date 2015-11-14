@@ -13,7 +13,7 @@ import backtype.storm.contrib.jms.JmsMessageProducer;
 import backtype.storm.tuple.Tuple;
 
 @SuppressWarnings("serial")
-public class NotificationTupleProducer implements JmsMessageProducer {
+public class NotificationMessageProducer implements JmsMessageProducer {
 
   @Override
   public Message toMessage(Session session, Tuple input) throws JMSException {

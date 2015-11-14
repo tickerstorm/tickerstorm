@@ -19,7 +19,8 @@ import org.springframework.stereotype.Service;
 
 import com.appx.h2o.H2ORestClient;
 
-import io.tickerstorm.common.data.feed.HistoricalFeedQuery;
+import io.tickerstorm.common.data.query.DataFeedQuery;
+import io.tickerstorm.common.data.query.HistoricalFeedQuery;
 import io.tickerstorm.common.entity.Candle;
 import io.tickerstorm.common.entity.Command;
 import io.tickerstorm.common.entity.Marker;
@@ -40,7 +41,7 @@ public class BacktestRunnerClient implements ApplicationListener<ContextRefreshe
 
   @Qualifier("query")
   @Autowired
-  private MBassador<HistoricalFeedQuery> queryBus;
+  private MBassador<DataFeedQuery> queryBus;
 
   @Qualifier("commands")
   @Autowired

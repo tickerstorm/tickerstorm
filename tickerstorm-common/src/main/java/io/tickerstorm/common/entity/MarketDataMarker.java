@@ -14,7 +14,7 @@ public class MarketDataMarker extends BaseMarketData implements Marker {
 
   public Set<String> markers = new HashSet<>();
 
-  public String id = UUID.randomUUID().toString();;
+  public String id = UUID.randomUUID().toString();
 
   public MarketDataMarker(String source, Instant timestamp) {
     super(source, timestamp);

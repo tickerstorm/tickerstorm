@@ -23,7 +23,7 @@ import io.tickerstorm.common.data.eventbus.ByDestinationNameJmsResolver;
 import io.tickerstorm.common.data.eventbus.Destinations;
 import io.tickerstorm.common.data.eventbus.EventBusToJMSBridge;
 import io.tickerstorm.common.data.eventbus.JMSToEventBusBridge;
-import io.tickerstorm.common.data.feed.HistoricalFeedQuery;
+import io.tickerstorm.common.data.query.DataFeedQuery;
 import io.tickerstorm.common.entity.MarketData;
 import net.engio.mbassy.bus.MBassador;
 
@@ -42,7 +42,7 @@ public class BacktestRunnerClientContext {
 
   // SENDERS
   @Bean
-  public EventBusToJMSBridge buildQueryJmsBridge(@Qualifier("query") MBassador<HistoricalFeedQuery> eventbus, JmsTemplate template) {
+  public EventBusToJMSBridge buildQueryJmsBridge(@Qualifier("query") MBassador<DataFeedQuery> eventbus, JmsTemplate template) {
     return new EventBusToJMSBridge(eventbus, Destinations.QUEUE_QUERY, template);
   }
 

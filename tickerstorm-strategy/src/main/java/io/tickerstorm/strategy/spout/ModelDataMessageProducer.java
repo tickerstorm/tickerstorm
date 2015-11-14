@@ -22,7 +22,7 @@ import io.tickerstorm.strategy.util.TupleUtil;
  *
  */
 @SuppressWarnings("serial")
-public class ModelDataTupleProducer implements JmsMessageProducer {
+public class ModelDataMessageProducer implements JmsMessageProducer {
 
   @Override
   public Message toMessage(Session session, Tuple input) throws JMSException {

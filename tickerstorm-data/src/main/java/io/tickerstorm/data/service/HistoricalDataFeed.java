@@ -19,7 +19,8 @@ import org.springframework.stereotype.Repository;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
 
-import io.tickerstorm.common.data.feed.HistoricalFeedQuery;
+import io.tickerstorm.common.data.query.DataFeedQuery;
+import io.tickerstorm.common.data.query.HistoricalFeedQuery;
 import io.tickerstorm.common.entity.Candle;
 import io.tickerstorm.common.entity.Markers;
 import io.tickerstorm.common.entity.MarketData;
@@ -45,7 +46,7 @@ public class HistoricalDataFeed {
 
   @Qualifier("query")
   @Autowired
-  private MBassador<HistoricalFeedQuery> queryBus;
+  private MBassador<DataFeedQuery> queryBus;
 
   @Autowired
   private CassandraOperations cassandra;

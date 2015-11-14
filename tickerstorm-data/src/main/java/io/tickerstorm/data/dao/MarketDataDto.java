@@ -41,8 +41,6 @@ public class MarketDataDto implements Serializable {
         mapper.map(data, dto);
         mapper.map(data, key);
 
-        long sec = data.getTimestamp().toEpochMilli() / 1000;
-
         LocalDateTime dt = LocalDateTime.ofInstant(data.getTimestamp(), ZoneOffset.UTC);
 
         key.date = dateFormatter.format(dt);

@@ -21,6 +21,31 @@ public class Candle extends BaseMarketData {
 
   public Candle() {}
 
+  public Candle(Field<?>[] fields) {
+    super(fields);
+
+    for (Field<?> f : fields) {
+
+      if (f.getName().equalsIgnoreCase(Field.VOLUME))
+        this.volume = (Integer) f.getValue();
+
+      if (f.getName().equalsIgnoreCase(Field.HIGH))
+        this.high = (BigDecimal) f.getValue();
+
+      if (f.getName().equalsIgnoreCase(Field.LOW))
+        this.low = (BigDecimal) f.getValue();
+
+      if (f.getName().equalsIgnoreCase(Field.OPEN))
+        this.open = (BigDecimal) f.getValue();
+
+      if (f.getName().equalsIgnoreCase(Field.CLOSE))
+        this.close = (BigDecimal) f.getValue();
+
+      if (f.getName().equalsIgnoreCase(Field.HIGH))
+        this.interval = f.getInterval();
+    }
+  }
+
   public Candle(String symbol, String source, Instant timestamp, BigDecimal open, BigDecimal close, BigDecimal high, BigDecimal low,
       String interval, int volume) {
     super(symbol, source, timestamp);
@@ -187,7 +212,9 @@ public class Candle extends BaseMarketData {
   @Override
   public Set<Field<?>> getFields() {
     Set<Field<?>> fields = new HashSet<Field<?>>();
-    fields.addAll(super.getFields());
+    fields.add(new CategoricalField(symbol, timestamp, symbol, Field.SYMBOL, source, interval));
+    fields.add(new CategoricalField(symbol, timestamp, timestamp.toString(), Field.TIMESTAMP, source, interval));
+    fields.add(new CategoricalField(symbol, timestamp, source, Field.SOURCE, source, interval));
     fields.add(new ContinousField(symbol, timestamp, high, Field.HIGH, source, interval));
     fields.add(new ContinousField(symbol, timestamp, low, Field.LOW, source, interval));
     fields.add(new ContinousField(symbol, timestamp, open, Field.OPEN, source, interval));

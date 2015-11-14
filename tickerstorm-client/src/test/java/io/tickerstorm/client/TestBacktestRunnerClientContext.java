@@ -11,7 +11,7 @@ import org.springframework.context.annotation.PropertySource;
 import com.appx.h2o.H2ORestClient;
 
 import io.tickerstorm.common.data.eventbus.MBassadorErrorHandler;
-import io.tickerstorm.common.data.feed.HistoricalFeedQuery;
+import io.tickerstorm.common.data.query.DataFeedQuery;
 import io.tickerstorm.common.entity.MarketData;
 import net.engio.mbassy.bus.MBassador;
 import net.engio.mbassy.bus.error.IPublicationErrorHandler;
@@ -40,8 +40,8 @@ public class TestBacktestRunnerClientContext {
 
   @Qualifier("query")
   @Bean(destroyMethod = "shutdown")
-  public MBassador<HistoricalFeedQuery> buildQueryEventBus(IPublicationErrorHandler handler) {
-    return new MBassador<HistoricalFeedQuery>(handler);
+  public MBassador<DataFeedQuery> buildQueryEventBus(IPublicationErrorHandler handler) {
+    return new MBassador<DataFeedQuery>(handler);
   }
 
   @Qualifier("commands")

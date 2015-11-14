@@ -24,7 +24,8 @@ import org.testng.annotations.Test;
 
 import com.google.common.io.Files;
 
-import io.tickerstorm.common.data.feed.HistoricalFeedQuery;
+import io.tickerstorm.common.data.query.DataFeedQuery;
+import io.tickerstorm.common.data.query.HistoricalFeedQuery;
 import io.tickerstorm.common.entity.Candle;
 import io.tickerstorm.common.entity.Markers;
 import io.tickerstorm.common.entity.MarketData;
@@ -49,7 +50,7 @@ public class HistoricalDataFeedITCase extends AbstractTestNGSpringContextTests {
 
   @Qualifier("query")
   @Autowired
-  private MBassador<HistoricalFeedQuery> queryBus;
+  private MBassador<DataFeedQuery> queryBus;
 
   MarketDataMarker start;
   MarketDataMarker end;

@@ -40,7 +40,8 @@ public class BacktestTopology {
   @Autowired
   private LogginBolt loggingBolt;
 
-  private final String NAME = "storm-topology";
+  private final String FORWARD = "forward-flow-topology";
+  private final String RETRO = "retro-flow-topology";
 
   @Autowired
   private CSVWriterBolt csvBolt;
@@ -51,10 +52,14 @@ public class BacktestTopology {
   @Qualifier("notification")
   @Autowired
   private JmsBolt notificationBolt;
-  
+
   @Qualifier("modelData")
   @Autowired
   private JmsBolt modelDataBolt;
+
+  @Qualifier
+  @Autowired
+  private JmsSpout retroModelData;
 
   public static void main(String[] args) throws Exception {
     SpringApplication.run(BacktestTopologyContext.class, args);
@@ -72,11 +77,15 @@ public class BacktestTopology {
     builder.setBolt("notification", notificationBolt).localOrShuffleGrouping("ave");
     builder.setBolt("modelData", modelDataBolt).localOrShuffleGrouping("ave");
 
+    TopologyBuilder retroBuilder = new TopologyBuilder();
+    builder.setSpout("retroModelData", retroModelData);
+
     stormConfig.setDebug(false);
     stormConfig.setNumWorkers(1);
 
     cluster = new LocalCluster();
-    cluster.submitTopology(NAME, stormConfig, builder.createTopology());
+    cluster.submitTopology(FORWARD, stormConfig, builder.createTopology());
+    cluster.submitTopology(RETRO, stormConfig, retroBuilder.createTopology());
 
   }
 
@@ -84,7 +93,8 @@ public class BacktestTopology {
   private void destroy() {
 
     if (cluster != null) {
-      cluster.killTopology(NAME);
+      cluster.killTopology(FORWARD);
+      cluster.killTopology(RETRO);
     }
 
   }

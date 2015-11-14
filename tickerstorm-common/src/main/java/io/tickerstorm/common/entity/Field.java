@@ -33,4 +33,34 @@ public interface Field<T> {
 
   public T getValue();
 
+  /**
+   * 
+   * Serialized: type_source_interval_name_symbol_timestamp:value
+   * 
+   * type : 0 source : 1 interval : 2 name : 3 symbol: 4 timestamp: 5
+   * 
+   * @return
+   */
+  default String serialize() {
+    StringBuffer buff = new StringBuffer(getFieldType()).append("_").append(getSource()).append("_").append(getInterval()).append("_")
+        .append(getName()).append("_").append(getSymbol()).append("_").append(getTimestamp()).append("=").append(getValue());
+    return buff.toString();
+
+  }
+
+  static Field<?> deserialize(String value) {
+
+    if (value.startsWith(ContinousField.TYPE))
+      return ContinousField.deserialize(value);
+    else if (value.startsWith(DiscreteField.TYPE))
+      return DiscreteField.deserialize(value);
+    else if (value.startsWith(EmptyField.TYPE))
+      return EmptyField.deserialize(value);
+    else if (value.startsWith(CategoricalField.TYPE))
+      return CategoricalField.deserialize(value);
+    else
+      throw new IllegalArgumentException();
+
+  }
+
 }

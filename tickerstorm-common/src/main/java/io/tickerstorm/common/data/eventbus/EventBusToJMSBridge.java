@@ -15,6 +15,7 @@ import org.springframework.jms.core.MessageCreator;
 
 import net.engio.mbassy.bus.MBassador;
 import net.engio.mbassy.listener.Handler;
+import net.engio.mbassy.listener.IMessageFilter;
 import net.engio.mbassy.listener.Listener;
 import net.engio.mbassy.listener.References;
 
@@ -28,10 +29,18 @@ public class EventBusToJMSBridge {
     this.destination = destination;
     this.template = template;
   }
+  
+  public EventBusToJMSBridge(MBassador<?> eventBus, String destination, JmsTemplate template, IMessageFilter<Serializable> filter) {
+    this.bus = eventBus;
+    this.destination = destination;
+    this.template = template;
+    this.filter = filter;
+  }
 
   private MBassador<?> bus;
   private JmsTemplate template;
   private String destination;
+  private IMessageFilter<Serializable> filter = new BaseFilter();
 
   @PostConstruct
   public void init() {
@@ -46,14 +55,16 @@ public class EventBusToJMSBridge {
   @Handler
   public void onEvent(Serializable data) {
 
-    template.send(destination, new MessageCreator() {
-      @Override
-      public Message createMessage(Session session) throws JMSException {
-        logger.debug("Dispatching " + data.toString());
-        Message m = session.createObjectMessage(data);
-        return m;
-      }
-    });
+    if (filter != null && filter.accepts(data, null)) {
+      template.send(destination, new MessageCreator() {
+        @Override
+        public Message createMessage(Session session) throws JMSException {
+          logger.debug("Dispatching " + data.toString());
+          Message m = session.createObjectMessage(data);
+          return m;
+        }
+      });
+    }
   }
 
 

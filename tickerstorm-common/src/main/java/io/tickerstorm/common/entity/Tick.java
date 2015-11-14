@@ -6,8 +6,25 @@ import java.util.Set;
 
 @SuppressWarnings("serial")
 public class Tick extends BaseMarketData {
+  
+  public Tick() {
+    // TODO Auto-generated constructor stub
+  }
 
   public static final String TYPE = "tick";
+
+  public Tick(Field<?>[] fields) {
+    super(fields);
+    for (Field<?> f : fields) {
+
+      if (f.getName().equalsIgnoreCase(Field.PRICE))
+        this.price = (BigDecimal) f.getValue();
+
+      if (f.getName().equalsIgnoreCase(Field.QUANTITY))
+        this.quantity = (BigDecimal) f.getValue();
+
+    }
+  }
 
   public BigDecimal getQuantity() {
     return quantity;

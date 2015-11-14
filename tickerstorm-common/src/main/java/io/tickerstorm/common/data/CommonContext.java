@@ -17,9 +17,11 @@ import org.springframework.jms.annotation.EnableJms;
 import org.springframework.jms.config.DefaultJmsListenerContainerFactory;
 
 import io.tickerstorm.common.data.eventbus.ByDestinationNameJmsResolver;
-import io.tickerstorm.common.data.feed.HistoricalFeedQuery;
+import io.tickerstorm.common.data.query.DataFeedQuery;
 import io.tickerstorm.common.entity.MarketData;
 import net.engio.mbassy.bus.MBassador;
+import net.engio.mbassy.bus.config.BusConfiguration;
+import net.engio.mbassy.bus.config.Feature;
 import net.engio.mbassy.bus.error.IPublicationErrorHandler;
 
 @EnableJms
@@ -31,33 +33,48 @@ public class CommonContext {
   @Value("${jms.transport}")
   protected String transport;
 
+  @Bean
+  public BusConfiguration busConfiguration(IPublicationErrorHandler handler){
+    return new BusConfiguration()
+    .addFeature(Feature.SyncPubSub.Default())
+    .addFeature(Feature.AsynchronousHandlerInvocation.Default(2,4))
+    .addFeature(Feature.AsynchronousMessageDispatch.Default())
+    .addPublicationErrorHandler(handler);    
+  }
+  
   @Qualifier("realtime")
   @Bean(destroyMethod = "shutdown")
-  public MBassador<MarketData> buildRealtimeEventBus(IPublicationErrorHandler handler) {
+  public MBassador<MarketData> buildRealtimeEventBus(BusConfiguration handler) {
     return new MBassador<MarketData>(handler);
   }
 
   @Qualifier("query")
   @Bean(destroyMethod = "shutdown")
-  public MBassador<HistoricalFeedQuery> buildQueryEventBus(IPublicationErrorHandler handler) {
-    return new MBassador<HistoricalFeedQuery>(handler);
+  public MBassador<DataFeedQuery> buildQueryEventBus(BusConfiguration handler) {
+    return new MBassador<DataFeedQuery>(handler);
   }
 
   @Qualifier("commands")
   @Bean(destroyMethod = "shutdown")
-  public MBassador<Serializable> buildCommandsEventBus(IPublicationErrorHandler handler) {
+  public MBassador<Serializable> buildCommandsEventBus(BusConfiguration handler) {
     return new MBassador<Serializable>(handler);
   }
 
   @Qualifier("notification")
   @Bean(destroyMethod = "shutdown")
-  public MBassador<Serializable> buildNotificaitonEventBus(IPublicationErrorHandler handler) {
+  public MBassador<Serializable> buildNotificaitonEventBus(BusConfiguration handler) {
     return new MBassador<Serializable>(handler);
   }
 
   @Qualifier("modelData")
   @Bean(destroyMethod = "shutdown")
-  public MBassador<Map<String, Object>> buildModelDataEventBus(IPublicationErrorHandler handler) {
+  public MBassador<Map<String, Object>> buildModelDataEventBus(BusConfiguration handler) {
+    return new MBassador<Map<String, Object>>(handler);
+  }
+  
+  @Qualifier("retroModelData")
+  @Bean(destroyMethod = "shutdown")
+  public MBassador<Map<String, Object>> buildRetroModelDataEventBus(BusConfiguration handler) {
     return new MBassador<Map<String, Object>>(handler);
   }
 

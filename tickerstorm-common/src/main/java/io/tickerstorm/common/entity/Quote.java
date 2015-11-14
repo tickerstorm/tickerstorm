@@ -9,6 +9,28 @@ public class Quote extends BaseMarketData {
 
   public static final String TYPE = "quote";
 
+  public Quote() {
+   
+  }
+  
+  public Quote(Field<?>[] fields) {
+    super(fields);
+    for (Field<?> f : fields) {
+
+      if (f.getName().equalsIgnoreCase(Field.ASK))
+        this.ask = (BigDecimal) f.getValue();
+
+      if (f.getName().equalsIgnoreCase(Field.ASK_SIZE))
+        this.askSize = (Integer) f.getValue();
+
+      if (f.getName().equalsIgnoreCase(Field.BID))
+        this.bid = (BigDecimal) f.getValue();
+
+      if (f.getName().equalsIgnoreCase(Field.BID_SIZE))
+        this.bidSize = (Integer) f.getValue();
+    }
+  }
+
   public BigDecimal getBid() {
     return bid;
   }

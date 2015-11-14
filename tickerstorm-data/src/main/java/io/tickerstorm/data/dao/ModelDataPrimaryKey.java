@@ -16,12 +16,12 @@ public class ModelDataPrimaryKey implements Serializable {
   public String modelName;
 
   @PrimaryKeyColumn(name = "date", ordinal = 1, type = PrimaryKeyType.PARTITIONED, ordering = Ordering.DESCENDING)
-  public String date;
+  public Integer date;
 
   @PrimaryKeyColumn(name = "timestamp", ordinal = 2, type = PrimaryKeyType.CLUSTERED, ordering = Ordering.DESCENDING)
   public Date timestamp;
 
-  public String getDate() {
+  public Integer getDate() {
     return date;
   }
 
@@ -70,7 +70,7 @@ public class ModelDataPrimaryKey implements Serializable {
     return timestamp;
   }
 
-  public void setDate(String date) {
+  public void setDate(Integer date) {
     this.date = date;
   }
 

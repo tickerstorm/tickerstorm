@@ -28,6 +28,14 @@ public abstract class BaseMarketData implements MarketData, Serializable {
     this.timestamp = timestamp;
   }
 
+  public BaseMarketData(Field<?>[] fields) {
+
+    this.source = fields[0].getSource();
+    this.timestamp = fields[0].getTimestamp();
+    this.symbol = fields[0].getSymbol();
+
+  }
+
   @Override
   public boolean equals(Object obj) {
     if (this == obj)
@@ -105,5 +113,7 @@ public abstract class BaseMarketData implements MarketData, Serializable {
     return fields;
 
   }
+
+
 
 }
