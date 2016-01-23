@@ -1,8 +1,9 @@
 package io.tickerstorm.common.entity;
 
+import java.io.Serializable;
 import java.time.Instant;
 
-public interface Field<T> {
+public interface Field<T> extends Serializable {
 
   public static final String SYMBOL = "symbol";
   public static final String TIMESTAMP = "timestamp";

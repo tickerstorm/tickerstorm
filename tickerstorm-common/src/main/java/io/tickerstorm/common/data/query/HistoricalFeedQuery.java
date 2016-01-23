@@ -21,7 +21,16 @@ public class HistoricalFeedQuery implements DataFeedQuery {
   public LocalDateTime until = LocalDateTime.now();
   public final String id = UUID.randomUUID().toString();
   public Set<String> periods = Sets.newHashSet(Candle.MIN_1_INTERVAL);
-  
+  public String stream = "Default";
+
+  public String getStream() {
+    return stream;
+  }
+
+  public void setStream(String stream) {
+    this.stream = stream;
+  }
+
   public HistoricalFeedQuery(LocalDateTime from, LocalDateTime until, String... symbols) {
     this.symbols.addAll(Sets.newHashSet(symbols));
     this.from = from;

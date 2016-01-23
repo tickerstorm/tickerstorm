@@ -2,8 +2,7 @@ package io.tickerstorm.common.entity;
 
 import java.time.Instant;
 
-import com.google.common.base.MoreObjects;
-
+@SuppressWarnings("serial")
 public class DiscreteField extends BaseField<Integer> {
 
   public static final String TYPE = "discrete";

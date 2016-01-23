@@ -4,6 +4,7 @@ import java.time.Instant;
 
 import com.google.common.base.MoreObjects;
 
+@SuppressWarnings("serial")
 public abstract class BaseField<T> implements Field<T> {
 
   public String getInterval() {

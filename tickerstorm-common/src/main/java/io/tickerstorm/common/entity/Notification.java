@@ -11,11 +11,20 @@ import java.util.UUID;
 import com.google.common.base.MoreObjects;
 
 @SuppressWarnings("serial")
-public class Notification implements Event, Marker, Serializable {
+public class Notification implements Event, Marker, Stream, Serializable {
 
   public static final String TYPE = "notification";
   public String id = UUID.randomUUID().toString();
   public Set<String> markers = new HashSet<>();
+  public String stream;
+
+  public String getStream() {
+    return stream;
+  }
+
+  public void setStream(String stream) {
+    this.stream = stream;
+  }
 
   public Map<String, String> properties = new HashMap<>();
 

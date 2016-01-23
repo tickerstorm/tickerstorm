@@ -2,7 +2,7 @@ package io.tickerstorm.common.entity;
 
 import java.time.Instant;
 
-
+@SuppressWarnings("serial")
 public class CategoricalField extends BaseField<String> {
 
   public static final String TYPE = "categorical";

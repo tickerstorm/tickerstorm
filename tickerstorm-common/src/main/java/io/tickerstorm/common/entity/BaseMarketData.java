@@ -13,18 +13,28 @@ public abstract class BaseMarketData implements MarketData, Serializable {
   public String source;
   public Instant timestamp;
   public String symbol;
+  public String stream;
 
+  public String getStream() {
+    return stream;
+  }
 
   public BaseMarketData() {}
+
+  public BaseMarketData(String symbol, String source, String stream, Instant timestamp) {
+    this.source = source;
+    this.symbol = symbol;
+    this.timestamp = timestamp;
+    this.stream = stream;
+  }
+
+  public void setStream(String stream) {
+    this.stream = stream;
+  }
 
   public BaseMarketData(String symbol, String source, Instant timestamp) {
     this.source = source;
     this.symbol = symbol;
-    this.timestamp = timestamp;
-  }
-
-  public BaseMarketData(String source, Instant timestamp) {
-    this.source = source;
     this.timestamp = timestamp;
   }
 
@@ -101,7 +111,8 @@ public abstract class BaseMarketData implements MarketData, Serializable {
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this).add("symbol", symbol).add("source", source).add("timestamp", timestamp).toString();
+    return MoreObjects.toStringHelper(this).add("symbol", symbol).add("source", source).add("timestamp", timestamp).add("stream", stream)
+        .toString();
   }
 
   public Set<Field<?>> getFields() {
@@ -110,6 +121,7 @@ public abstract class BaseMarketData implements MarketData, Serializable {
     fields.add(new CategoricalField(symbol, timestamp, symbol, Field.SYMBOL, source));
     fields.add(new CategoricalField(symbol, timestamp, timestamp.toString(), Field.TIMESTAMP, source));
     fields.add(new CategoricalField(symbol, timestamp, source, Field.SOURCE, source));
+    fields.add(new CategoricalField(symbol, timestamp, stream, Field.TIMESTAMP, source));
     return fields;
 
   }

@@ -12,7 +12,7 @@ import com.google.common.base.MoreObjects;
 import com.google.common.collect.Lists;
 
 @SuppressWarnings("serial")
-public class Command implements Marker, Event, Serializable {
+public class Command implements Marker, Event, Stream, Serializable {
 
   public String id = UUID.randomUUID().toString();
   public Set<String> markers = new HashSet<>();
@@ -20,6 +20,11 @@ public class Command implements Marker, Event, Serializable {
   public Instant timestamp = Instant.now();
   public String source;
   public static final String TYPE = "command";
+  public String stream;
+
+  public String getStream() {
+    return stream;
+  }
 
   public String getId() {
     return id;
@@ -27,6 +32,10 @@ public class Command implements Marker, Event, Serializable {
 
   public Command(String source) {
     this.source = source;
+  }
+
+  public void setStream(String stream) {
+    this.stream = stream;
   }
 
   public Command(String source, String... marker) {

@@ -5,17 +5,26 @@ import java.util.Set;
 import java.util.UUID;
 
 @SuppressWarnings("serial")
-public class BaseMarker implements Marker {
+public class BaseMarker implements Marker, Stream {
 
   public static final String TYPE = "marker";
   public Integer expect = null;
-
+  public String stream;
+  
   public Set<String> markers = new HashSet<>();
 
   public String id = UUID.randomUUID().toString();
 
-  public BaseMarker(String id) {
+  public BaseMarker(String id, String stream) {
     this.id = id;
+  }
+
+  public String getStream() {
+    return stream;
+  }
+
+  public void setStream(String stream) {
+    this.stream = stream;
   }
 
   @Override

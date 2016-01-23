@@ -7,5 +7,5 @@ public interface Event {
   public Instant getTimestamp();
   public String getSource();
   public String getType();
-
+  
 }

@@ -29,7 +29,7 @@ public class EventBusToJMSBridge {
     this.destination = destination;
     this.template = template;
   }
-  
+
   public EventBusToJMSBridge(MBassador<?> eventBus, String destination, JmsTemplate template, IMessageFilter<Serializable> filter) {
     this.bus = eventBus;
     this.destination = destination;
@@ -59,7 +59,7 @@ public class EventBusToJMSBridge {
       template.send(destination, new MessageCreator() {
         @Override
         public Message createMessage(Session session) throws JMSException {
-          logger.debug("Dispatching " + data.toString());
+          logger.trace("Dispatching " + data.toString() + " to destination " + destination);
           Message m = session.createObjectMessage(data);
           return m;
         }

@@ -69,13 +69,13 @@ public class JMSToEventBusBridge {
       if (Collection.class.isAssignableFrom(md.getClass()) && explodeCollections) {
 
         for (Serializable s : (Collection<Serializable>) md) {
-          logger.debug("Received command  " + md.toString());
+          logger.trace("Received command  " + md.toString());
           commandsBus.publishAsync(s);
         }
 
       } else {
 
-        logger.debug("Received command " + md.toString());
+        logger.trace("Received command " + md.toString());
         commandsBus.publishAsync(md);
 
       }
@@ -85,7 +85,7 @@ public class JMSToEventBusBridge {
   @JmsListener(destination = Destinations.QUEUE_QUERY)
   public void onMessage(@Payload HistoricalFeedQuery query) {
     if (queryBus != null) {
-      logger.debug("Received query " + query.toString());
+      logger.trace("Received query " + query.toString());
       queryBus.publishAsync(query);
     }
   }
@@ -93,7 +93,7 @@ public class JMSToEventBusBridge {
   @JmsListener(destination = Destinations.TOPIC_REALTIME_MARKETDATA)
   public void onMessage(@Payload MarketData md) {
     if (realtimeBus != null) {
-      logger.debug("Received market data " + md.toString());
+      logger.trace("Received market data " + md.toString());
       realtimeBus.publishAsync(md);
     }
   }
@@ -101,7 +101,7 @@ public class JMSToEventBusBridge {
   @JmsListener(destination = Destinations.QUEUE_MODEL_DATA)
   public void onMessage(@Payload Map<String, Object> row) {
     if (modelDataBus != null) {
-      logger.debug("Received model data " + row.toString());
+      logger.trace("Received model data " + row.toString());
       modelDataBus.publishAsync(row);
     }
   }
@@ -113,13 +113,13 @@ public class JMSToEventBusBridge {
       if (Collection.class.isAssignableFrom(md.getClass()) && explodeCollections) {
 
         for (Serializable s : (Collection<Serializable>) md) {
-          logger.debug("Received notification " + md.toString());
+          logger.trace("Received notification " + md.toString());
           notificationBus.publishAsync(s);
         }
 
       } else {
 
-        logger.debug("Received notification " + md.toString());
+        logger.trace("Received notification " + md.toString());
         notificationBus.publishAsync(md);
       }
     }

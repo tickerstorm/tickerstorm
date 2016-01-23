@@ -6,7 +6,7 @@ import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 
-public interface MarketData extends Event, Serializable {
+public interface MarketData extends Event, Stream, Serializable {
 
   public String getSymbol();
 
