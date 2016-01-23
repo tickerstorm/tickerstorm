@@ -194,19 +194,22 @@ public class MarketDataDto implements Serializable {
     this.volume = volume;
   }
 
-  public MarketData toMarketData() {
+  public MarketData toMarketData(String stream) {
 
     MarketData c = null;
 
     try {
       if (Candle.TYPE.equals(primarykey.type)) {
         c = mapper.map(this, Candle.class);
+        ((Candle)c).setStream(stream);
       } else if (Quote.TYPE.equals(primarykey.type)) {
         c = mapper.map(this, Quote.class);
+        ((Quote)c).setStream(stream);
       } else if (Tick.TYPE.equals(primarykey.type)) {
         c = mapper.map(this, Tick.class);
-      }
-
+        ((Tick) c).setStream(stream);
+      }     
+      
     } catch (Exception e) {
       Throwables.propagate(e);
     }

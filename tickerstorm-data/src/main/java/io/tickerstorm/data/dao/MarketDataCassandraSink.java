@@ -8,6 +8,7 @@ import javax.annotation.PreDestroy;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Repository;
 
 import io.tickerstorm.common.entity.MarketData;
@@ -15,12 +16,18 @@ import net.engio.mbassy.bus.MBassador;
 import net.engio.mbassy.listener.Listener;
 import net.engio.mbassy.listener.References;
 
+@DependsOn(value={"cassandraSetup"})
 @Repository
 @Listener(references = References.Strong)
-public class MarketDataCassandraSink extends BaseCassandraSink {
+public class MarketDataCassandraSink extends BaseCassandraSink<MarketDataDto> {
 
   @Autowired
   private MarketDataDao dao;
+
+  @Override
+  protected int batchSize() {
+    return 149;
+  }
 
   @Qualifier("historical")
   @Autowired
@@ -48,13 +55,24 @@ public class MarketDataCassandraSink extends BaseCassandraSink {
     return data;
   }
 
-  protected void persist(List<Object> data) {
+  protected void persist(List<MarketDataDto> data) {
     try {
       synchronized (data) {
-        dao.save((List) data);        
         logger.debug(
             "Persisting " + data.size() + " records, " + count.addAndGet(data.size()) + " total saved and " + received.get() + " received");
+        dao.save((List) data);
       }
+
+    } catch (Exception e) {
+      logger.error(e.getMessage(), e);
+    }
+  }
+
+  protected void persist(MarketDataDto data) {
+    try {
+
+      logger.debug("Persisting 1 records, " + count.addAndGet(1) + " total saved and " + received.get() + " received");
+      dao.save(data);
 
     } catch (Exception e) {
       logger.error(e.getMessage(), e);

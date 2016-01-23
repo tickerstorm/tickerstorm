@@ -42,7 +42,7 @@ public class TestMarketDataDto {
     assertEquals(dto.primarykey.symbol, c.symbol.toLowerCase());
     assertNotNull(dto.primarykey.date);
 
-    Candle d = (Candle) dto.toMarketData();
+    Candle d = (Candle) dto.toMarketData("Default");
 
     assertEquals(d.close, c.close);
     assertEquals(d.low, c.low);
@@ -83,7 +83,7 @@ public class TestMarketDataDto {
     assertEquals(dto.primarykey.symbol, c.symbol.toLowerCase());
     assertNotNull(dto.primarykey.date);
 
-    Quote d = (Quote) dto.toMarketData();
+    Quote d = (Quote) dto.toMarketData("Default");
 
     assertEquals(d.ask, c.ask);
     assertEquals(d.bid, c.bid);
@@ -118,7 +118,7 @@ public class TestMarketDataDto {
     assertEquals(dto.primarykey.symbol, c.symbol.toLowerCase());
     assertNotNull(dto.primarykey.date);
 
-    Tick d = (Tick) dto.toMarketData();
+    Tick d = (Tick) dto.toMarketData("Default");
 
     assertEquals(d.price, c.price);
     assertEquals(d.quantity, c.quantity);

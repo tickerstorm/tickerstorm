@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -17,8 +16,8 @@ import org.springframework.data.cassandra.mapping.Table;
 
 import com.google.common.collect.Lists;
 
+import io.tickerstorm.common.entity.CategoricalField;
 import io.tickerstorm.common.entity.Field;
-import io.tickerstorm.common.entity.Marker;
 import io.tickerstorm.common.entity.MarketData;
 import io.tickerstorm.common.model.Fields;
 
@@ -39,7 +38,7 @@ public class ModelDataDto implements Serializable {
   public Map<String, Object> fromRow() {
 
     Map<String, Object> row = new HashMap<>();
-    row.put(Fields.MODEL_NAME.toString(), primarykey.modelName);
+    row.put(Fields.STREAM.toString(), primarykey.stream);
 
     for (String k : fields) {
 
@@ -81,17 +80,7 @@ public class ModelDataDto implements Serializable {
 
   public static ModelDataDto convert(Map<String, Object> data) {
 
-    MarketData md = (MarketData) data.get(Fields.MARKETDATA.toString());
-    String modelName = (String) data.get(Fields.MODEL_NAME.toString());
-
     ModelDataDto dto = new ModelDataDto();
-    ModelDataPrimaryKey key = new ModelDataPrimaryKey();
-
-    key.timestamp = Date.from(md.getTimestamp());
-    LocalDateTime dt = LocalDateTime.ofInstant(md.getTimestamp(), ZoneOffset.UTC);
-    key.date = Integer.valueOf(dateFormatter.format(dt));
-    key.modelName = modelName;
-    dto.primarykey = key;
 
     for (String f : data.keySet()) {
 
@@ -100,7 +89,17 @@ public class ModelDataDto implements Serializable {
       if (o == null)
         continue;
 
-      if (MarketData.class.isAssignableFrom(o.getClass()) && !Marker.class.isAssignableFrom(o.getClass())) {
+      if (MarketData.class.isAssignableFrom(o.getClass())) {
+
+        MarketData md = (MarketData) data.get(Fields.MARKETDATA.fieldName());
+        String modelName = (String) data.get(Fields.STREAM.fieldName());
+
+        ModelDataPrimaryKey key = new ModelDataPrimaryKey();
+        key.timestamp = Date.from(md.getTimestamp());
+        LocalDateTime dt = LocalDateTime.ofInstant(md.getTimestamp(), ZoneOffset.UTC);
+        key.date = Integer.valueOf(dateFormatter.format(dt));
+        key.stream = modelName;
+        dto.primarykey = key;
 
         for (Field<?> mf : ((MarketData) o).getFields()) {
           dto.fields.add(f + "$" + mf.serialize());
@@ -120,7 +119,10 @@ public class ModelDataDto implements Serializable {
       }
     }
 
-    return dto;
+    if (dto.primarykey != null)
+      return dto;
+    
+    return null;
 
   }
 

@@ -15,16 +15,16 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.cassandra.core.CassandraOperations;
 
 import net.engio.mbassy.listener.Handler;
-import net.engio.mbassy.listener.Synchronized;
+import scala.annotation.serializable;
 
-public abstract class BaseCassandraSink {
+public abstract class BaseCassandraSink<T> {
 
   private class BatchSaveTask extends TimerTask {
 
     @Override
     public void run() {
 
-      List<Object> b = nextBatch();
+      List<T> b = nextBatch();
       if (!b.isEmpty())
         persist(b);
 
@@ -33,17 +33,19 @@ public abstract class BaseCassandraSink {
 
   protected static final org.slf4j.Logger logger = LoggerFactory.getLogger(BaseCassandraSink.class);
   private final Timer timer = new Timer();
-  protected final AtomicReference<List<Object>> batch = new AtomicReference<List<Object>>(Collections.synchronizedList(new ArrayList<>()));
+  protected final AtomicReference<List<T>> batch = new AtomicReference<List<T>>(Collections.synchronizedList(new ArrayList<T>()));
   protected final AtomicLong count = new AtomicLong(0);
   protected final AtomicLong received = new AtomicLong(0);
 
-  protected int batchSize = 149;
+  protected int batchSize() {
+    return 149;
+  }
 
   @Value("${cassandra.keyspace}")
   private String keyspace;
 
   @Autowired
-  private CassandraOperations session;
+  protected CassandraOperations session;
 
   public void destroy() {
     timer.cancel();
@@ -60,21 +62,25 @@ public abstract class BaseCassandraSink {
 
     try {
 
-      received.incrementAndGet();
-
-      Object d = convert(data);
-
-      if (d != null) {
-        batch.get().add(d);
-      } else {
-        logger.error(data + "was null");
+      synchronized (received) {
+        received.incrementAndGet();
       }
-      
-      if (batch.get().size() > batchSize) {
-        List<Object> b = nextBatch();
-        if (!b.isEmpty()) {
-          persist(b);
+
+      T d = (T) convert(data);
+
+      if (d != null && batchSize() > 1) {
+
+        batch.get().add(d);
+
+        if (batch.get().size() > batchSize()) {
+          List<T> b = nextBatch();
+          if (!b.isEmpty()) {
+            persist(b);
+          }
         }
+
+      } else if (d != null && batchSize() == 1) {
+        persist(d);
       }
 
     } catch (Exception e) {
@@ -83,15 +89,17 @@ public abstract class BaseCassandraSink {
 
   }
 
-  protected abstract void persist(List<Object> batch);
+  protected abstract void persist(List<T> batch);
+
+  protected abstract void persist(T data);
 
   protected Serializable convert(Serializable data) {
     return data;
   }
 
-  
-  protected synchronized List<Object> nextBatch() {
-    List<Object> data = batch.getAndSet(Collections.synchronizedList(new ArrayList<>()));
+
+  protected synchronized List<T> nextBatch() {
+    List<T> data = batch.getAndSet(Collections.synchronizedList(new ArrayList<T>()));
     return data;
   }
 }

@@ -48,7 +48,9 @@ public class BaseDataQueryITCase extends AbstractTestNGSpringContextTests {
   public void tearDown() throws Exception {
     bus.unsubscribe(verifier);
     session.getSession().execute("TRUNCATE marketdata");
+    session.getSession().execute("TRUNCATE modeldata");
     count.set(0);
+    Thread.sleep(2000);
   }
 
 

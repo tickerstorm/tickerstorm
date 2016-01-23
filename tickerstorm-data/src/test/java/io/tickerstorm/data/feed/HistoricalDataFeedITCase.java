@@ -26,10 +26,11 @@ import com.google.common.io.Files;
 
 import io.tickerstorm.common.data.query.DataFeedQuery;
 import io.tickerstorm.common.data.query.HistoricalFeedQuery;
+import io.tickerstorm.common.entity.BaseMarker;
 import io.tickerstorm.common.entity.Candle;
+import io.tickerstorm.common.entity.Marker;
 import io.tickerstorm.common.entity.Markers;
 import io.tickerstorm.common.entity.MarketData;
-import io.tickerstorm.common.entity.MarketDataMarker;
 import io.tickerstorm.data.TestMarketDataServiceConfig;
 import net.engio.mbassy.bus.MBassador;
 import net.engio.mbassy.listener.Handler;
@@ -52,8 +53,8 @@ public class HistoricalDataFeedITCase extends AbstractTestNGSpringContextTests {
   @Autowired
   private MBassador<DataFeedQuery> queryBus;
 
-  MarketDataMarker start;
-  MarketDataMarker end;
+  BaseMarker start;
+  BaseMarker end;
 
   @Autowired
   private CassandraOperations session;
@@ -112,21 +113,27 @@ public class HistoricalDataFeedITCase extends AbstractTestNGSpringContextTests {
   public class HistoricalDataFeedVerifier {
 
     @Handler
+    public void onNotification(Serializable md) {
+
+      if (Marker.class.isAssignableFrom(md.getClass())) {
+
+        if (((BaseMarker) md).getMarkers().contains(Markers.QUERY_START.toString()))
+          start = (BaseMarker) md;
+
+        if (((BaseMarker) md).getMarkers().contains(Markers.QUERY_END.toString()))
+          end = (BaseMarker) md;
+
+      }
+    }
+
+    @Handler
     public void onMarketData(MarketData md) {
 
       assertNotNull(md.getSymbol());
       assertEquals(md.getSource(), "google");
       assertNotNull(md.getTimestamp());
 
-      if (MarketDataMarker.class.isAssignableFrom(md.getClass())) {
-
-        if (((MarketDataMarker) md).getMarkers().contains(Markers.QUERY_START.toString()))
-          start = (MarketDataMarker) md;
-
-        if (((MarketDataMarker) md).getMarkers().contains(Markers.QUERY_END.toString()))
-          end = (MarketDataMarker) md;
-
-      } else if (Candle.class.isAssignableFrom(md.getClass())) {
+      if (Candle.class.isAssignableFrom(md.getClass())) {
 
         Candle c = (Candle) md;
         assertNotNull(c.close);

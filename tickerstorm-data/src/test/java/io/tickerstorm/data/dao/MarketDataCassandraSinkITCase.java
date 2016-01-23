@@ -76,7 +76,7 @@ public class MarketDataCassandraSinkITCase extends AbstractTestNGSpringContextTe
       assertEquals(dto.primarykey.symbol, c.symbol.toLowerCase());
       assertNotNull(dto.primarykey.date);
 
-      Candle d = (Candle) dto.toMarketData();
+      Candle d = (Candle) dto.toMarketData("Default");
 
       assertEquals(d.close, c.close);
       assertEquals(d.low, c.low);

@@ -39,7 +39,7 @@ public class StooqHistoricalForexQueryITCase extends BaseDataQueryITCase {
 
     Files.copy(new File("./src/test/resources/data/Stooq/5_world_txt.zip"), new File("./data/Stooq/5_world_txt.zip"));
 
-    Thread.sleep(25000);
+    Thread.sleep(27000);
 
     Long daoCount = dao.count();
     assertEquals(daoCount.longValue(), 62355L);

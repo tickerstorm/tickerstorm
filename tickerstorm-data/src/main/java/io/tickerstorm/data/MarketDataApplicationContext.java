@@ -66,7 +66,7 @@ public class MarketDataApplicationContext {
   public JmsTemplate buildJmsTemplate(ConnectionFactory factory) {
     JmsTemplate template = new JmsTemplate(factory);
     template.setDestinationResolver(new ByDestinationNameJmsResolver());
-    template.setSessionAcknowledgeMode(Session.CLIENT_ACKNOWLEDGE);
+    template.setSessionAcknowledgeMode(Session.AUTO_ACKNOWLEDGE);
     template.setTimeToLive(2000);
     template.setPubSubNoLocal(true);
     return template;

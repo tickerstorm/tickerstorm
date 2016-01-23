@@ -12,8 +12,8 @@ import org.springframework.data.cassandra.mapping.PrimaryKeyColumn;
 @SuppressWarnings("serial")
 public class ModelDataPrimaryKey implements Serializable {
 
-  @PrimaryKeyColumn(name = "modelName", ordinal = 0, type = PrimaryKeyType.PARTITIONED)
-  public String modelName;
+  @PrimaryKeyColumn(name = "stream", ordinal = 0, type = PrimaryKeyType.PARTITIONED)
+  public String stream;
 
   @PrimaryKeyColumn(name = "date", ordinal = 1, type = PrimaryKeyType.PARTITIONED, ordering = Ordering.DESCENDING)
   public Integer date;
@@ -30,7 +30,7 @@ public class ModelDataPrimaryKey implements Serializable {
     final int prime = 31;
     int result = 1;
     result = prime * result + ((date == null) ? 0 : date.hashCode());
-    result = prime * result + ((modelName == null) ? 0 : modelName.hashCode());
+    result = prime * result + ((stream == null) ? 0 : stream.hashCode());
     result = prime * result + ((timestamp == null) ? 0 : timestamp.hashCode());
     return result;
   }
@@ -49,10 +49,10 @@ public class ModelDataPrimaryKey implements Serializable {
         return false;
     } else if (!date.equals(other.date))
       return false;
-    if (modelName == null) {
-      if (other.modelName != null)
+    if (stream == null) {
+      if (other.stream != null)
         return false;
-    } else if (!modelName.equals(other.modelName))
+    } else if (!stream.equals(other.stream))
       return false;
     if (timestamp == null) {
       if (other.timestamp != null)
@@ -62,8 +62,8 @@ public class ModelDataPrimaryKey implements Serializable {
     return true;
   }
 
-  public String getModelName() {
-    return modelName;
+  public String getStream() {
+    return stream;
   }
 
   public Date getTimestamp() {
@@ -74,8 +74,8 @@ public class ModelDataPrimaryKey implements Serializable {
     this.date = date;
   }
 
-  public void setModelName(String modelName) {
-    this.modelName = modelName;
+  public void setStream(String modelName) {
+    this.stream = modelName;
   }
 
   public void setTimestamp(Date timestamp) {

@@ -7,6 +7,7 @@ import java.time.Instant;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -20,10 +21,12 @@ import org.testng.annotations.Test;
 
 import com.google.common.collect.Lists;
 
+import io.tickerstorm.common.entity.BaseMarker;
 import io.tickerstorm.common.entity.Candle;
 import io.tickerstorm.common.entity.CategoricalField;
 import io.tickerstorm.common.entity.ContinousField;
 import io.tickerstorm.common.entity.DiscreteField;
+import io.tickerstorm.common.entity.Markers;
 import io.tickerstorm.common.entity.MarketData;
 import io.tickerstorm.common.model.Fields;
 import io.tickerstorm.data.TestMarketDataServiceConfig;
@@ -44,8 +47,9 @@ public class ModelDataCassandraSinkITCase extends AbstractTestNGSpringContextTes
   private ModelDataDao dao;
 
   @AfterMethod
-  public void cleanup() {
+  public void cleanup() throws Exception {
     session.getSession().execute("TRUNCATE modeldata");
+    Thread.sleep(2000);
   }
 
   @Test
@@ -56,11 +60,11 @@ public class ModelDataCassandraSinkITCase extends AbstractTestNGSpringContextTes
     DiscreteField df = new DiscreteField("google", Instant.now(), 100, "ave", "google");
     ContinousField cf = new ContinousField("google", Instant.now(), BigDecimal.TEN, "sma", "google");
     CategoricalField cat = new CategoricalField("goog", Instant.now(), "category", "some field name", "goog");
-    
+
     tuple.put(Fields.MARKETDATA.toString(), c);
     tuple.put(Fields.AVE.toString(), Lists.newArrayList(df));
     tuple.put(Fields.SMA.toString(), Lists.newArrayList(cf));
-    tuple.put(Fields.MODEL_NAME.toString(), "test model");
+    tuple.put(Fields.STREAM.toString(), "test model");
     modelDataBus.publish(tuple);
 
     Thread.sleep(5000);
@@ -76,21 +80,42 @@ public class ModelDataCassandraSinkITCase extends AbstractTestNGSpringContextTes
     Assert.assertNotNull(dto.primarykey);
     Assert.assertNotNull(dto.primarykey.date);
     Assert.assertNotNull(dto.primarykey.timestamp);
-    Assert.assertNotNull(dto.primarykey.modelName);
+    Assert.assertNotNull(dto.primarykey.stream);
     Assert.assertNotNull(dto.fields);
     Assert.assertEquals(dto.fields.size(), 10);
 
     Map<String, Object> map = dto.fromRow();
     MarketData data = (MarketData) map.get(Fields.MARKETDATA.toString());
-    String modelName = (String) map.get(Fields.MODEL_NAME.toString());
-    
+    String modelName = (String) map.get(Fields.STREAM.toString());
+
     Assert.assertNotNull(data);
     Assert.assertNotNull(modelName);
     Assert.assertNotNull(map.get(Fields.AVE.toString()));
     Assert.assertNotNull(map.get(Fields.SMA.toString()));
     Assert.assertEquals(c, data);
-    Assert.assertEquals(((Collection)map.get(Fields.SMA.toString())).iterator().next(), cf);
-    Assert.assertEquals(((Collection)map.get(Fields.AVE.toString())).iterator().next(), df);
-    
+    Assert.assertEquals(((Collection) map.get(Fields.SMA.toString())).iterator().next(), cf);
+    Assert.assertEquals(((Collection) map.get(Fields.AVE.toString())).iterator().next(), df);
+
+  }
+
+  @Test
+  public void testStoreMarker() throws Exception {
+
+    Map<String, Object> tuple = new HashMap<String, Object>();
+
+    Candle m = new Candle("goog", "google", Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ONE, BigDecimal.ONE, "1m", 1000);
+    BaseMarker marker = new BaseMarker(UUID.randomUUID().toString(), "Default");
+    marker.addMarker(Markers.QUERY_START.toString());
+    marker.expect = 100;
+    tuple.put(Fields.MARKETDATA.toString(), marker);
+    tuple.put(Fields.STREAM.toString(), "test model");
+
+    modelDataBus.publish(tuple);
+
+    Thread.sleep(5000);
+
+    long count = dao.count();
+
+    assertEquals(count, 0);
   }
 }

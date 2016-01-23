@@ -7,6 +7,8 @@ import static org.testng.Assert.assertTrue;
 import java.io.File;
 
 import org.apache.commons.io.FileUtils;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ContextConfiguration;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -16,6 +18,7 @@ import com.google.common.io.Files;
 
 import io.tickerstorm.common.entity.Candle;
 import io.tickerstorm.common.entity.MarketData;
+import io.tickerstorm.data.TestMarketDataServiceConfig;
 import net.engio.mbassy.listener.Handler;
 import net.engio.mbassy.listener.Listener;
 import net.engio.mbassy.listener.References;
@@ -60,7 +63,7 @@ public class GoogleDataQueryITCase extends BaseDataQueryITCase {
 
     Files.copy(new File("./src/test/resources/data/Google/TOL.csv"), new File("./data/Google/TOL.csv"));
 
-    Thread.sleep(10000);
+    Thread.sleep(12000);
 
     daoCount = dao.count();
     assertEquals(count.get(), 5792, "Failed message broker count");

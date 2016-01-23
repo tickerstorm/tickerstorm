@@ -21,10 +21,10 @@ import com.datastax.driver.core.querybuilder.Select;
 
 import io.tickerstorm.common.data.query.DataFeedQuery;
 import io.tickerstorm.common.data.query.HistoricalFeedQuery;
+import io.tickerstorm.common.entity.BaseMarker;
 import io.tickerstorm.common.entity.Candle;
 import io.tickerstorm.common.entity.Markers;
 import io.tickerstorm.common.entity.MarketData;
-import io.tickerstorm.common.entity.MarketDataMarker;
 import io.tickerstorm.data.dao.MarketDataDto;
 import net.engio.mbassy.bus.MBassador;
 import net.engio.mbassy.listener.Handler;
@@ -102,11 +102,11 @@ public class HistoricalDataFeed {
       for (MarketDataDto dto : dtos) {
 
         try {
-          MarketData m = dto.toMarketData();
-
+          MarketData m = dto.toMarketData(query.getStream());
+                    
           if (null == first) {
             first = m;
-            MarketDataMarker marker = new MarketDataMarker(m.getSymbol(), m.getSource(), m.getTimestamp(), query.id);
+            BaseMarker marker = new BaseMarker(query.id, query.getStream());
             marker.addMarker(Markers.QUERY_START.toString());
             marker.expect = dtos.size();
             notificationBus.publish(marker);
@@ -117,7 +117,7 @@ public class HistoricalDataFeed {
 
           if (count == dtos.size() && null == last) {
             last = m;
-            MarketDataMarker marker = new MarketDataMarker(m.getSymbol(), m.getSource(), m.getTimestamp(), query.id);
+            BaseMarker marker = new BaseMarker(query.id, query.getStream());
             marker.addMarker(Markers.QUERY_END.toString());
             marker.expect = 0;
             notificationBus.publish(marker);

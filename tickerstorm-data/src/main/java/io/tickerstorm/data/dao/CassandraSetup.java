@@ -47,7 +47,7 @@ public class CassandraSetup {
         .column("properties", DataType.map(DataType.text(), DataType.text())).column("volume", DataType.decimal())
         .column("quantity", DataType.decimal()).ifNotExists();
 
-    CreateTableSpecification modelSpec = CreateTableSpecification.createTable("modeldata").partitionKeyColumn("modelname", DataType.text())
+    CreateTableSpecification modelSpec = CreateTableSpecification.createTable("modeldata").partitionKeyColumn("stream", DataType.text())
         .partitionKeyColumn("date", DataType.varint()).clusteredKeyColumn("timestamp", DataType.timestamp(), Ordering.DESCENDING)
         .column("fields", DataType.set(DataType.text())).ifNotExists();
 
