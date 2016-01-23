@@ -57,7 +57,7 @@ public class BacktestTopology {
   @Autowired
   private JmsBolt modelDataBolt;
 
-  @Qualifier
+  @Qualifier("retroModelData")
   @Autowired
   private JmsSpout retroModelData;
 
@@ -73,12 +73,13 @@ public class BacktestTopology {
     builder.setSpout("commands", commandsSpout);
     builder.setBolt("clock", clockBolt).localOrShuffleGrouping("marketdata").allGrouping("commands");
     builder.setBolt("ave", aveBolt).localOrShuffleGrouping("clock").allGrouping("commands");
-    builder.setBolt("logger", loggingBolt).localOrShuffleGrouping("ave").allGrouping("commands");
-    builder.setBolt("notification", notificationBolt).localOrShuffleGrouping("ave");
-    builder.setBolt("modelData", modelDataBolt).localOrShuffleGrouping("ave");
-
+    //builder.setBolt("logger", loggingBolt).localOrShuffleGrouping("ave").allGrouping("commands");
+    builder.setBolt("notification", notificationBolt).localOrShuffleGrouping("ave").allGrouping("commands");
+    builder.setBolt("modelData", modelDataBolt).localOrShuffleGrouping("ave").allGrouping("commands");
+    
     TopologyBuilder retroBuilder = new TopologyBuilder();
-    builder.setSpout("retroModelData", retroModelData);
+    retroBuilder.setSpout("retroModelData", retroModelData);
+    retroBuilder.setSpout("commands", commandsSpout);
 
     stormConfig.setDebug(false);
     stormConfig.setNumWorkers(1);

@@ -67,9 +67,9 @@ public class TupleUtil {
     return columns;
   }
 
-  public static Map<String, Object> toMap(Tuple tuple) {
+  public static HashMap<String, Object> toMap(Tuple tuple) {
 
-    Map<String, Object> columns = new HashMap<>();
+    HashMap<String, Object> columns = new HashMap<>();
     backtype.storm.tuple.Fields fields = tuple.getFields();
 
     for (String f : fields) {

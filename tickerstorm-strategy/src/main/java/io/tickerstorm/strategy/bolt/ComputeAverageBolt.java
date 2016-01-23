@@ -22,24 +22,16 @@ import io.tickerstorm.common.entity.EmptyField;
 import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.entity.MarketData;
 import io.tickerstorm.common.model.Fields;
+import io.tickerstorm.strategy.util.CacheManager;
 import io.tickerstorm.strategy.util.TupleUtil;
-import net.sf.ehcache.Cache;
-import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Element;
-import net.sf.ehcache.config.CacheConfiguration;
-import net.sf.ehcache.config.MemoryUnit;
-import net.sf.ehcache.config.PersistenceConfiguration;
-import net.sf.ehcache.config.PersistenceConfiguration.Strategy;
-import net.sf.ehcache.store.MemoryStoreEvictionPolicy;
 
 @Component
 @SuppressWarnings("serial")
 public class ComputeAverageBolt extends BaseBolt {
 
-  private final static String MARKETDATA_CACHE = "md-cache";
   private final static Logger logger = LoggerFactory.getLogger(ComputeAverageBolt.class);
   private List<Integer> periods = null;
-  private CacheManager cacheManager = null;
 
   private String computeFieldName(Field<?> f, Integer p, String func) {
     StringBuffer b = new StringBuffer(func).append("|").append(p).append("|").append(f.getSymbol()).append("|").append(f.getInterval())
@@ -69,12 +61,12 @@ public class ComputeAverageBolt extends BaseBolt {
   }
 
   @Override
-  public void process(Tuple tuple) {
+  protected void process(Tuple input) {
+    ack();   
+  }
 
-    if (!tuple.contains(Fields.MARKETDATA.fieldName())) {
-      ack(tuple);
-      return;
-    }
+  @Override
+  protected void executeMarketData(Tuple tuple) {
 
     MarketData md = (MarketData) tuple.getValueByField(Fields.MARKETDATA.fieldName());
 
@@ -89,9 +81,10 @@ public class ComputeAverageBolt extends BaseBolt {
 
         String key = computeKey(f, p);
 
-        cacheManager.getCache(MARKETDATA_CACHE).putIfAbsent(new Element(key, new DescriptiveStatistics(p)));
+        CacheManager.getInstance().getCache(CacheManager.MARKETDATA_CACHE).putIfAbsent(new Element(key, new DescriptiveStatistics(p)));
 
-        DescriptiveStatistics ds = (DescriptiveStatistics) cacheManager.getCache(MARKETDATA_CACHE).get(key).getObjectValue();
+        DescriptiveStatistics ds =
+            (DescriptiveStatistics) CacheManager.getInstance().getCache(CacheManager.MARKETDATA_CACHE).get(key).getObjectValue();
 
         if (f.getFieldType().equals(ContinousField.TYPE)) {
           ds.addValue(((ContinousField) f).getValue().doubleValue());
@@ -140,20 +133,14 @@ public class ComputeAverageBolt extends BaseBolt {
     values.add(fields);
 
     emit(values.toArray());
-    ack(tuple);
+    ack();
 
   }
 
   @Override
   protected void init() {
 
-    CacheConfiguration config = new CacheConfiguration().eternal(false).maxBytesLocalHeap(100, MemoryUnit.MEGABYTES)
-        .memoryStoreEvictionPolicy(MemoryStoreEvictionPolicy.FIFO).persistence(new PersistenceConfiguration().strategy(Strategy.NONE));
-    config.setName("md-cache");
-    cacheManager = CacheManager.create();
-    cacheManager.addCache(new Cache(config));
-
-    periods = Lists.newArrayList(10, 15, 30, 60, 90);
+    periods = Lists.newArrayList(1, 10, 15, 30, 60, 90);
 
     periods.sort(new Comparator<Integer>() {
 

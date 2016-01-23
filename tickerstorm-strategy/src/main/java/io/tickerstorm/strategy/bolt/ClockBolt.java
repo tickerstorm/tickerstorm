@@ -22,23 +22,19 @@ public class ClockBolt extends BaseBolt {
   @Autowired
   private Clock clock;
 
-  @Override
-  public void process(Tuple tuple) {
+  protected void executeMarketData(Tuple tuple) {
 
-    if (tuple.contains(Fields.MARKETDATA.fieldName())) {
+    List<Object> values = TupleUtil.propagateTuple(tuple, Lists.newArrayList());
 
-      List<Object> values = TupleUtil.propagateTuple(tuple, Lists.newArrayList());
+    MarketData data = (MarketData) tuple.getValueByField(Fields.MARKETDATA.fieldName());
 
-      MarketData data = (MarketData) tuple.getValueByField(Fields.MARKETDATA.fieldName());
-
-      if (data != null) {
-        clock.update(data.getTimestamp());
-        values.add(clock.now());
-        emit(values.toArray());
-      }
+    if (data != null) {
+      clock.update(data.getTimestamp());
+      values.add(clock.now());
+      emit(values.toArray());
     }
 
-    ack(tuple);
+    ack();
   }
 
   @Override

@@ -8,14 +8,18 @@ import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
+import io.tickerstorm.common.entity.Command;
+import io.tickerstorm.common.entity.Marker;
+import io.tickerstorm.common.model.Fields;
 
 @SuppressWarnings("serial")
 public abstract class BaseBolt extends BaseRichBolt {
-  
+
   protected OutputCollector coll = null;
   protected Map config;
   protected TopologyContext context;
   protected Tuple t;
+
 
   @Override
   public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
@@ -24,29 +28,61 @@ public abstract class BaseBolt extends BaseRichBolt {
     this.context = context;
     init();
   }
-  
+
   @Override
-  public void declareOutputFields(OutputFieldsDeclarer declarer) {
-    //none
+  public void declareOutputFields(OutputFieldsDeclarer declarer) {}
+
+  protected void ack() {
+    if (coll != null)
+      coll.ack(t);
   }
 
-  protected void ack(Tuple tuple) {
-    coll.ack(tuple);
+  protected void emit(Object... tuple) {
+    if (coll != null)
+      coll.emit(t, new Values(tuple));
   }
-  
-  protected void emit(Object... tuple){
-    coll.emit(t, new Values(tuple));
+
+  protected void executeCommand(Command input) {
+
+  }
+
+  protected void executeMarker(Marker input) {
+
+  }
+
+  protected void executeMarketData(Tuple tuple) {
+
   }
 
   @Override
   public final void execute(Tuple input) {
     this.t = input;
+
+    if (input.contains(Fields.MARKER.toString())) {
+
+      Object o = input.getValueByField(Fields.MARKER.toString());
+
+      if (Command.class.isAssignableFrom(o.getClass())) {
+        Command m = (Command) o;
+        executeCommand(m);
+      } else {
+        Marker m = (Marker) o;
+        executeMarker(m);
+      }
+    }
+
+    if (input.contains(Fields.MARKETDATA.toString())) {
+      executeMarketData(input);
+    }
+
     process(input);
   }
 
-  protected abstract void process(Tuple input);
-  
-  protected void init(){}
+  protected void process(Tuple input) {
+
+  }
+
+  protected void init() {}
 
 
 }

@@ -29,7 +29,7 @@ public class BacktestClock implements Clock, Serializable {
 
     if (c != null && dt != null && dt.isAfter(c)) {
       ref.compareAndSet(c, dt);
-      logger.debug("Time is now: " + ref.get().toString());
+      logger.trace("Time is now: " + ref.get().toString());
     }
 
     return ref.get();

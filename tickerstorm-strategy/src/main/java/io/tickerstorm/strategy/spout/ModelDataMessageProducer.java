@@ -1,12 +1,13 @@
 package io.tickerstorm.strategy.spout;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import javax.jms.JMSException;
-import javax.jms.MapMessage;
 import javax.jms.Message;
+import javax.jms.ObjectMessage;
 import javax.jms.Session;
 
 import backtype.storm.contrib.jms.JmsMessageProducer;
@@ -27,16 +28,18 @@ public class ModelDataMessageProducer implements JmsMessageProducer {
   @Override
   public Message toMessage(Session session, Tuple input) throws JMSException {
 
-    Map<String, Object> fields = TupleUtil.toMap(input);
-    MapMessage m = session.createMapMessage();
+    HashMap<String, Object> fields = TupleUtil.toMap(input);
+    Map<String, Object> loopFields = new HashMap<>(fields);
+    ObjectMessage m = session.createObjectMessage();
 
-    for (Entry<String, Object> e : fields.entrySet()) {
-
-      if (MarketData.class.isAssignableFrom(e.getValue().getClass()) && Field.class.isAssignableFrom(e.getValue().getClass())
-          && Collection.class.isAssignableFrom(e.getValue().getClass())) {
-        m.setObjectProperty(e.getKey(), e.getValue());
+    for (Entry<String, Object> e : loopFields.entrySet()) {
+      if (!MarketData.class.isAssignableFrom(e.getValue().getClass()) && !Field.class.isAssignableFrom(e.getValue().getClass())
+          && !Collection.class.isAssignableFrom(e.getValue().getClass())) {
+        fields.remove(e.getKey()); // remove from first map
       }
     }
+
+    m.setObject(fields);
 
     return m;
   }
