@@ -21,11 +21,11 @@ import com.appx.h2o.H2ORestClient;
 
 import io.tickerstorm.common.data.query.DataFeedQuery;
 import io.tickerstorm.common.data.query.HistoricalFeedQuery;
+import io.tickerstorm.common.entity.BaseMarker;
 import io.tickerstorm.common.entity.Candle;
 import io.tickerstorm.common.entity.Command;
 import io.tickerstorm.common.entity.Marker;
 import io.tickerstorm.common.entity.Markers;
-import io.tickerstorm.common.entity.MarketDataMarker;
 import io.tickerstorm.common.entity.Notification;
 import net.engio.mbassy.bus.MBassador;
 import net.engio.mbassy.listener.Handler;
@@ -57,17 +57,17 @@ public class BacktestRunnerClient implements ApplicationListener<ContextRefreshe
 
   @PostConstruct
   protected void init() throws Exception {
-//    commandsBus.subscribe(this);
+    commandsBus.subscribe(this);
     notificationBus.subscribe(this);
   }
 
   @Handler
-  public void onCommandNotification(MarketDataMarker data) throws Exception {
+  public void onCommandNotification(BaseMarker data) throws Exception {
 
-    logger.info("Marker : " + ((MarketDataMarker) data).markers);
-    logger.info("Marker : " + ((MarketDataMarker) data).expect);
+    logger.info("Marker : " + ((BaseMarker) data).markers);
+    logger.info("Marker : " + ((BaseMarker) data).expect);
 
-    if (Markers.is((Marker) data, Markers.QUERY_END) && ((MarketDataMarker) data).expect == 0) {
+    if (Markers.is((Marker) data, Markers.QUERY_END) && ((BaseMarker) data).expect == 0) {
       Command marker = new Command(clientName, Instant.now());
       marker.addMarker(Markers.SESSION_END.toString());
 
@@ -107,6 +107,7 @@ public class BacktestRunnerClient implements ApplicationListener<ContextRefreshe
     query.source = "google";
     query.periods.add(Candle.MIN_1_INTERVAL);
     query.zone = ZoneOffset.ofHours(-7);
+    query.stream = "TestModel";
     queryBus.publish(query);
 
   }
