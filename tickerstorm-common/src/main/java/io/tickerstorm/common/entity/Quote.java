@@ -10,23 +10,23 @@ public class Quote extends BaseMarketData {
   public static final String TYPE = "quote";
 
   public Quote() {
-   
+
   }
-  
-  public Quote(Field<?>[] fields) {
+
+  public Quote(Set<Field<?>> fields) {
     super(fields);
     for (Field<?> f : fields) {
 
-      if (f.getName().equalsIgnoreCase(Field.ASK))
+      if (f.getName().equalsIgnoreCase(Field.Name.ASK.field()))
         this.ask = (BigDecimal) f.getValue();
 
-      if (f.getName().equalsIgnoreCase(Field.ASK_SIZE))
+      if (f.getName().equalsIgnoreCase(Field.Name.ASK_SIZE.field()))
         this.askSize = (Integer) f.getValue();
 
-      if (f.getName().equalsIgnoreCase(Field.BID))
+      if (f.getName().equalsIgnoreCase(Field.Name.BID.field()))
         this.bid = (BigDecimal) f.getValue();
 
-      if (f.getName().equalsIgnoreCase(Field.BID_SIZE))
+      if (f.getName().equalsIgnoreCase(Field.Name.BID_SIZE.field()))
         this.bidSize = (Integer) f.getValue();
     }
   }
@@ -123,10 +123,11 @@ public class Quote extends BaseMarketData {
   @Override
   public Set<Field<?>> getFields() {
     Set<Field<?>> fields = new HashSet<Field<?>>();
-    fields.add(new ContinousField(symbol, timestamp, ask, source, Field.ASK));
-    fields.add(new ContinousField(symbol, timestamp, bid, source, Field.BID));
-    fields.add(new DiscreteField(symbol, timestamp, askSize, source, Field.ASK_SIZE));
-    fields.add(new DiscreteField(symbol, timestamp, bidSize, source, Field.BID_SIZE));
+    fields.addAll(super.getFields());
+    fields.add(new BaseField<BigDecimal>(Field.Name.ASK.field(), ask));
+    fields.add(new BaseField<BigDecimal>(Field.Name.BID.field(), bid));
+    fields.add(new BaseField<Integer>(Field.Name.ASK_SIZE.field(), askSize));
+    fields.add(new BaseField<Integer>(Field.Name.BID_SIZE.field(), bidSize));
     return fields;
   }
 }

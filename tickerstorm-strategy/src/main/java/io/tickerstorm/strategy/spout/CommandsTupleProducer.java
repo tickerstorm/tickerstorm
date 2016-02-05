@@ -8,6 +8,7 @@ import backtype.storm.contrib.jms.JmsTupleProducer;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Values;
+import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.entity.Marker;
 
 @SuppressWarnings("serial")
@@ -34,6 +35,6 @@ public class CommandsTupleProducer implements JmsTupleProducer {
 
   @Override
   public void declareOutputFields(OutputFieldsDeclarer declarer) {
-    declarer.declare(new Fields(io.tickerstorm.common.model.Fields.MARKER.fieldName()));
+    declarer.declare(new Fields(Field.Name.MARKER.field()));
   }
 }

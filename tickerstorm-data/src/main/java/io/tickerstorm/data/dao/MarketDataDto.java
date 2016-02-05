@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -39,20 +40,21 @@ public class MarketDataDto implements Serializable {
       try {
 
         mapper.map(data, dto);
-        mapper.map(data, key);
 
         LocalDateTime dt = LocalDateTime.ofInstant(data.getTimestamp(), ZoneOffset.UTC);
 
+        key.symbol = data.getSymbol().toLowerCase();
+        key.source = data.getSource().toLowerCase();
         key.date = dateFormatter.format(dt);
         key.hour = dt.getHour();
         key.min = dt.getMinute();
+        key.timestamp = Date.from(data.getTimestamp());
+        key.type = data.getType();
+
+        if (Candle.TYPE.equals(data.getType()))
+          key.interval = ((Candle) data).getInterval().toLowerCase();
 
         dto.primarykey = key;
-        dto.primarykey.symbol = dto.primarykey.symbol.toLowerCase();
-        dto.primarykey.source = dto.primarykey.source.toLowerCase();
-
-        if (dto.primarykey.interval != null)
-          dto.primarykey.interval = dto.primarykey.interval.toLowerCase();
 
       } catch (Exception e) {
         Throwables.propagate(e);
@@ -201,15 +203,15 @@ public class MarketDataDto implements Serializable {
     try {
       if (Candle.TYPE.equals(primarykey.type)) {
         c = mapper.map(this, Candle.class);
-        ((Candle)c).setStream(stream);
+        ((Candle) c).setStream(stream);
       } else if (Quote.TYPE.equals(primarykey.type)) {
         c = mapper.map(this, Quote.class);
-        ((Quote)c).setStream(stream);
+        ((Quote) c).setStream(stream);
       } else if (Tick.TYPE.equals(primarykey.type)) {
         c = mapper.map(this, Tick.class);
         ((Tick) c).setStream(stream);
-      }     
-      
+      }
+
     } catch (Exception e) {
       Throwables.propagate(e);
     }

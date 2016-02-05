@@ -21,28 +21,28 @@ public class Candle extends BaseMarketData {
 
   public Candle() {}
 
-  public Candle(Field<?>[] fields) {
+  public Candle(Set<Field<?>> fields) {
     super(fields);
 
     for (Field<?> f : fields) {
 
-      if (f.getName().equalsIgnoreCase(Field.VOLUME))
+      if (f.getName().equalsIgnoreCase(Field.Name.VOLUME.field()))
         this.volume = (Integer) f.getValue();
 
-      if (f.getName().equalsIgnoreCase(Field.HIGH))
+      if (f.getName().equalsIgnoreCase(Field.Name.HIGH.field()))
         this.high = (BigDecimal) f.getValue();
 
-      if (f.getName().equalsIgnoreCase(Field.LOW))
+      if (f.getName().equalsIgnoreCase(Field.Name.LOW.field()))
         this.low = (BigDecimal) f.getValue();
 
-      if (f.getName().equalsIgnoreCase(Field.OPEN))
+      if (f.getName().equalsIgnoreCase(Field.Name.OPEN.field()))
         this.open = (BigDecimal) f.getValue();
 
-      if (f.getName().equalsIgnoreCase(Field.CLOSE))
+      if (f.getName().equalsIgnoreCase(Field.Name.CLOSE.field()))
         this.close = (BigDecimal) f.getValue();
 
-      if (f.getName().equalsIgnoreCase(Field.HIGH))
-        this.interval = f.getInterval();
+      if (f.getName().equalsIgnoreCase(Field.Name.INTERVAL.field()))
+        this.interval = (String) f.getValue();
     }
   }
 
@@ -211,15 +211,13 @@ public class Candle extends BaseMarketData {
 
   @Override
   public Set<Field<?>> getFields() {
-    Set<Field<?>> fields = new HashSet<Field<?>>();
-    fields.add(new CategoricalField(symbol, timestamp, symbol, Field.SYMBOL, source, interval));
-    fields.add(new CategoricalField(symbol, timestamp, timestamp.toString(), Field.TIMESTAMP, source, interval));
-    fields.add(new CategoricalField(symbol, timestamp, source, Field.SOURCE, source, interval));
-    fields.add(new ContinousField(symbol, timestamp, high, Field.HIGH, source, interval));
-    fields.add(new ContinousField(symbol, timestamp, low, Field.LOW, source, interval));
-    fields.add(new ContinousField(symbol, timestamp, open, Field.OPEN, source, interval));
-    fields.add(new ContinousField(symbol, timestamp, close, Field.CLOSE, source, interval));
-    fields.add(new DiscreteField(symbol, timestamp, volume, Field.VOLUME, source, interval));
+    Set<Field<?>> fields = super.getFields();
+    fields.add(new BaseField<BigDecimal>(Field.Name.HIGH.field(), high));
+    fields.add(new BaseField<BigDecimal>(Field.Name.LOW.field(), low));
+    fields.add(new BaseField<BigDecimal>(Field.Name.OPEN.field(), open));
+    fields.add(new BaseField<BigDecimal>(Field.Name.CLOSE.field(), close));
+    fields.add(new BaseField<Integer>(Field.Name.VOLUME.field(), volume));
+    fields.add(new BaseField<String>(Field.Name.INTERVAL.field(), interval));
     return fields;
 
   }

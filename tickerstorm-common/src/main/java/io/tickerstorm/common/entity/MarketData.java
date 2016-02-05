@@ -1,84 +1,54 @@
 package io.tickerstorm.common.entity;
 
 import java.io.Serializable;
-import java.time.Instant;
+import java.util.Map;
 import java.util.Set;
-
-import org.apache.commons.lang3.StringUtils;
 
 public interface MarketData extends Event, Stream, Serializable {
 
   public String getSymbol();
 
-  public Set<Field<?>> getFields();
-  
-  public static boolean validate(Field<?>[] fields) {
-
-    String symbol = fields[0].getSymbol();
-    String source = fields[0].getSource();
-    Instant timestamp = fields[0].getTimestamp();
-    String inteval = fields[0].getInterval();
-
-    for (Field<?> f : fields) {
-
-      if (!f.getSymbol().equalsIgnoreCase(symbol))
-        throw new IllegalArgumentException("All fields must belong to the same symbol");
-
-      if (!f.getSource().equalsIgnoreCase(source))
-        throw new IllegalArgumentException("All fields must belong to the same source");
-
-      if (!f.getTimestamp().equals(timestamp))
-        throw new IllegalArgumentException("All fields must belong to the same timestamp");
-
-      if (!f.getInterval().equals(inteval))
-        throw new IllegalArgumentException("All fields must belong to the same interval");
-
-    }
-
-    return true;
-
+  default Map<String, Field<?>> getFieldsAsMap() {
+    return Field.toMap(getFields());
   }
 
-  public static String getMarketDataType(Field<?>[] fields) {
+  public Set<Field<?>> getFields();
 
-    String inteval = fields[0].getInterval();
+  public static String getMarketDataType(Set<Field<?>> fields) {
 
-    if (!StringUtils.isEmpty(inteval))
+    Field<String> interval = (Field<String>) Field.findField(Field.Name.INTERVAL.field(), fields);
+
+    if (interval != null)
       return Candle.TYPE;
 
+    if (Field.findField(Field.Name.ASK.field(), fields) != null)
+      return Quote.TYPE;
 
-    for (Field<?> f : fields) {
-
-      if (f.getName().equalsIgnoreCase(Field.ASK))
-        return Quote.TYPE;
-
-      if (f.getName().equalsIgnoreCase(Field.PRICE))
-        return Tick.TYPE;
-    }
+    if (Field.findField(Field.Name.PRICE.field(), fields) != null)
+      return Tick.TYPE;
 
     throw new IllegalArgumentException("Unknown market data type");
 
   }
 
-  public static MarketData build(Field<?>[] fields) {
+  public static MarketData build(Set<Field<?>> fields) {
 
-    boolean validated = validate(fields);
 
-    if (validated) {
-      switch (getMarketDataType(fields)) {
-        case Candle.TYPE:
-          return new Candle(fields);
 
-        case Quote.TYPE:
-          return new Quote(fields);
+    switch (getMarketDataType(fields)) {
+      case Candle.TYPE:
+        return new Candle(fields);
 
-        case Tick.TYPE:
-          return new Tick(fields);
-        
-        default:
-          break;
-      }
+      case Quote.TYPE:
+        return new Quote(fields);
+
+      case Tick.TYPE:
+        return new Tick(fields);
+
+      default:
+        break;
     }
+
 
     throw new IllegalArgumentException("Unknown market data type");
 

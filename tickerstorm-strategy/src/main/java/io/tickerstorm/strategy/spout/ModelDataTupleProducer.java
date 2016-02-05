@@ -12,6 +12,7 @@ import backtype.storm.contrib.jms.JmsTupleProducer;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Values;
+import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.entity.Marker;
 
 @SuppressWarnings("serial")
@@ -43,6 +44,6 @@ public class ModelDataTupleProducer implements JmsTupleProducer {
 
   @Override
   public void declareOutputFields(OutputFieldsDeclarer declarer) {
-    declarer.declare(new Fields(io.tickerstorm.common.model.Fields.FEATURES.fieldName()));
+    declarer.declare(new Fields(Field.Name.FEATURES.field()));
   }
 }

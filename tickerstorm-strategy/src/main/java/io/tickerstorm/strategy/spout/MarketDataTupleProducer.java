@@ -8,7 +8,7 @@ import backtype.storm.contrib.jms.JmsTupleProducer;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Values;
-import io.tickerstorm.common.entity.CategoricalField;
+import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.entity.MarketData;
 
 @SuppressWarnings("serial")
@@ -27,8 +27,6 @@ public class MarketDataTupleProducer implements JmsTupleProducer {
 
         MarketData md = (MarketData) payload;
         v.add(0, md);
-        v.add(1, new CategoricalField(md.getSymbol(), md.getTimestamp(), md.getStream(),
-            io.tickerstorm.common.model.Fields.STREAM.fieldName(), md.getSource()));
       }
       return v;
 
@@ -40,6 +38,6 @@ public class MarketDataTupleProducer implements JmsTupleProducer {
   @Override
   public void declareOutputFields(OutputFieldsDeclarer declarer) {
     declarer.declare(
-        new Fields(io.tickerstorm.common.model.Fields.MARKETDATA.fieldName(), io.tickerstorm.common.model.Fields.STREAM.fieldName()));
+        new Fields(Field.Name.MARKETDATA.field()));
   }
 }

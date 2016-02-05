@@ -1,23 +1,30 @@
 package io.tickerstorm.strategy.util;
 
+import static io.tickerstorm.common.entity.Field.Name.MARKETDATA;
+import static io.tickerstorm.common.entity.Field.Name.NOW;
+import static io.tickerstorm.common.entity.Field.Name.STREAM;
+
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
+import com.google.common.collect.Sets;
 
 import backtype.storm.tuple.Tuple;
 import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.entity.Marker;
 import io.tickerstorm.common.entity.MarketData;
-import io.tickerstorm.common.model.Fields;
 
 public class TupleUtil {
 
   public static List<Object> propagateTuple(Tuple tuple, List<Object> output) {
 
-    for (String key : Fields.marketdataFields()) {
+    for (String key : marketdataFields()) {
 
       try {
         Object o = tuple.getValueByField(key);
@@ -30,6 +37,10 @@ public class TupleUtil {
 
     return output;
 
+  }
+
+  public static Set<String> marketdataFields() {
+    return Collections.unmodifiableSet(Sets.newHashSet(MARKETDATA.field(), NOW.field(), STREAM.field()));
   }
 
   public static Map<String, Field<?>> flattenFields(Tuple tuple) {

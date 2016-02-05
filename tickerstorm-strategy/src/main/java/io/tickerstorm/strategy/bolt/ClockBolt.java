@@ -10,8 +10,8 @@ import com.google.common.collect.Lists;
 
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.tuple.Tuple;
+import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.entity.MarketData;
-import io.tickerstorm.common.model.Fields;
 import io.tickerstorm.strategy.util.Clock;
 import io.tickerstorm.strategy.util.TupleUtil;
 
@@ -26,7 +26,7 @@ public class ClockBolt extends BaseBolt {
 
     List<Object> values = TupleUtil.propagateTuple(tuple, Lists.newArrayList());
 
-    MarketData data = (MarketData) tuple.getValueByField(Fields.MARKETDATA.fieldName());
+    MarketData data = (MarketData) tuple.getValueByField(Field.Name.MARKETDATA.field());
 
     if (data != null) {
       clock.update(data.getTimestamp());
@@ -39,7 +39,7 @@ public class ClockBolt extends BaseBolt {
 
   @Override
   public void declareOutputFields(OutputFieldsDeclarer arg0) {
-    List<String> fields = new ArrayList<String>(Fields.marketdataFields());
+    List<String> fields = new ArrayList<String>(TupleUtil.marketdataFields());
     arg0.declare(new backtype.storm.tuple.Fields(fields));
   }
 }

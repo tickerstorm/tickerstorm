@@ -16,10 +16,8 @@ import org.springframework.data.cassandra.mapping.Table;
 
 import com.google.common.collect.Lists;
 
-import io.tickerstorm.common.entity.CategoricalField;
 import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.entity.MarketData;
-import io.tickerstorm.common.model.Fields;
 
 @Table("modeldata")
 @SuppressWarnings("serial")
@@ -38,7 +36,7 @@ public class ModelDataDto implements Serializable {
   public Map<String, Object> fromRow() {
 
     Map<String, Object> row = new HashMap<>();
-    row.put(Fields.STREAM.toString(), primarykey.stream);
+    row.put(Field.Name.STREAM.field(), primarykey.stream);
 
     for (String k : fields) {
 
@@ -69,9 +67,9 @@ public class ModelDataDto implements Serializable {
         row.put(collectionName, Lists.newArrayList(f));
     }
 
-    if (row.containsKey(Fields.MARKETDATA.toString())) {
-      Collection<Field<?>> mds = (Collection) row.get(Fields.MARKETDATA.toString());
-      row.put(Fields.MARKETDATA.toString(), MarketData.build(mds.toArray(new Field[] {}))); // replace
+    if (row.containsKey(Field.Name.MARKETDATA.field())) {
+      Collection<Field<?>> mds = (Collection) row.get(Field.Name.MARKETDATA.field());
+      row.put(Field.Name.MARKETDATA.field(), MarketData.build(new HashSet<>(mds))); // replace
     }
 
     return row;
@@ -91,14 +89,13 @@ public class ModelDataDto implements Serializable {
 
       if (MarketData.class.isAssignableFrom(o.getClass())) {
 
-        MarketData md = (MarketData) data.get(Fields.MARKETDATA.fieldName());
-        String modelName = (String) data.get(Fields.STREAM.fieldName());
+        MarketData md = (MarketData) data.get(Field.Name.MARKETDATA.field());
 
         ModelDataPrimaryKey key = new ModelDataPrimaryKey();
         key.timestamp = Date.from(md.getTimestamp());
         LocalDateTime dt = LocalDateTime.ofInstant(md.getTimestamp(), ZoneOffset.UTC);
         key.date = Integer.valueOf(dateFormatter.format(dt));
-        key.stream = modelName;
+        key.stream = md.getStream();
         dto.primarykey = key;
 
         for (Field<?> mf : ((MarketData) o).getFields()) {
@@ -121,7 +118,7 @@ public class ModelDataDto implements Serializable {
 
     if (dto.primarykey != null)
       return dto;
-    
+
     return null;
 
   }

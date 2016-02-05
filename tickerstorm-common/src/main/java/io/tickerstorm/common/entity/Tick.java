@@ -6,21 +6,21 @@ import java.util.Set;
 
 @SuppressWarnings("serial")
 public class Tick extends BaseMarketData {
-  
+
   public Tick() {
     // TODO Auto-generated constructor stub
   }
 
   public static final String TYPE = "tick";
 
-  public Tick(Field<?>[] fields) {
+  public Tick(Set<Field<?>> fields) {
     super(fields);
     for (Field<?> f : fields) {
 
-      if (f.getName().equalsIgnoreCase(Field.PRICE))
+      if (f.getName().equalsIgnoreCase(Field.Name.PRICE.field()))
         this.price = (BigDecimal) f.getValue();
 
-      if (f.getName().equalsIgnoreCase(Field.QUANTITY))
+      if (f.getName().equalsIgnoreCase(Field.Name.QUANTITY.field()))
         this.quantity = (BigDecimal) f.getValue();
 
     }
@@ -89,8 +89,8 @@ public class Tick extends BaseMarketData {
   public Set<Field<?>> getFields() {
     Set<Field<?>> fields = new HashSet<Field<?>>();
     fields.addAll(super.getFields());
-    fields.add(new ContinousField(symbol, timestamp, price, source, Field.PRICE));
-    fields.add(new ContinousField(symbol, timestamp, quantity, source, Field.QUANTITY));
+    fields.add(new BaseField<BigDecimal>(Field.Name.PRICE.field(), price));
+    fields.add(new BaseField<BigDecimal>(Field.Name.QUANTITY.field(), quantity));
     return fields;
   }
 

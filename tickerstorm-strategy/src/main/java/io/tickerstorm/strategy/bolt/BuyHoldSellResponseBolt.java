@@ -5,8 +5,8 @@ import java.math.BigDecimal;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.tuple.Tuple;
 import io.tickerstorm.common.entity.Candle;
+import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.entity.MarketData;
-import io.tickerstorm.common.model.Fields;
 import io.tickerstorm.strategy.util.CacheManager;
 
 @SuppressWarnings("serial")
@@ -15,13 +15,13 @@ public class BuyHoldSellResponseBolt extends BaseBolt {
   @Override
   protected void process(Tuple input) {
 
-    if (input.contains(Fields.MARKETDATA.toString()) && input.contains(Fields.NOW.toString())) {
+    if (input.contains(Field.Name.MARKETDATA.field()) && input.contains(Field.Name.NOW.field())) {
 
-      MarketData md = (MarketData) input.getValueByField(Fields.MARKETDATA.toString());
+      MarketData md = (MarketData) input.getValueByField(Field.Name.MARKETDATA.field());
 
       if (md.getType().equals(Candle.TYPE)) {
 
-        Candle previous = (Candle) CacheManager.getInstance().getCache(CacheManager.MARKETDATA_CACHE).get(Fields.BUY_HOLD_SELL.toString())
+        Candle previous = (Candle) CacheManager.getInstance().getCache(CacheManager.MARKETDATA_CACHE).get(Field.Name.BUY_HOLD_SELL.field())
             .getObjectValue();
 
         // We are going in reverse time, the previous tuple happens after the current in timeseries
@@ -47,7 +47,7 @@ public class BuyHoldSellResponseBolt extends BaseBolt {
 
   @Override
   public void declareOutputFields(OutputFieldsDeclarer declarer) {
-    declarer.declare(new backtype.storm.tuple.Fields(Fields.AVE.toString()));
+    declarer.declare(new backtype.storm.tuple.Fields(Field.Name.AVE.field()));
   }
 
 }

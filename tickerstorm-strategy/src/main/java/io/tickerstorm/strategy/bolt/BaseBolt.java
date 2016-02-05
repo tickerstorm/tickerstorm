@@ -9,8 +9,8 @@ import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
 import io.tickerstorm.common.entity.Command;
+import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.entity.Marker;
-import io.tickerstorm.common.model.Fields;
 
 @SuppressWarnings("serial")
 public abstract class BaseBolt extends BaseRichBolt {
@@ -58,9 +58,9 @@ public abstract class BaseBolt extends BaseRichBolt {
   public final void execute(Tuple input) {
     this.t = input;
 
-    if (input.contains(Fields.MARKER.toString())) {
+    if (input.contains(Field.Name.MARKER.field())) {
 
-      Object o = input.getValueByField(Fields.MARKER.toString());
+      Object o = input.getValueByField(Field.Name.MARKER.field());
 
       if (Command.class.isAssignableFrom(o.getClass())) {
         Command m = (Command) o;
@@ -71,7 +71,7 @@ public abstract class BaseBolt extends BaseRichBolt {
       }
     }
 
-    if (input.contains(Fields.MARKETDATA.toString())) {
+    if (input.contains(Field.Name.MARKETDATA.field())) {
       executeMarketData(input);
     }
 

@@ -1,4 +1,7 @@
 package io.tickerstorm.strategy.bolt;
+import static io.tickerstorm.common.entity.Field.Name.MARKER;
+import static io.tickerstorm.common.entity.Field.Name.MARKETDATA;
+import static io.tickerstorm.common.entity.Field.Name.SMA;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -22,12 +25,10 @@ import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.TupleImpl;
+import io.tickerstorm.common.entity.BaseField;
 import io.tickerstorm.common.entity.Candle;
-import io.tickerstorm.common.entity.CategoricalField;
 import io.tickerstorm.common.entity.Command;
-import io.tickerstorm.common.entity.ContinousField;
 import io.tickerstorm.common.entity.Markers;
-import io.tickerstorm.common.model.Fields;
 
 public class TestCSVWriterBolt {
 
@@ -51,7 +52,7 @@ public class TestCSVWriterBolt {
     bolt.prepare(config, context, collector);
 
     backtype.storm.tuple.Fields f =
-        new backtype.storm.tuple.Fields(Fields.MARKER.fieldName(), Fields.MARKETDATA.fieldName(), Fields.SMA.fieldName(), "category");
+        new backtype.storm.tuple.Fields(MARKER.field(), MARKETDATA.field(), SMA.field(), "category");
 
     Mockito.doReturn("1").when(context).getComponentId(1);
     Mockito.doReturn(f).when(context).getComponentOutputFields("1", "1");
@@ -69,9 +70,9 @@ public class TestCSVWriterBolt {
     values.add(new Candle("TOL", "Google", now, BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.TEN, Candle.MIN_1_INTERVAL,
         Integer.MAX_VALUE));
 
-    values.add(Sets.newHashSet(new ContinousField("TOL", now, BigDecimal.ONE, "sma", "Google")));
+    values.add(Sets.newHashSet(new BaseField<BigDecimal>("sma", BigDecimal.ONE)));
 
-    values.add(Sets.newHashSet(new CategoricalField("TOL", now, "Some String", "category", "Google")));
+    values.add(Sets.newHashSet(new BaseField<String>("category", "Some String")));
 
     Tuple t = new TupleImpl(context, values, 1, "1");
     bolt.execute(t);

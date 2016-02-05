@@ -15,13 +15,9 @@ import com.google.common.collect.Lists;
 
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.tuple.Tuple;
-import io.tickerstorm.common.entity.CategoricalField;
-import io.tickerstorm.common.entity.ContinousField;
-import io.tickerstorm.common.entity.DiscreteField;
-import io.tickerstorm.common.entity.EmptyField;
+import io.tickerstorm.common.entity.BaseField;
+import io.tickerstorm.common.entity.Candle;
 import io.tickerstorm.common.entity.Field;
-import io.tickerstorm.common.entity.MarketData;
-import io.tickerstorm.common.model.Fields;
 import io.tickerstorm.strategy.util.CacheManager;
 import io.tickerstorm.strategy.util.TupleUtil;
 import net.sf.ehcache.Element;
@@ -33,16 +29,16 @@ public class ComputeAverageBolt extends BaseBolt {
   private final static Logger logger = LoggerFactory.getLogger(ComputeAverageBolt.class);
   private List<Integer> periods = null;
 
-  private String computeFieldName(Field<?> f, Integer p, String func) {
-    StringBuffer b = new StringBuffer(func).append("|").append(p).append("|").append(f.getSymbol()).append("|").append(f.getInterval())
+  private String computeFieldName(Candle md, Field<?> f, Integer p, String func) {
+    StringBuffer b = new StringBuffer(func).append("|").append(p).append("|").append(md.getSymbol()).append("|").append(md.getInterval())
         .append("|").append(f.getName());
 
     return b.toString();
   }
 
-  private String computeKey(Field<?> f, Integer p) {
-    StringBuffer b = new StringBuffer(f.getSymbol()).append("|").append(f.getInterval()).append("|").append(f.getName()).append("|")
-        .append(f.getSource());
+  private String computeKey(Candle md, Field<?> f, Integer p) {
+    StringBuffer b = new StringBuffer(md.getSymbol()).append("|").append(md.getInterval()).append("|").append(f.getName()).append("|")
+        .append(md.getSource());
 
     if (p != null) {
       b.append("|").append(p);
@@ -54,57 +50,54 @@ public class ComputeAverageBolt extends BaseBolt {
   @Override
   public void declareOutputFields(OutputFieldsDeclarer dec) {
 
-    List<String> fields = new ArrayList<String>(Fields.marketdataFields());
-    fields.add(Fields.AVE.fieldName());
+    List<String> fields = new ArrayList<String>(TupleUtil.marketdataFields());
+    fields.add(Field.Name.AVE.field());
     dec.declare(new backtype.storm.tuple.Fields(fields));
 
   }
 
   @Override
   protected void process(Tuple input) {
-    ack();   
+    ack();
   }
 
   @Override
   protected void executeMarketData(Tuple tuple) {
 
-    MarketData md = (MarketData) tuple.getValueByField(Fields.MARKETDATA.fieldName());
+    Candle md = (Candle) tuple.getValueByField(Field.Name.MARKETDATA.field());
 
     Set<Field<?>> fields = new java.util.HashSet<>();
 
     for (Field<?> f : md.getFields()) {
 
-      if (f.getFieldType().equals(CategoricalField.TYPE))
+      if (f.getFieldType().equals(String.class))
         continue;
 
       for (Integer p : periods) {
 
-        String key = computeKey(f, p);
+        String key = computeKey(md, f, p);
 
         CacheManager.getInstance().getCache(CacheManager.MARKETDATA_CACHE).putIfAbsent(new Element(key, new DescriptiveStatistics(p)));
 
         DescriptiveStatistics ds =
             (DescriptiveStatistics) CacheManager.getInstance().getCache(CacheManager.MARKETDATA_CACHE).get(key).getObjectValue();
 
-        if (f.getFieldType().equals(ContinousField.TYPE)) {
-          ds.addValue(((ContinousField) f).getValue().doubleValue());
+        if (f.getFieldType().equals(BigDecimal.class)) {
+          ds.addValue(((BigDecimal) f).doubleValue());
         } else {
-          ds.addValue(((DiscreteField) f).getValue());
+          ds.addValue((Integer) f.getValue());
         }
 
         if (ds.getValues().length == p) {
 
-          ContinousField aveField = new ContinousField(f.getSymbol(), f.getTimestamp(), new BigDecimal(ds.getMean()),
-              computeFieldName(f, p, "ma"), f.getSource(), f.getInterval());
+          BaseField<BigDecimal> aveField = new BaseField<BigDecimal>(computeFieldName(md, f, p, "ma"), new BigDecimal(ds.getMean()));
 
-          ContinousField gmeanField = new ContinousField(f.getSymbol(), f.getTimestamp(), new BigDecimal(ds.getGeometricMean()),
-              computeFieldName(f, p, "geo-mean"), f.getSource(), f.getInterval());
+          BaseField<BigDecimal> gmeanField =
+              new BaseField<BigDecimal>(computeFieldName(md, f, p, "geo-mean"), new BigDecimal(ds.getGeometricMean()));
 
-          ContinousField maxField = new ContinousField(f.getSymbol(), f.getTimestamp(), new BigDecimal(ds.getMax()),
-              computeFieldName(f, p, "max"), f.getSource(), f.getInterval());
+          BaseField<BigDecimal> maxField = new BaseField<BigDecimal>(computeFieldName(md, f, p, "max"), new BigDecimal(ds.getMax()));
 
-          ContinousField minField = new ContinousField(f.getSymbol(), f.getTimestamp(), new BigDecimal(ds.getMin()),
-              computeFieldName(f, p, "min"), f.getSource(), f.getInterval());
+          BaseField<BigDecimal> minField = new BaseField<BigDecimal>(computeFieldName(md, f, p, "min"), new BigDecimal(ds.getMin()));
 
           fields.add(aveField);
           fields.add(gmeanField);
@@ -113,16 +106,16 @@ public class ComputeAverageBolt extends BaseBolt {
 
         } else {
 
-          EmptyField field = new EmptyField(f.getSymbol(), f.getTimestamp(), computeFieldName(f, p, "ma"), f.getSource(), f.getInterval());
+          BaseField<BigDecimal> field = new BaseField<BigDecimal>(computeFieldName(md, f, p, "ma"), BigDecimal.class);
           fields.add(field);
 
-          field = new EmptyField(f.getSymbol(), f.getTimestamp(), computeFieldName(f, p, "geo-mean"), f.getSource(), f.getInterval());
+          field = new BaseField<BigDecimal>(computeFieldName(md, f, p, "geo-mean"), BigDecimal.class);
           fields.add(field);
 
-          field = new EmptyField(f.getSymbol(), f.getTimestamp(), computeFieldName(f, p, "max"), f.getSource(), f.getInterval());
+          field = new BaseField<BigDecimal>(computeFieldName(md, f, p, "max"), BigDecimal.class);
           fields.add(field);
 
-          field = new EmptyField(f.getSymbol(), f.getTimestamp(), computeFieldName(f, p, "min"), f.getSource(), f.getInterval());
+          field = new BaseField<BigDecimal>(computeFieldName(md, f, p, "min"), BigDecimal.class);
           fields.add(field);
 
         }

@@ -17,6 +17,7 @@ public class BaseMarker implements Marker, Stream {
 
   public BaseMarker(String id, String stream) {
     this.id = id;
+    this.stream = stream;
   }
 
   public String getStream() {

@@ -1,67 +1,153 @@
 package io.tickerstorm.common.entity;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
+import org.apache.commons.lang3.StringUtils;
 
 public interface Field<T> extends Serializable {
 
-  public static final String SYMBOL = "symbol";
-  public static final String TIMESTAMP = "timestamp";
-  public static final String SOURCE = "source";
-  public static final String OPEN = "open";
-  public static final String CLOSE = "close";
-  public static final String HIGH = "high";
-  public static final String LOW = "low";
-  public static final String BID = "bid";
-  public static final String ASK = "ask";
-  public static final String BID_SIZE = "bidSize";
-  public static final String ASK_SIZE = "askSize";
-  public static final String VOLUME = "volume";
-  public static final String PRICE = "price";
-  public static final String QUANTITY = "quantity";
+  public enum Name {
 
-  public String getSymbol();
+    SYMBOL("symbol", String.class), TIMESTAMP("timestamp", Instant.class), SOURCE("source", String.class), STREAM("stream",
+        String.class), OPEN("open", BigDecimal.class), CLOSE("close", BigDecimal.class), HIGH("high", BigDecimal.class), LOW("low",
+            BigDecimal.class), BID("bid", BigDecimal.class), ASK("ask", BigDecimal.class), BID_SIZE("bidSize",
+                BigDecimal.class), ASK_SIZE("askSize", BigDecimal.class), VOLUME("volume", BigDecimal.class), PRICE("price",
+                    BigDecimal.class), QUANTITY("quantity", Integer.class), INTERVAL("interval", String.class), MARKETDATA("marketdata",
+                        MarketData.class), CANDEL("candel", Candle.class), QUOTE("quote", Quote.class), TICK("tick", Tick.class), AVE("ave",
+                            BigDecimal.class), SMA("ma", BigDecimal.class), NOW("now", Instant.class), MARKER("marker",
+                                Marker.class), FEATURES("features", Collection.class), BUY_HOLD_SELL("buyholdsell", Collection.class);
 
-  public Instant getTimestamp();
+    private Class<?> type;
+    private String field;
+
+    private Name(String name, Class<?> clazz) {
+      this.type = clazz;
+      this.field = name;
+    }
+
+    public String field() {
+      return field;
+    }
+
+    @Override
+    public String toString() {
+      return field;
+    }
+
+    public Class<?> type() {
+      return type;
+    }
+  }
+
+  static Field<?> deserialize(String value) {
+
+    Class<?> clazz = parseType(value);
+    Object vals = parseValue(value, clazz);
+    String field = parseField(value);
+    return new BaseField(field, vals);
+
+  }
+
+  static Field<?> findField(String name, Set<Field<?>> fields) {
+
+    for (Field<?> f : fields) {
+      if (name.equalsIgnoreCase(f.getName()))
+        return f;
+    }
+
+    return null;
+
+  }
+
+  static String parseField(String value) {
+    String[] vals = value.split("=");
+    String[] fields = vals[0].split(":");
+    return fields[1];
+  }
+
+  static Class<?> parseType(String value) {
+    String[] vals = value.split(":");
+
+    if (String.class.getName().equalsIgnoreCase(vals[0])) {
+      return String.class;
+    } else if (Integer.class.getName().equalsIgnoreCase(vals[0])) {
+      return Integer.class;
+    } else if (BigDecimal.class.getName().equalsIgnoreCase(vals[0])) {
+      return BigDecimal.class;
+    } else if (Instant.class.getName().equalsIgnoreCase(vals[0])) {
+      return Instant.class;
+    }
+
+    return String.class;
+  }
+
+  static <T> T parseValue(String value, Class<T> clazz) {
+    String[] vals = value.split("=");
+    return convert(vals[1], clazz);
+  }
+
+  static <T> T convert(String value, Class<T> clazz) {
+
+    if (String.class.isAssignableFrom(clazz))
+      return (T) value;
+    else if (Integer.class.isAssignableFrom(clazz))
+      return (T) Integer.valueOf(value);
+    else if (BigDecimal.class.isAssignableFrom(clazz))
+      return (T) new BigDecimal(value);
+    else if (Instant.class.isAssignableFrom(clazz))
+      return (T) Instant.parse(value);
+    else if(StringUtils.isEmpty(value))
+      return null;
+
+    throw new IllegalArgumentException("Unknown type " + clazz + " for value " + value);
+  }
+
+  static Map<String, Field<?>> toMap(Set<Field<?>> fields) {
+
+    Map<String, Field<?>> map = new HashMap<>(fields.size());
+
+    for (Field<?> f : fields) {
+      map.put(f.getName(), f);
+    }
+
+    return map;
+  }
+
+  public Class<?> getFieldType();
 
   public String getName();
 
-  public String getSource();
-
-  public String getInterval();
-
-  public String getFieldType();
-
   public T getValue();
+
+  default boolean isEmpty() {
+
+    if (getValue() == null)
+      return true;
+
+    if (getFieldType() != null && getFieldType().equals(String.class))
+      return StringUtils.isEmpty((String) getValue());
+
+    return false;
+
+  }
 
   /**
    * 
    * Serialized: type_source_interval_name_symbol_timestamp:value
    * 
-   * type : 0 source : 1 interval : 2 name : 3 symbol: 4 timestamp: 5
+   * type : 0 name : 1
    * 
    * @return
    */
   default String serialize() {
-    StringBuffer buff = new StringBuffer(getFieldType()).append("_").append(getSource()).append("_").append(getInterval()).append("_")
-        .append(getName()).append("_").append(getSymbol()).append("_").append(getTimestamp()).append("=").append(getValue());
+    StringBuffer buff = new StringBuffer(getFieldType().getName()).append(":").append(getName()).append("=").append(getValue());
     return buff.toString();
-
-  }
-
-  static Field<?> deserialize(String value) {
-
-    if (value.startsWith(ContinousField.TYPE))
-      return ContinousField.deserialize(value);
-    else if (value.startsWith(DiscreteField.TYPE))
-      return DiscreteField.deserialize(value);
-    else if (value.startsWith(EmptyField.TYPE))
-      return EmptyField.deserialize(value);
-    else if (value.startsWith(CategoricalField.TYPE))
-      return CategoricalField.deserialize(value);
-    else
-      throw new IllegalArgumentException();
-
   }
 
 }
