@@ -43,15 +43,15 @@ public abstract class BaseBolt extends BaseRichBolt {
   }
 
   protected void executeCommand(Command input) {
-
+    ack();
   }
 
   protected void executeMarker(Marker input) {
-
+    ack();
   }
 
   protected void executeMarketData(Tuple tuple) {
-
+    ack();
   }
 
   @Override
@@ -79,7 +79,7 @@ public abstract class BaseBolt extends BaseRichBolt {
   }
 
   protected void process(Tuple input) {
-
+    ack();
   }
 
   protected void init() {}

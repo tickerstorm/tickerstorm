@@ -1,6 +1,7 @@
 package io.tickerstorm.common.entity;
 
 import java.io.Serializable;
+import java.time.Instant;
 import java.util.Map;
 import java.util.Set;
 
@@ -8,8 +9,48 @@ public interface MarketData extends Event, Stream, Serializable {
 
   public String getSymbol();
 
+  public Instant getTimestamp();
+
+  public String getSource();
+
+  public String getStream();
+
+  /**
+   * Format: source|symbol|timestamp
+   * 
+   * @return
+   */
+  default String getEventId() {
+    return new StringBuffer(getSource()).append("|").append(getSymbol()).append("|").append(getTimestamp().toEpochMilli()).toString();
+  }
+
   default Map<String, Field<?>> getFieldsAsMap() {
     return Field.toMap(getFields());
+  }
+
+  public static String[] parseEventId(String eventId) {
+    return eventId.split("|");
+  }
+
+  public static String parseSymbol(String eventId) {
+    return MarketData.parseEventId(eventId)[1];
+  }
+
+  public static String parseSource(String eventId) {
+    return MarketData.parseEventId(eventId)[0];
+  }
+
+  public static Instant parseTimestamp(String eventId) {
+    return Instant.ofEpochMilli(Long.valueOf(MarketData.parseEventId(eventId)[3]));
+  }
+
+  public static String parseInterval(String eventId) {
+
+    if (MarketData.parseEventId(eventId).length == 4) {
+      return MarketData.parseEventId(eventId)[1];
+    }
+
+    return null;
   }
 
   public Set<Field<?>> getFields();
@@ -33,8 +74,6 @@ public interface MarketData extends Event, Stream, Serializable {
 
   public static MarketData build(Set<Field<?>> fields) {
 
-
-
     switch (getMarketDataType(fields)) {
       case Candle.TYPE:
         return new Candle(fields);
@@ -48,7 +87,6 @@ public interface MarketData extends Event, Stream, Serializable {
       default:
         break;
     }
-
 
     throw new IllegalArgumentException("Unknown market data type");
 

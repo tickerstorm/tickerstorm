@@ -3,7 +3,6 @@ package io.tickerstorm.common.entity;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.HashSet;
 import java.util.Set;
 
 import com.google.common.base.MoreObjects;
@@ -208,16 +207,25 @@ public class Candle extends BaseMarketData {
     return MoreObjects.toStringHelper(this).addValue(v).add("interval", interval).add("open", open).add("close", close).add("high", high)
         .add("low", low).add("volume", volume).toString();
   }
+  
+  /**
+   * Format: source|symbol|timestamp|interval
+   * @return
+   */
+  @Override
+  public String getEventId() {
+    return new StringBuffer(super.getEventId()).append("|").append(getInterval()).toString();
+  }
 
   @Override
   public Set<Field<?>> getFields() {
     Set<Field<?>> fields = super.getFields();
-    fields.add(new BaseField<BigDecimal>(Field.Name.HIGH.field(), high));
-    fields.add(new BaseField<BigDecimal>(Field.Name.LOW.field(), low));
-    fields.add(new BaseField<BigDecimal>(Field.Name.OPEN.field(), open));
-    fields.add(new BaseField<BigDecimal>(Field.Name.CLOSE.field(), close));
-    fields.add(new BaseField<Integer>(Field.Name.VOLUME.field(), volume));
-    fields.add(new BaseField<String>(Field.Name.INTERVAL.field(), interval));
+    fields.add(new BaseField<BigDecimal>(getEventId(), Field.Name.HIGH.field(), high));
+    fields.add(new BaseField<BigDecimal>(getEventId(), Field.Name.LOW.field(), low));
+    fields.add(new BaseField<BigDecimal>(getEventId(), Field.Name.OPEN.field(), open));
+    fields.add(new BaseField<BigDecimal>(getEventId(), Field.Name.CLOSE.field(), close));
+    fields.add(new BaseField<Integer>(getEventId(), Field.Name.VOLUME.field(), volume));
+    fields.add(new BaseField<String>(getEventId(), Field.Name.INTERVAL.field(), interval));
     return fields;
 
   }

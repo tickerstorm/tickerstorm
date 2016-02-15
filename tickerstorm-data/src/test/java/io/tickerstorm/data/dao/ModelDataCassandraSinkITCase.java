@@ -56,9 +56,9 @@ public class ModelDataCassandraSinkITCase extends AbstractTestNGSpringContextTes
     Map<String, Object> tuple = new HashMap<String, Object>();
     Candle c = new Candle("goog", "google", Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ONE, BigDecimal.ONE, "1m", 1000);
     c.setStream("Test model");
-    BaseField<Integer> df = new BaseField<Integer>("ave", 100);
-    BaseField<BigDecimal> cf = new BaseField<BigDecimal>("sma", BigDecimal.TEN);
-    BaseField<String> cat = new BaseField<String>("some field name", "category");
+    BaseField<Integer> df = new BaseField<Integer>(c.getEventId(), "ave", 100);
+    BaseField<BigDecimal> cf = new BaseField<BigDecimal>(c.getEventId(), "sma", BigDecimal.TEN);
+    BaseField<String> cat = new BaseField<String>(c.getEventId(), "some field name", "category");
 
     tuple.put(Field.Name.MARKETDATA.field(), c);
     tuple.put(Field.Name.AVE.field(), Lists.newArrayList(df));

@@ -17,7 +17,7 @@ public class MarketDataTupleProducer implements JmsTupleProducer {
   @Override
   public Values toTuple(Message msg) throws JMSException {
 
-    Values v = new Values();
+    Values v = null;
 
     if (ObjectMessage.class.isAssignableFrom(msg.getClass())) {
 
@@ -26,18 +26,18 @@ public class MarketDataTupleProducer implements JmsTupleProducer {
       if (payload != null && MarketData.class.isAssignableFrom(payload.getClass())) {
 
         MarketData md = (MarketData) payload;
-        v.add(0, md);
+        v = new Values(md);
       }
-      return v;
-
-    } else {
-      return null;
     }
+
+    return v;
   }
 
   @Override
   public void declareOutputFields(OutputFieldsDeclarer declarer) {
-    declarer.declare(
-        new Fields(Field.Name.MARKETDATA.field()));
+    declarer.declare(new Fields(Field.Name.MARKETDATA.field(), Field.Name.CATEGORICAL_FIELDS.field(), Field.Name.DISCRETE_FIELDS.field(),
+        Field.Name.CONTINOUS_FIELDS.field(), Field.Name.TEMPORAL_FIELDS.field()));
   }
+
+
 }

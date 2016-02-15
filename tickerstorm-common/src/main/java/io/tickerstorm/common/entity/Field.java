@@ -10,29 +10,51 @@ import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 
+/**
+ *
+ * @author kkarski
+ *
+ * @param <T>
+ */
 public interface Field<T> extends Serializable {
 
   public enum Name {
 
     SYMBOL("symbol", String.class), TIMESTAMP("timestamp", Instant.class), SOURCE("source", String.class), STREAM("stream",
         String.class), OPEN("open", BigDecimal.class), CLOSE("close", BigDecimal.class), HIGH("high", BigDecimal.class), LOW("low",
-            BigDecimal.class), BID("bid", BigDecimal.class), ASK("ask", BigDecimal.class), BID_SIZE("bidSize",
-                BigDecimal.class), ASK_SIZE("askSize", BigDecimal.class), VOLUME("volume", BigDecimal.class), PRICE("price",
-                    BigDecimal.class), QUANTITY("quantity", Integer.class), INTERVAL("interval", String.class), MARKETDATA("marketdata",
-                        MarketData.class), CANDEL("candel", Candle.class), QUOTE("quote", Quote.class), TICK("tick", Tick.class), AVE("ave",
-                            BigDecimal.class), SMA("ma", BigDecimal.class), NOW("now", Instant.class), MARKER("marker",
-                                Marker.class), FEATURES("features", Collection.class), BUY_HOLD_SELL("buyholdsell", Collection.class);
+            BigDecimal.class), BID("bid", BigDecimal.class), ASK("ask", BigDecimal.class), BID_SIZE("bidSize", BigDecimal.class), ASK_SIZE(
+                "askSize", BigDecimal.class), VOLUME("volume", BigDecimal.class), PRICE("price", BigDecimal.class), QUANTITY("quantity",
+                    Integer.class), INTERVAL("interval", String.class), MARKETDATA("marketdata", MarketData.class, 0), CANDEL("candel",
+                        Candle.class), QUOTE("quote", Quote.class), TICK("tick", Tick.class), AVE("ave", BigDecimal.class), SMA("ma",
+                            BigDecimal.class), MEDIAN("median", BigDecimal.class), STD("std", BigDecimal.class), NOW("now",
+                                Instant.class), MARKER("marker", Marker.class), FEATURES("features", Collection.class), DISCRETE_FIELDS(
+                                    "discrete_fields", Collection.class,
+                                    2), CONTINOUS_FIELDS("continous_fields", Collection.class, 3), TEMPORAL_FIELDS("temporal_fields",
+                                        Collection.class, 4), CATEGORICAL_FIELDS("categorical_fields", Collection.class, 1), MIN("min",
+                                            Collection.class), MAX("max", Collection.class), CHANGE("buyholdsell", Collection.class);
 
     private Class<?> type;
     private String field;
+    private int index;
 
     private Name(String name, Class<?> clazz) {
       this.type = clazz;
       this.field = name;
+      this.index = -1;
+    }
+
+    private Name(String name, Class<?> clazz, int index) {
+      this.type = clazz;
+      this.field = name;
+      this.index = index;
     }
 
     public String field() {
       return field;
+    }
+
+    public int index() {
+      return index;
     }
 
     @Override
@@ -45,12 +67,34 @@ public interface Field<T> extends Serializable {
     }
   }
 
+  static <T> T convert(String value, Class<T> clazz) {
+
+    if (String.class.isAssignableFrom(clazz))
+      return (T) value;
+    else if (Integer.class.isAssignableFrom(clazz))
+      return (T) Integer.valueOf(value);
+    else if (BigDecimal.class.isAssignableFrom(clazz))
+      return (T) new BigDecimal(value);
+    else if (Instant.class.isAssignableFrom(clazz))
+      return (T) Instant.parse(value);
+    else if (StringUtils.isEmpty(value))
+      return null;
+
+    throw new IllegalArgumentException("Unknown type " + clazz + " for value " + value);
+  }
+
+  /**
+   * 
+   * @param value
+   * @return
+   */
   static Field<?> deserialize(String value) {
 
     Class<?> clazz = parseType(value);
     Object vals = parseValue(value, clazz);
     String field = parseField(value);
-    return new BaseField(field, vals);
+    String eventId = parseEventId(value);
+    return new BaseField(eventId, field, vals);
 
   }
 
@@ -65,10 +109,15 @@ public interface Field<T> extends Serializable {
 
   }
 
+  static String parseEventId(String value) {
+    String[] vals = value.split(":");
+    return vals[1];
+  }
+
   static String parseField(String value) {
     String[] vals = value.split("=");
     String[] fields = vals[0].split(":");
-    return fields[1];
+    return fields[2];
   }
 
   static Class<?> parseType(String value) {
@@ -92,22 +141,6 @@ public interface Field<T> extends Serializable {
     return convert(vals[1], clazz);
   }
 
-  static <T> T convert(String value, Class<T> clazz) {
-
-    if (String.class.isAssignableFrom(clazz))
-      return (T) value;
-    else if (Integer.class.isAssignableFrom(clazz))
-      return (T) Integer.valueOf(value);
-    else if (BigDecimal.class.isAssignableFrom(clazz))
-      return (T) new BigDecimal(value);
-    else if (Instant.class.isAssignableFrom(clazz))
-      return (T) Instant.parse(value);
-    else if(StringUtils.isEmpty(value))
-      return null;
-
-    throw new IllegalArgumentException("Unknown type " + clazz + " for value " + value);
-  }
-
   static Map<String, Field<?>> toMap(Set<Field<?>> fields) {
 
     Map<String, Field<?>> map = new HashMap<>(fields.size());
@@ -118,6 +151,13 @@ public interface Field<T> extends Serializable {
 
     return map;
   }
+
+  /**
+   * Should take form
+   * 
+   * @return
+   */
+  public String getEventId();
 
   public Class<?> getFieldType();
 
@@ -139,14 +179,15 @@ public interface Field<T> extends Serializable {
 
   /**
    * 
-   * Serialized: type_source_interval_name_symbol_timestamp:value
+   * Serialized: type:eventId:fieldName=value
    * 
    * type : 0 name : 1
    * 
    * @return
    */
   default String serialize() {
-    StringBuffer buff = new StringBuffer(getFieldType().getName()).append(":").append(getName()).append("=").append(getValue());
+    StringBuffer buff = new StringBuffer(getFieldType().getName()).append(":").append(getEventId()).append(":").append(getName())
+        .append("=").append(getValue());
     return buff.toString();
   }
 

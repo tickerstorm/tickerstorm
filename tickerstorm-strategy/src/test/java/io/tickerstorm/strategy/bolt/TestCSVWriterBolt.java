@@ -1,4 +1,5 @@
 package io.tickerstorm.strategy.bolt;
+
 import static io.tickerstorm.common.entity.Field.Name.MARKER;
 import static io.tickerstorm.common.entity.Field.Name.MARKETDATA;
 import static io.tickerstorm.common.entity.Field.Name.SMA;
@@ -51,8 +52,7 @@ public class TestCSVWriterBolt {
     Mockito.doNothing().when(collector).ack(Mockito.any(Tuple.class));
     bolt.prepare(config, context, collector);
 
-    backtype.storm.tuple.Fields f =
-        new backtype.storm.tuple.Fields(MARKER.field(), MARKETDATA.field(), SMA.field(), "category");
+    backtype.storm.tuple.Fields f = new backtype.storm.tuple.Fields(MARKER.field(), MARKETDATA.field(), SMA.field(), "category");
 
     Mockito.doReturn("1").when(context).getComponentId(1);
     Mockito.doReturn(f).when(context).getComponentOutputFields("1", "1");
@@ -67,12 +67,13 @@ public class TestCSVWriterBolt {
     Command m = new Command("TestCase", Markers.SESSION_START.toString());
     m.config.put("output.file.csv.path", fileName);
     values.add(m);
-    values.add(new Candle("TOL", "Google", now, BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.TEN, Candle.MIN_1_INTERVAL,
-        Integer.MAX_VALUE));
+    Candle md = new Candle("TOL", "Google", now, BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.TEN, Candle.MIN_1_INTERVAL,
+        Integer.MAX_VALUE);
+    values.add(md);
 
-    values.add(Sets.newHashSet(new BaseField<BigDecimal>("sma", BigDecimal.ONE)));
+    values.add(Sets.newHashSet(new BaseField<BigDecimal>(md.getEventId(), "sma", BigDecimal.ONE)));
 
-    values.add(Sets.newHashSet(new BaseField<String>("category", "Some String")));
+    values.add(Sets.newHashSet(new BaseField<String>(md.getEventId(), "category", "Some String")));
 
     Tuple t = new TupleImpl(context, values, 1, "1");
     bolt.execute(t);
