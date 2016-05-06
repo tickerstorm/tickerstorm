@@ -7,6 +7,7 @@ import java.util.Map;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.DependsOn;
@@ -23,6 +24,8 @@ import net.engio.mbassy.listener.References;
 @Repository
 @Listener(references = References.Strong)
 public class ModelDataCassandraSink extends BaseCassandraSink<ModelDataDto> {
+  
+  protected static final org.slf4j.Logger logger = LoggerFactory.getLogger(ModelDataCassandraSink.class);
 
   @Qualifier("modelData")
   @Autowired

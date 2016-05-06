@@ -33,8 +33,8 @@ public class StooqHistoricalForexQueryITCase extends BaseDataQueryITCase {
     FileUtils.deleteQuietly(new File("./data/Stooq/5_world_txt.zip"));
     super.tearDown();
   }
-
-  @Test
+  
+  @Test(enabled=false)
   public void parseGloabForext() throws Exception {
 
     Files.copy(new File("./src/test/resources/data/Stooq/5_world_txt.zip"), new File("./data/Stooq/5_world_txt.zip"));
@@ -47,7 +47,7 @@ public class StooqHistoricalForexQueryITCase extends BaseDataQueryITCase {
 
   }
 
-  @Test
+  @Test(enabled=false)
   public void downloadGloabForext() throws Exception {
 
     StooqHistoricalForexQuery query = new StooqHistoricalForexQuery().currencies().min5();

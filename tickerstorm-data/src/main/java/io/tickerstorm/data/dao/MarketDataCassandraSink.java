@@ -6,6 +6,7 @@ import java.util.List;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.DependsOn;
@@ -20,6 +21,8 @@ import net.engio.mbassy.listener.References;
 @Repository
 @Listener(references = References.Strong)
 public class MarketDataCassandraSink extends BaseCassandraSink<MarketDataDto> {
+  
+  protected static final org.slf4j.Logger logger = LoggerFactory.getLogger(MarketDataCassandraSink.class);
 
   @Autowired
   private MarketDataDao dao;
@@ -60,7 +63,7 @@ public class MarketDataCassandraSink extends BaseCassandraSink<MarketDataDto> {
       synchronized (data) {
         logger.debug(
             "Persisting " + data.size() + " records, " + count.addAndGet(data.size()) + " total saved and " + received.get() + " received");
-        dao.save((List) data);
+        dao.save((List<MarketDataDto>) data);
       }
 
     } catch (Exception e) {

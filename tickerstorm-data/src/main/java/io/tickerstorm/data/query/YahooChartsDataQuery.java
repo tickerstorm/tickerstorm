@@ -1,5 +1,7 @@
 package io.tickerstorm.data.query;
 
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,6 +52,12 @@ public class YahooChartsDataQuery implements QueryBuilder, DataQuery {
   @Override
   public String provider() {
     return "Yahoo";
+  }
+
+  @Override
+  public Map<String, String> headers() {
+    // TODO Auto-generated method stub
+    return null;
   }
 
 

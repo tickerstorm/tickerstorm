@@ -104,17 +104,52 @@ public class ModelDataDto implements Serializable {
 
       } else if (Field.class.isAssignableFrom(o.getClass())) {
 
-        dto.fields.add(((Field<?>) o).serialize());
+        Field<?> field = (Field<?>) o;
+
+        ModelDataPrimaryKey key = new ModelDataPrimaryKey();
+        key.timestamp = Date.from(MarketData.parseTimestamp(field.getEventId()));
+        LocalDateTime dt = LocalDateTime.ofInstant(key.timestamp.toInstant(), ZoneOffset.UTC);
+        key.date = Integer.valueOf(dateFormatter.format(dt));
+        key.stream = field.getStream();
+        dto.primarykey = key;
+
+        dto.fields.add(field.serialize());
 
       } else if (Collection.class.isAssignableFrom(o.getClass())) {
 
         for (Object i : (Collection<?>) o) {
+
           if (Field.class.isAssignableFrom(i.getClass())) {
-            dto.fields.add(f + "$" + ((Field<?>) i).serialize());
+
+            Field<?> field = (Field<?>) i;
+
+            ModelDataPrimaryKey key = new ModelDataPrimaryKey();
+            key.timestamp = Date.from(MarketData.parseTimestamp(field.getEventId()));
+            LocalDateTime dt = LocalDateTime.ofInstant(key.timestamp.toInstant(), ZoneOffset.UTC);
+            key.date = Integer.valueOf(dateFormatter.format(dt));
+            key.stream = field.getStream();
+            dto.primarykey = key;
+            dto.fields.add(f + "$" + field.serialize());
+
+          } else if (MarketData.class.isAssignableFrom(i.getClass())) {
+
+            MarketData md = (MarketData) i;
+
+            ModelDataPrimaryKey key = new ModelDataPrimaryKey();
+            key.timestamp = Date.from(md.getTimestamp());
+            LocalDateTime dt = LocalDateTime.ofInstant(md.getTimestamp(), ZoneOffset.UTC);
+            key.date = Integer.valueOf(dateFormatter.format(dt));
+            key.stream = md.getStream();
+            dto.primarykey = key;
+
+            for (Field<?> mf : md.getFields()) {
+              dto.fields.add(f + "$" + mf.serialize());
+            }
           }
         }
       }
     }
+
 
     if (dto.primarykey != null)
       return dto;

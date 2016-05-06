@@ -1,7 +1,10 @@
 package io.tickerstorm.data.query;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+
+import com.google.common.collect.Maps;
 
 import io.tickerstorm.common.data.query.DataQuery;
 import io.tickerstorm.common.entity.Candle;
@@ -23,14 +26,14 @@ public class StooqHistoricalForexQuery implements QueryBuilder, DataQuery {
     throw new IllegalAccessError("Not supported");
   }
 
-  private static final String HOST = "http://s.stooq.pl/db/h/";
+  private static final String HOST = "http://stooq.pl/db/d/?b=";
 
   private String fileName = "_world_txt.zip";
   private Set<String> securityTypes = new HashSet<String>();
   private String interval = "5";
 
   public StooqHistoricalForexQuery currencies() {
-    this.fileName = "_world_txt.zip";
+    this.fileName = "_world_txt";
     this.securityTypes.add("currencies");
     return this;
   }
@@ -65,12 +68,12 @@ public class StooqHistoricalForexQuery implements QueryBuilder, DataQuery {
   }
 
   public StooqHistoricalForexQuery forUS() {
-    this.fileName = "_us_txt.zip";
+    this.fileName = "_us_txt";
     return this;
   }
 
   public StooqHistoricalForexQuery forWorld() {
-    this.fileName = "_world_txt.zip";
+    this.fileName = "_world_txt";
     return this;
   }
 
@@ -97,6 +100,11 @@ public class StooqHistoricalForexQuery implements QueryBuilder, DataQuery {
   @Override
   public String provider() {
     return "Stooq";
+  }
+
+  @Override
+  public Map<String, String> headers() {
+    return null;
   }
 
 }

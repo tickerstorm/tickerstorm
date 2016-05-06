@@ -8,6 +8,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.io.IOUtils;
@@ -106,6 +107,11 @@ public class GoogleFileConverter extends BaseFileConverter implements FileConver
     @Override
     public String provider() {
       return "Google";
+    }
+
+    @Override
+    public Map<String, String> headers() {
+      return null;
     }
 
   }

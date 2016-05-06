@@ -5,6 +5,7 @@ import javax.jms.Session;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jms.listener.DefaultMessageListenerContainer;
@@ -13,6 +14,7 @@ import org.springframework.util.ErrorHandler;
 import io.tickerstorm.common.data.eventbus.ByDestinationNameJmsResolver;
 import io.tickerstorm.common.data.eventbus.Destinations;
 
+@EnableAutoConfiguration
 @Configuration
 public class TestMarketDataServiceConfig extends MarketDataApplicationContext {
 

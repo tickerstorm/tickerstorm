@@ -33,7 +33,8 @@ public class MarketDataDto implements Serializable {
 
   public static MarketDataDto convert(MarketData data) {
 
-    if (Candle.TYPE.equals(data.getType()) || Tick.TYPE.equals(data.getType()) || Quote.TYPE.equals(data.getType())) {
+    // Ignore ticks or quotes
+    if (Candle.TYPE.equals(data.getType())) {
 
       MarketDataDto dto = new MarketDataDto();
       MarketDataPrimaryKey key = new MarketDataPrimaryKey();

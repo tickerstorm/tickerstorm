@@ -1,5 +1,7 @@
 package io.tickerstorm.data.query;
 
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,6 +51,12 @@ public class YahooRealtimeQuoteQuery implements QueryBuilder, DataQuery {
   @Override
   public String getInterval() {
     return Quote.TYPE;
+  }
+
+  @Override
+  public Map<String, String> headers() {
+    // TODO Auto-generated method stub
+    return null;
   }
 
 }

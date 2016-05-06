@@ -2,6 +2,7 @@ package io.tickerstorm.data.query;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoField;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -83,6 +84,12 @@ public class YahooHistoricalQuoteQuery implements QueryBuilder, DataQuery {
   @Override
   public String provider() {
     return "Yahoo";
+  }
+
+  @Override
+  public Map<String, String> headers() {
+    // TODO Auto-generated method stub
+    return null;
   }
 
 }

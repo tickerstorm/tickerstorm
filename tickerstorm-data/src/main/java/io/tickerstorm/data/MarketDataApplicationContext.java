@@ -17,6 +17,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.ImportResource;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.cassandra.repository.config.EnableCassandraRepositories;
 import org.springframework.jms.annotation.EnableJms;
 import org.springframework.jms.core.JmsTemplate;
@@ -24,6 +25,7 @@ import org.springframework.jms.core.JmsTemplate;
 import io.tickerstorm.common.data.CommonContext;
 import io.tickerstorm.common.data.eventbus.ByDestinationNameJmsResolver;
 import io.tickerstorm.common.data.eventbus.Destinations;
+import io.tickerstorm.common.data.eventbus.EventBusToEventBusBridge;
 import io.tickerstorm.common.data.eventbus.EventBusToJMSBridge;
 import io.tickerstorm.common.data.eventbus.JMSToEventBusBridge;
 import io.tickerstorm.common.data.query.DataFeedQuery;
@@ -51,14 +53,21 @@ public class MarketDataApplicationContext {
     SpringApplication.run(MarketDataApplicationContext.class, args);
   }
 
+  @Profile("embedded")
   @Bean(initMethod = "start", destroyMethod = "stop")
-  public BrokerService startActiveMQ() throws Exception {
-    BrokerService broker = new BrokerService();
-    broker.setBrokerName("tickerstorm");
-    TransportConnector connector = new TransportConnector();
-    connector.setUri(new URI(transport));
-    broker.addConnector(connector);
-    broker.setPersistent(false);;
+  public BrokerService startActiveMQ() {
+    BrokerService broker = null;
+
+    try {
+      broker = new BrokerService();
+      broker.setBrokerName("tickerstorm");
+      TransportConnector connector = new TransportConnector();
+      connector.setUri(new URI(transport));
+      broker.addConnector(connector);
+      broker.setPersistent(false);
+    } catch (Exception e) {
+      // nothing
+    }
     return broker;
   }
 
@@ -74,10 +83,13 @@ public class MarketDataApplicationContext {
 
   @Qualifier("historical")
   @Bean(destroyMethod = "shutdown")
-  public MBassador<MarketData> buildEventBus(IPublicationErrorHandler handler) {
-    return new MBassador<MarketData>(new BusConfiguration().addFeature(Feature.SyncPubSub.Default())
+  public MBassador<MarketData> buildEventBus(IPublicationErrorHandler handler,
+      @Qualifier("brokerfeed") EventBusToEventBusBridge brokerFeed) {
+    MBassador<MarketData> historical = new MBassador<MarketData>(new BusConfiguration().addFeature(Feature.SyncPubSub.Default())
         .addFeature(Feature.AsynchronousHandlerInvocation.Default(1, 4)).addFeature(Feature.AsynchronousMessageDispatch.Default())
         .addPublicationErrorHandler(handler).setProperty(Properties.Common.Id, "historical bus"));
+    brokerFeed.addListener(historical);// subscribe to broker data to record
+    return historical;
   }
 
   // SENDERS
@@ -85,9 +97,10 @@ public class MarketDataApplicationContext {
   public EventBusToJMSBridge buildRealtimeJmsBridge(@Qualifier("realtime") MBassador<MarketData> eventbus, JmsTemplate template) {
     return new EventBusToJMSBridge(eventbus, Destinations.TOPIC_REALTIME_MARKETDATA, template);
   }
-  
+
   @Bean
-  public EventBusToJMSBridge buildRetroModelDataJmsBridge(@Qualifier("retroModelData") MBassador<Map<String, Object>> eventbus, JmsTemplate template) {
+  public EventBusToJMSBridge buildRetroModelDataJmsBridge(@Qualifier("retroModelData") MBassador<Map<String, Object>> eventbus,
+      JmsTemplate template) {
     return new EventBusToJMSBridge(eventbus, Destinations.QUEUE_RETRO_MODEL_DATA, template);
   }
 

@@ -2,6 +2,7 @@ package io.tickerstorm.data.converter;
 
 import java.io.File;
 import java.util.List;
+import java.util.Map.Entry;
 
 import javax.annotation.PostConstruct;
 
@@ -14,8 +15,13 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.cookie.BasicClientCookie;
+import org.apache.http.protocol.BasicHttpContext;
+import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,6 +63,8 @@ public class DataQueryClient {
 
   public void query(DataQuery dq) {
 
+
+
     String query = dq.build();
 
     HttpGet get = new HttpGet(query);
@@ -67,10 +75,13 @@ public class DataQueryClient {
     get.addHeader(HttpHeaders.ACCEPT_LANGUAGE, "en-US,en;q=0.8");
     get.addHeader(HttpHeaders.REFERER, "https://www.google.com/");
 
+    if (dq.headers() != null && !dq.headers().isEmpty()) {
+      for (Entry<String, String> e : dq.headers().entrySet()) {
+        get.addHeader(e.getKey(), e.getValue());
+      }
+    }
+    
     DataConverter converter = null;
-
-
-
     CloseableHttpResponse response = null;
     try {
 
