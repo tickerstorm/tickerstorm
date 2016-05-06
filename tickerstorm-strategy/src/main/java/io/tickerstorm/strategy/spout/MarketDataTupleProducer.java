@@ -35,8 +35,7 @@ public class MarketDataTupleProducer implements JmsTupleProducer {
 
   @Override
   public void declareOutputFields(OutputFieldsDeclarer declarer) {
-    declarer.declare(new Fields(Field.Name.MARKETDATA.field(), Field.Name.CATEGORICAL_FIELDS.field(), Field.Name.DISCRETE_FIELDS.field(),
-        Field.Name.CONTINOUS_FIELDS.field(), Field.Name.TEMPORAL_FIELDS.field()));
+    declarer.declare(new Fields(Field.Name.MARKETDATA.field()));
   }
 
 

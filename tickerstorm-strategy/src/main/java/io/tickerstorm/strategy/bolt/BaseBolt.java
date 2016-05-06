@@ -7,7 +7,6 @@ import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Tuple;
-import backtype.storm.tuple.Values;
 import io.tickerstorm.common.entity.Command;
 import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.entity.Marker;
@@ -18,8 +17,6 @@ public abstract class BaseBolt extends BaseRichBolt {
   protected OutputCollector coll = null;
   protected Map config;
   protected TopologyContext context;
-  protected Tuple t;
-
 
   @Override
   public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
@@ -32,31 +29,25 @@ public abstract class BaseBolt extends BaseRichBolt {
   @Override
   public void declareOutputFields(OutputFieldsDeclarer declarer) {}
 
-  protected void ack() {
+  protected void ack(Tuple t) {
     if (coll != null)
       coll.ack(t);
   }
 
-  protected void emit(Object... tuple) {
-    if (coll != null)
-      coll.emit(t, new Values(tuple));
+  protected void executeCommand(Tuple t, Command input) {
+    ack(t);
   }
 
-  protected void executeCommand(Command input) {
-    ack();
+  protected void executeMarker(Tuple t, Marker input) {
+    ack(t);
   }
 
-  protected void executeMarker(Marker input) {
-    ack();
-  }
-
-  protected void executeMarketData(Tuple tuple) {
-    ack();
+  protected void executeMarketData(Tuple t) {
+    ack(t);
   }
 
   @Override
   public final void execute(Tuple input) {
-    this.t = input;
 
     if (input.contains(Field.Name.MARKER.field())) {
 
@@ -64,10 +55,10 @@ public abstract class BaseBolt extends BaseRichBolt {
 
       if (Command.class.isAssignableFrom(o.getClass())) {
         Command m = (Command) o;
-        executeCommand(m);
+        executeCommand(input, m);
       } else {
         Marker m = (Marker) o;
-        executeMarker(m);
+        executeMarker(input, m);
       }
     }
 
@@ -79,7 +70,7 @@ public abstract class BaseBolt extends BaseRichBolt {
   }
 
   protected void process(Tuple input) {
-    ack();
+    ack(input);
   }
 
   protected void init() {}

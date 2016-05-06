@@ -1,5 +1,7 @@
 package io.tickerstorm.strategy.backtest;
 
+import javax.annotation.PostConstruct;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -21,8 +23,10 @@ public class RetroFlowTopologyFactory {
 
   private final TopologyBuilder retroBuilder = new TopologyBuilder();
 
-  protected RetroFlowTopologyFactory() {
+  protected RetroFlowTopologyFactory() {}
 
+  @PostConstruct
+  private void init() {
     retroBuilder.setSpout("retroModelData", retroModelData);
     retroBuilder.setSpout("commands", commandsSpout);
   }

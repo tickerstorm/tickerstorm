@@ -25,7 +25,7 @@ public class FieldTypeSplittingBolt extends BaseBolt {
     coll.emit(Field.Name.DISCRETE_FIELDS.field(), tuple, new Values(filterForFields(md, Integer.class)));
     coll.emit(Field.Name.CATEGORICAL_FIELDS.field(), tuple, new Values(filterForFields(md, String.class)));
     coll.emit(Field.Name.TEMPORAL_FIELDS.field(), tuple, new Values(filterForFields(md, Instant.class)));
-    ack();
+    ack(tuple);
 
   }
 

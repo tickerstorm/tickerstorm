@@ -4,12 +4,10 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.SpringApplication;
 import org.springframework.stereotype.Service;
 
 import backtype.storm.Config;
 import backtype.storm.LocalCluster;
-import io.tickerstorm.strategy.BacktestTopologyContext;
 
 @Service
 public class BacktestTopology {
@@ -26,10 +24,6 @@ public class BacktestTopology {
   private final String FORWARD = "forward-flow-topology";
   private final String RETRO = "retro-flow-topology";
 
-  public static void main(String[] args) throws Exception {
-    SpringApplication.run(BacktestTopologyContext.class, args);
-  }
-
   @PostConstruct
   public void init() throws Exception {
 
@@ -37,7 +31,7 @@ public class BacktestTopology {
     stormConfig.setNumWorkers(1);
 
     cluster = new LocalCluster();
-    cluster.submitTopology(FORWARD, stormConfig, forwardTopology.withAveBolt().build());
+    cluster.submitTopology(FORWARD, stormConfig, forwardTopology.withBasicStatsBolt().storeToModelData().build());
     cluster.submitTopology(RETRO, stormConfig, retroTopology.build());
 
   }

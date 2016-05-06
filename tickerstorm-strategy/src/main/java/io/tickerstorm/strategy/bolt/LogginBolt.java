@@ -20,7 +20,7 @@ public class LogginBolt extends BaseBolt {
       buf = buf.append(f + ",");
     }
     logger.debug(buf.toString());
-    ack();
+    ack(tuple);
   }
 
 }

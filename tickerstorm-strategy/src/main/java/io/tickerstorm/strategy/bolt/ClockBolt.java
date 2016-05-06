@@ -25,7 +25,7 @@ public class ClockBolt extends BaseBolt {
       }
     }
 
-    ack();
+    ack(tuple);
 
   }
 }

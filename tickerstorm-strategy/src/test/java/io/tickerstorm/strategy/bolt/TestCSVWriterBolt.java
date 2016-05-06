@@ -71,9 +71,9 @@ public class TestCSVWriterBolt {
         Integer.MAX_VALUE);
     values.add(md);
 
-    values.add(Sets.newHashSet(new BaseField<BigDecimal>(md.getEventId(), "sma", BigDecimal.ONE)));
+    values.add(Sets.newHashSet(new BaseField<BigDecimal>(md.getEventId(), null, "sma", BigDecimal.ONE)));
 
-    values.add(Sets.newHashSet(new BaseField<String>(md.getEventId(), "category", "Some String")));
+    values.add(Sets.newHashSet(new BaseField<String>(md.getEventId(), null, "category", "Some String")));
 
     Tuple t = new TupleImpl(context, values, 1, "1");
     bolt.execute(t);

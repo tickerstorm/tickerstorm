@@ -1,5 +1,7 @@
 package io.tickerstorm.strategy.backtest;
 
+import javax.annotation.PostConstruct;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -7,11 +9,12 @@ import org.springframework.stereotype.Component;
 import backtype.storm.contrib.jms.bolt.JmsBolt;
 import backtype.storm.contrib.jms.spout.JmsSpout;
 import backtype.storm.generated.StormTopology;
+import backtype.storm.topology.BoltDeclarer;
 import backtype.storm.topology.TopologyBuilder;
 import io.tickerstorm.common.entity.Field;
+import io.tickerstorm.strategy.bolt.BasicStatsBolt;
 import io.tickerstorm.strategy.bolt.CSVWriterBolt;
 import io.tickerstorm.strategy.bolt.ClockBolt;
-import io.tickerstorm.strategy.bolt.ComputeSimpleStatsBolt;
 import io.tickerstorm.strategy.bolt.FieldTypeSplittingBolt;
 import io.tickerstorm.strategy.bolt.LogginBolt;
 
@@ -39,7 +42,7 @@ public class ForwardFlowTopologyFactory {
   private CSVWriterBolt csvBolt;
 
   @Autowired
-  private ComputeSimpleStatsBolt aveBolt;
+  private BasicStatsBolt simpleStatsBolt;
 
   @Qualifier("notification")
   @Autowired
@@ -51,33 +54,102 @@ public class ForwardFlowTopologyFactory {
 
   private final TopologyBuilder builder = new TopologyBuilder();
 
-  protected ForwardFlowTopologyFactory() {
+  protected ForwardFlowTopologyFactory() {}
 
+  private boolean simpleStats = false;
+  private boolean csv = false;
+  private boolean modelData = false;
+  private boolean notifications = false;
+  private boolean logger = false;
+  private boolean fieldTypeSplitter = false;
+  private boolean clock = false;
+
+  @PostConstruct
+  private void init() {
     builder.setSpout("marketdata", jmsSpout);
     builder.setSpout("commands", commandsSpout);
-    builder.setBolt("notification", notificationBolt).localOrShuffleGrouping("ave").allGrouping("commands");
-    builder.setBolt("clock", clockBolt).localOrShuffleGrouping("fieldTypeSplitting").allGrouping("commands");
-    builder.setBolt("fieldTypeSplitting", fieldTypeSplitting).localOrShuffleGrouping("marketdata").allGrouping("commands");
   }
 
-  public ForwardFlowTopologyFactory withLogginBolt() {
-    builder.setBolt("logger", loggingBolt).localOrShuffleGrouping("ave").allGrouping("commands");
+  public ForwardFlowTopologyFactory withFieldTypeSplitting() {
+
+    if (fieldTypeSplitter)
+      return this;
+
+    fieldTypeSplitter = true;
+    attachCommon(builder.setBolt("fieldTypeSplitting", fieldTypeSplitting).localOrShuffleGrouping("marketdata"));
     return this;
   }
 
-  public ForwardFlowTopologyFactory withAveBolt() {
-    builder.setBolt("ave", aveBolt).localOrShuffleGrouping("fieldTypeSplitting", Field.Name.CONTINOUS_FIELDS.field())
-        .localOrShuffleGrouping("fieldTypeSplitting", Field.Name.DISCRETE_FIELDS.field()).allGrouping("commands");
+  public ForwardFlowTopologyFactory withNotifications() {
+
+    if (notifications)
+      return this;
+
+    notifications = true;
+    attachCommon(builder.setBolt("notifications", notificationBolt).localOrShuffleGrouping("marketdata"));
+    return this;
+  }
+
+  public ForwardFlowTopologyFactory withClock() {
+
+    if (clock)
+      return this;
+
+    clock = true;
+    attachCommon(builder.setBolt("clock", clockBolt).localOrShuffleGrouping("fieldTypeSplitting"));
+    return this;
+  }
+
+  private BoltDeclarer attachCommon(BoltDeclarer declarer) {
+    declarer.allGrouping("commands");
+    return declarer;
+  }
+
+  public ForwardFlowTopologyFactory withLogginBolt() {
+
+    if (logger)
+      return this;
+
+    logger = true;
+    attachCommon(builder.setBolt("logger", loggingBolt).localOrShuffleGrouping("simpleStats"));
+    return this;
+  }
+
+  public ForwardFlowTopologyFactory withBasicStatsBolt() {
+
+    if (simpleStats)
+      return this;
+
+    withFieldTypeSplitting();
+
+    simpleStats = true;
+    attachCommon(
+        builder.setBolt("simpleStats", simpleStatsBolt).localOrShuffleGrouping("fieldTypeSplitting", Field.Name.CONTINOUS_FIELDS.field())
+            .localOrShuffleGrouping("fieldTypeSplitting", Field.Name.DISCRETE_FIELDS.field()));
     return this;
   }
 
   public ForwardFlowTopologyFactory withCSVBolt() {
-    builder.setBolt("ave", csvBolt).localOrShuffleGrouping("ave").allGrouping("commands");
+
+    if (csv)
+      return this;
+
+    csv = true;
+    attachCommon(builder.setBolt("csv", csvBolt).localOrShuffleGrouping("simpleStats"));
     return this;
   }
 
-  public ForwardFlowTopologyFactory withModelDataBolt() {
-    builder.setBolt("modelData", modelDataBolt).localOrShuffleGrouping("ave").allGrouping("commands");
+  public ForwardFlowTopologyFactory storeToModelData() {
+
+    if (modelData)
+      return this;
+
+    if (simpleStats) {
+      builder.setBolt("modelData", modelDataBolt).localOrShuffleGrouping("simpleStats");
+      modelData = true;
+    }
+
+
     return this;
   }
 

@@ -20,6 +20,7 @@ import com.google.common.io.Files;
 
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.tuple.Tuple;
+import backtype.storm.tuple.Values;
 import io.tickerstorm.common.entity.Command;
 import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.entity.Markers;
@@ -36,7 +37,7 @@ public class CSVWriterBolt extends BaseBolt {
   private AtomicBoolean firstLine = new AtomicBoolean(true);
 
   @Override
-  protected void executeCommand(Command input) {
+  protected void executeCommand(Tuple t, Command input) {
 
     if (Markers.is(input, Markers.SESSION_START)) {
 
@@ -78,7 +79,7 @@ public class CSVWriterBolt extends BaseBolt {
       n.setSource(this.getClass().getSimpleName());
       n.addMarker(Markers.CSV_CREATED.toString());
       n.getProperties().put("output.file.csv.path", file.getAbsolutePath());
-      emit(n);
+      coll.emit(t, new Values(n));
     }
   }
 
@@ -101,7 +102,7 @@ public class CSVWriterBolt extends BaseBolt {
       logger.error(e.getMessage(), e);
     }
 
-    ack();
+    ack(tuple);
   }
 
   private String writeHeader(List<Field<?>> sorted) {

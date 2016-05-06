@@ -15,15 +15,16 @@ import com.google.common.collect.Lists;
 
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.tuple.Tuple;
+import backtype.storm.tuple.Values;
 import io.tickerstorm.common.entity.BaseField;
 import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.strategy.util.CacheManager;
 
 @Component
 @SuppressWarnings("serial")
-public class ComputeSimpleStatsBolt extends BaseBolt {
+public class BasicStatsBolt extends BaseBolt {
 
-  private final static Logger logger = LoggerFactory.getLogger(ComputeSimpleStatsBolt.class);
+  private final static Logger logger = LoggerFactory.getLogger(BasicStatsBolt.class);
   private List<Integer> periods = null;
 
   @Override
@@ -35,8 +36,14 @@ public class ComputeSimpleStatsBolt extends BaseBolt {
   protected void process(Tuple tuple) {
 
     HashSet<Field<?>> fields = new HashSet<>();
-    Set<Field<BigDecimal>> bg = (Set<Field<BigDecimal>>) tuple.getValueByField(Field.Name.CONTINOUS_FIELDS.field());
-    Set<Field<Integer>> is = (Set<Field<Integer>>) tuple.getValueByField(Field.Name.DISCRETE_FIELDS.field());
+    Set<Field<BigDecimal>> bg = new HashSet<>();
+    Set<Field<Integer>> is = new HashSet<>();
+
+    if (tuple.contains(Field.Name.CONTINOUS_FIELDS.field()))
+      bg = (Set<Field<BigDecimal>>) tuple.getValueByField(Field.Name.CONTINOUS_FIELDS.field());
+
+    if (tuple.contains(Field.Name.DISCRETE_FIELDS.field()))
+      is = (Set<Field<Integer>>) tuple.getValueByField(Field.Name.DISCRETE_FIELDS.field());
 
     for (Integer p : periods) {
 
@@ -69,6 +76,8 @@ public class ComputeSimpleStatsBolt extends BaseBolt {
         }
       }
     }
+    coll.emit(tuple, new Values(fields));
+    ack(tuple);
   }
 
   @Override
