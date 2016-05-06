@@ -94,7 +94,8 @@ public interface Field<T> extends Serializable {
     Object vals = parseValue(value, clazz);
     String field = parseField(value);
     String eventId = parseEventId(value);
-    return new BaseField(eventId, field, vals);
+    String stream = parseStream(value);
+    return new BaseField(eventId, stream, field, vals);
 
   }
 
@@ -111,13 +112,23 @@ public interface Field<T> extends Serializable {
 
   static String parseEventId(String value) {
     String[] vals = value.split(":");
-    return vals[1];
+    return vals[2];
   }
 
   static String parseField(String value) {
     String[] vals = value.split("=");
     String[] fields = vals[0].split(":");
-    return fields[2];
+    return fields[3];
+  }
+
+  static String parseStream(String value) {
+    String[] vals = value.split("=");
+    String[] fields = vals[0].split(":");
+
+    if (fields[1].equalsIgnoreCase("null"))
+      return null;
+
+    return fields[1];
   }
 
   static Class<?> parseType(String value) {
@@ -138,6 +149,10 @@ public interface Field<T> extends Serializable {
 
   static <T> T parseValue(String value, Class<T> clazz) {
     String[] vals = value.split("=");
+
+    if (vals[1].equalsIgnoreCase("null"))
+      return null;
+
     return convert(vals[1], clazz);
   }
 
@@ -165,6 +180,8 @@ public interface Field<T> extends Serializable {
 
   public T getValue();
 
+  public String getStream();
+
   default boolean isEmpty() {
 
     if (getValue() == null)
@@ -179,15 +196,15 @@ public interface Field<T> extends Serializable {
 
   /**
    * 
-   * Serialized: type:eventId:fieldName=value
+   * Serialized: type:stream:eventId:fieldName=value
    * 
-   * type : 0 name : 1
+   * type : 0, stream : 1, eventId: 2, name: 3
    * 
    * @return
    */
   default String serialize() {
-    StringBuffer buff = new StringBuffer(getFieldType().getName()).append(":").append(getEventId()).append(":").append(getName())
-        .append("=").append(getValue());
+    StringBuffer buff = new StringBuffer(getFieldType().getName()).append(":").append(getStream()).append(":").append(getEventId())
+        .append(":").append(getName()).append("=").append(getValue());
     return buff.toString();
   }
 

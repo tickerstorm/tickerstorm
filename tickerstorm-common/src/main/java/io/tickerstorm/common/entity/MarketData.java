@@ -29,7 +29,8 @@ public interface MarketData extends Event, Stream, Serializable {
   }
 
   public static String[] parseEventId(String eventId) {
-    return eventId.split("|");
+    String[] parts = eventId.split("\\|");
+    return parts;
   }
 
   public static String parseSymbol(String eventId) {
@@ -41,7 +42,8 @@ public interface MarketData extends Event, Stream, Serializable {
   }
 
   public static Instant parseTimestamp(String eventId) {
-    return Instant.ofEpochMilli(Long.valueOf(MarketData.parseEventId(eventId)[3]));
+    String part = MarketData.parseEventId(eventId)[2];
+    return Instant.ofEpochMilli(Long.valueOf(part));
   }
 
   public static String parseInterval(String eventId) {

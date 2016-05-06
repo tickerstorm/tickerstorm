@@ -89,8 +89,8 @@ public class Tick extends BaseMarketData {
   public Set<Field<?>> getFields() {
     Set<Field<?>> fields = new HashSet<Field<?>>();
     fields.addAll(super.getFields());
-    fields.add(new BaseField<BigDecimal>(getEventId(), Field.Name.PRICE.field(), price));
-    fields.add(new BaseField<BigDecimal>(getEventId(), Field.Name.QUANTITY.field(), quantity));
+    fields.add(new BaseField<BigDecimal>(getEventId(), stream, Field.Name.PRICE.field(), price));
+    fields.add(new BaseField<BigDecimal>(getEventId(), stream, Field.Name.QUANTITY.field(), quantity));
     return fields;
   }
 

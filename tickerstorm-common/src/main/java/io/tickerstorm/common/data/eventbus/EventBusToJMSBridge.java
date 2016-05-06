@@ -28,12 +28,13 @@ public class EventBusToJMSBridge {
     this.bus = eventBus;
     this.destination = destination;
     this.template = template;
+
+    if (destination.contains("topic"))
+      template.setPubSubDomain(true);
   }
 
   public EventBusToJMSBridge(MBassador<?> eventBus, String destination, JmsTemplate template, IMessageFilter<Serializable> filter) {
-    this.bus = eventBus;
-    this.destination = destination;
-    this.template = template;
+    this(eventBus, destination, template);
     this.filter = filter;
   }
 
@@ -56,7 +57,9 @@ public class EventBusToJMSBridge {
   public void onEvent(Serializable data) {
 
     if (filter != null && filter.accepts(data, null)) {
+
       template.send(destination, new MessageCreator() {
+
         @Override
         public Message createMessage(Session session) throws JMSException {
           logger.trace("Dispatching " + data.toString() + " to destination " + destination);

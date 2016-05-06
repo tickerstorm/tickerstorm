@@ -46,6 +46,7 @@ public class BaseField<T> implements Field<T> {
   public final T value;
   public final Class<?> type;
   public final String eventId;
+  public final String stream;
 
   /**
    * Convenience constructor when extrapolating a new field based on an existing field of the same
@@ -60,6 +61,7 @@ public class BaseField<T> implements Field<T> {
     this.value = value;
     this.type = value.getClass();
     this.eventId = f.getEventId();
+    this.stream = f.getStream();
   }
 
 
@@ -76,6 +78,7 @@ public class BaseField<T> implements Field<T> {
     this.value = null;
     this.type = clazz;
     this.eventId = f.getEventId();
+    this.stream = f.getStream();
   }
 
   /**
@@ -85,11 +88,12 @@ public class BaseField<T> implements Field<T> {
    * @param field
    * @param value
    */
-  public BaseField(String eventId, String field, T value) {
+  public BaseField(String eventId, String stream, String field, T value) {
     this.field = field;
     this.value = value;
     this.type = value.getClass();
     this.eventId = eventId;
+    this.stream = stream;
   }
 
   /**
@@ -99,17 +103,24 @@ public class BaseField<T> implements Field<T> {
    * @param field
    * @param clazz
    */
-  public BaseField(String eventId, String field, Class<?> clazz) {
+  public BaseField(String eventId, String stream, String field, Class<?> clazz) {
     this.field = field;
     this.value = null;
     this.type = clazz;
     this.eventId = eventId;
+    this.stream = stream;
   }
 
   @Override
   public Class<?> getFieldType() {
     return type;
   }
+
+  @Override
+  public String getStream() {
+    return stream;
+  }
+
 
   public String getName() {
     return field;
@@ -121,7 +132,8 @@ public class BaseField<T> implements Field<T> {
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this).add("name", this.field).add("value", this.value).add("class", this.type).add("eventId", eventId).toString();
+    return MoreObjects.toStringHelper(this).add("name", this.field).add("value", this.value).add("class", this.type).add("eventId", eventId)
+        .toString();
   }
 
   public String getEventId() {
