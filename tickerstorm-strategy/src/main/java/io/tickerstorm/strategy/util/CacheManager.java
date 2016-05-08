@@ -9,6 +9,7 @@ import org.apache.commons.math3.stat.descriptive.SynchronizedDescriptiveStatisti
 
 import com.google.common.collect.FluentIterable;
 
+import io.tickerstorm.common.entity.Candle;
 import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.entity.MarketData;
 import net.sf.ehcache.Cache;
@@ -85,7 +86,7 @@ public class CacheManager {
   private static StringBuffer buildKey(Field<?> f) {
 
     return new StringBuffer(MarketData.parseSource(f.getEventId())).append(MarketData.parseSymbol(f.getEventId()))
-        .append(MarketData.parseInterval(f.getEventId()));
+        .append(Candle.parseInterval(f.getEventId()));
   }
 
   /**
