@@ -9,7 +9,7 @@ import java.util.Map;
 import org.testng.annotations.Test;
 
 public class TestCandle {
-  
+
   private final Candle c =
       new Candle("goog", "google", Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ONE, BigDecimal.ONE, "1m", 1000);
 
@@ -23,8 +23,10 @@ public class TestCandle {
     assertEquals(vol.getEventId(), c.getEventId());
     assertEquals(vol.getName(), Field.Name.VOLUME.field());
     assertEquals(vol.getStream(), c.getStream());
-    assertEquals(Field.parseType(BigDecimal.class.getName()), vol.getValue().getClass().getName());
-    
+    assertEquals(vol.getValue(), c.getVolume());
+    assertEquals(Candle.parseInterval(c.getEventId()), c.getInterval());
+    assertEquals(MarketData.parseSymbol(c.getEventId()), c.getSymbol());
+    assertEquals(MarketData.parseTimestamp(c.getEventId()), c.getTimestamp());
 
   }
 

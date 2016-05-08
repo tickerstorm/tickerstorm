@@ -46,15 +46,6 @@ public interface MarketData extends Event, Stream, Serializable {
     return Instant.ofEpochMilli(Long.valueOf(part));
   }
 
-  public static String parseInterval(String eventId) {
-
-    if (MarketData.parseEventId(eventId).length == 4) {
-      return MarketData.parseEventId(eventId)[1];
-    }
-
-    return null;
-  }
-
   public Set<Field<?>> getFields();
 
   public static String getMarketDataType(Set<Field<?>> fields) {

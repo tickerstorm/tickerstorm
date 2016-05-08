@@ -11,9 +11,12 @@ public class BaseField<T> implements Field<T> {
     int result = 1;
     result = prime * result + ((eventId == null) ? 0 : eventId.hashCode());
     result = prime * result + ((field == null) ? 0 : field.hashCode());
+    result = prime * result + ((stream == null) ? 0 : stream.hashCode());
+    result = prime * result + ((type == null) ? 0 : type.hashCode());
     result = prime * result + ((value == null) ? 0 : value.hashCode());
     return result;
   }
+
 
   @Override
   public boolean equals(Object obj) {
@@ -33,6 +36,16 @@ public class BaseField<T> implements Field<T> {
       if (other.field != null)
         return false;
     } else if (!field.equals(other.field))
+      return false;
+    if (stream == null) {
+      if (other.stream != null)
+        return false;
+    } else if (!stream.equals(other.stream))
+      return false;
+    if (type == null) {
+      if (other.type != null)
+        return false;
+    } else if (!type.equals(other.type))
       return false;
     if (value == null) {
       if (other.value != null)

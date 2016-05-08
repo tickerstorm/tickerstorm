@@ -20,6 +20,15 @@ public class Candle extends BaseMarketData {
 
   public Candle() {}
 
+  public static String parseInterval(String eventId) {
+
+    if (MarketData.parseEventId(eventId).length == 4) {
+      return MarketData.parseEventId(eventId)[3];
+    }
+
+    return null;
+  }
+
   public Candle(Set<Field<?>> fields) {
     super(fields);
 
@@ -207,9 +216,10 @@ public class Candle extends BaseMarketData {
     return MoreObjects.toStringHelper(this).addValue(v).add("interval", interval).add("open", open).add("close", close).add("high", high)
         .add("low", low).add("volume", volume).toString();
   }
-  
+
   /**
    * Format: source|symbol|timestamp|interval
+   * 
    * @return
    */
   @Override

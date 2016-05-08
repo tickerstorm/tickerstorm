@@ -63,6 +63,32 @@ public abstract class BaseMarketData implements MarketData, Serializable {
 
   }
 
+  public String getSource() {
+    return source;
+  }
+
+  public String getStream() {
+    return stream;
+  }
+
+  public String getSymbol() {
+    return symbol;
+  }
+
+
+  public Instant getTimestamp() {
+    return timestamp;
+  }
+
+  public void setSource(String source) {
+    this.source = source;
+  }
+
+
+  public void setStream(String stream) {
+    this.stream = stream;
+  }
+
   @Override
   public int hashCode() {
     final int prime = 31;
@@ -104,32 +130,6 @@ public abstract class BaseMarketData implements MarketData, Serializable {
     } else if (!timestamp.equals(other.timestamp))
       return false;
     return true;
-  }
-
-  public String getSource() {
-    return source;
-  }
-
-  public String getStream() {
-    return stream;
-  }
-
-  public String getSymbol() {
-    return symbol;
-  }
-
-
-  public Instant getTimestamp() {
-    return timestamp;
-  }
-
-  public void setSource(String source) {
-    this.source = source;
-  }
-
-
-  public void setStream(String stream) {
-    this.stream = stream;
   }
 
   public void setSymbol(String symbol) {

@@ -23,7 +23,7 @@ public interface Field<T> extends Serializable {
     SYMBOL("symbol", String.class), TIMESTAMP("timestamp", Instant.class), SOURCE("source", String.class), STREAM("stream",
         String.class), OPEN("open", BigDecimal.class), CLOSE("close", BigDecimal.class), HIGH("high", BigDecimal.class), LOW("low",
             BigDecimal.class), BID("bid", BigDecimal.class), ASK("ask", BigDecimal.class), BID_SIZE("bidSize", BigDecimal.class), ASK_SIZE(
-                "askSize", BigDecimal.class), VOLUME("volume", BigDecimal.class), PRICE("price", BigDecimal.class), QUANTITY("quantity",
+                "askSize", BigDecimal.class), VOLUME("volume", Integer.class), PRICE("price", BigDecimal.class), QUANTITY("quantity",
                     Integer.class), INTERVAL("interval", String.class), MARKETDATA("marketdata", MarketData.class, 0), CANDEL("candel",
                         Candle.class), QUOTE("quote", Quote.class), TICK("tick", Tick.class), AVE("ave", BigDecimal.class), SMA("ma",
                             BigDecimal.class), MEDIAN("median", BigDecimal.class), STD("std", BigDecimal.class), NOW("now",
@@ -62,7 +62,7 @@ public interface Field<T> extends Serializable {
       return field;
     }
 
-    public Class<?> type() {
+    public Class<?> fieldType() {
       return type;
     }
   }
@@ -114,6 +114,7 @@ public interface Field<T> extends Serializable {
     String[] vals = value.split(":");
     return vals[2];
   }
+
 
   static String parseField(String value) {
     String[] vals = value.split("=");
