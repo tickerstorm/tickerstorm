@@ -17,7 +17,7 @@ import org.springframework.jms.annotation.EnableJms;
 
 import backtype.storm.contrib.jms.bolt.JmsBolt;
 import backtype.storm.contrib.jms.spout.JmsSpout;
-import io.tickerstorm.common.data.CommonContext;
+import io.tickerstorm.common.CommonContext;
 import io.tickerstorm.common.data.eventbus.Destinations;
 import io.tickerstorm.strategy.bolt.FieldTypeSplittingBolt;
 import io.tickerstorm.strategy.spout.CommandsTupleProducer;

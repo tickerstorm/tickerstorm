@@ -144,11 +144,13 @@ public class ForwardFlowTopologyFactory {
     if (modelData)
       return this;
 
+    BoltDeclarer dec = builder.setBolt("modelData", modelDataBolt).localOrShuffleGrouping("marketdata");
+    
     if (simpleStats) {
-      builder.setBolt("modelData", modelDataBolt).localOrShuffleGrouping("simpleStats");
-      modelData = true;
+      dec.localOrShuffleGrouping("simpleStats");
     }
-
+    
+    modelData = true;
 
     return this;
   }

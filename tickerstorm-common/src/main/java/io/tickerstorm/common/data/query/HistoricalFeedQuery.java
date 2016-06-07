@@ -23,6 +23,8 @@ public class HistoricalFeedQuery implements DataFeedQuery {
   public Set<String> periods = Sets.newHashSet(Candle.MIN_1_INTERVAL);
   public String stream = "Default";
 
+
+
   public String getStream() {
     return stream;
   }
@@ -48,6 +50,11 @@ public class HistoricalFeedQuery implements DataFeedQuery {
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this).add("symbol", symbols).add("from", from).add("until", until).toString();
+  }
+
+  @Override
+  public String id() {
+    return id;
   }
 
 }

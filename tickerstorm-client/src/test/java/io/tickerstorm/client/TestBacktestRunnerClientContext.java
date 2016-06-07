@@ -23,11 +23,6 @@ public class TestBacktestRunnerClientContext {
   public static final Logger logger = org.slf4j.LoggerFactory.getLogger(TestBacktestRunnerClientContext.class);
 
   @Bean
-  public BacktestRunnerClient buildClient() {
-    return new BacktestRunnerClient();
-  }
-
-  @Bean
   public IPublicationErrorHandler buildErrorHandler() {
     return new MBassadorErrorHandler();
   }

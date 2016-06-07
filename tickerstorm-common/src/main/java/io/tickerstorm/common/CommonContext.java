@@ -1,4 +1,4 @@
-package io.tickerstorm.common.data;
+package io.tickerstorm.common;
 
 import java.io.Serializable;
 import java.util.Map;
@@ -17,6 +17,7 @@ import org.springframework.jms.annotation.EnableJms;
 import org.springframework.jms.config.DefaultJmsListenerContainerFactory;
 
 import io.tickerstorm.common.data.eventbus.ByDestinationNameJmsResolver;
+import io.tickerstorm.common.data.eventbus.Destinations;
 import io.tickerstorm.common.data.eventbus.EventBusToEventBusBridge;
 import io.tickerstorm.common.data.query.DataFeedQuery;
 import io.tickerstorm.common.entity.MarketData;
@@ -48,17 +49,18 @@ public class CommonContext {
    * @param handler
    * @return
    */
-  @Qualifier("realtime")
+  @Qualifier(Destinations.REALTIME_MARKETDATA_BUS)
   @Bean(destroyMethod = "shutdown")
-  public MBassador<MarketData> buildRealtimeEventBus(BusConfiguration handler, @Qualifier("brokerfeed") MBassador<MarketData> brokerFeed) {
+  public MBassador<MarketData> buildRealtimeEventBus(BusConfiguration handler,
+      @Qualifier(Destinations.BROKER_MARKETDATA_BUS) MBassador<MarketData> brokerFeed) {
     MBassador<MarketData> bus = new MBassador<MarketData>(handler);
     return bus;
   }
 
   @Qualifier("brokerfeed")
   @Bean
-  public EventBusToEventBusBridge<MarketData> buildBrokerFeedEventBridge(@Qualifier("brokerfeed") MBassador<MarketData> source,
-      @Qualifier("realtime") MBassador<MarketData> listener) {
+  public EventBusToEventBusBridge<MarketData> buildBrokerFeedEventBridge(
+      @Qualifier(Destinations.BROKER_MARKETDATA_BUS) MBassador<MarketData> source, @Qualifier("realtime") MBassador<MarketData> listener) {
     EventBusToEventBusBridge<MarketData> bridge = new EventBusToEventBusBridge<MarketData>(source, listener);
     return bridge;
   }
@@ -69,7 +71,7 @@ public class CommonContext {
    * @param handler
    * @return
    */
-  @Qualifier("brokerfeed")
+  @Qualifier(Destinations.BROKER_MARKETDATA_BUS)
   @Bean(destroyMethod = "shutdown")
   public MBassador<MarketData> buildBrokerFeed(BusConfiguration handler) {
     return new MBassador<MarketData>(handler);
@@ -82,7 +84,7 @@ public class CommonContext {
    * @param handler
    * @return
    */
-  @Qualifier("query")
+  @Qualifier(Destinations.HISTORICAL_DATA_QUERY_BUS)
   @Bean(destroyMethod = "shutdown")
   public MBassador<DataFeedQuery> buildQueryEventBus(BusConfiguration handler) {
     return new MBassador<DataFeedQuery>(handler);
@@ -95,7 +97,7 @@ public class CommonContext {
    * @param handler
    * @return
    */
-  @Qualifier("commands")
+  @Qualifier(Destinations.COMMANDS_BUS)
   @Bean(destroyMethod = "shutdown")
   public MBassador<Serializable> buildCommandsEventBus(BusConfiguration handler) {
     return new MBassador<Serializable>(handler);
@@ -108,7 +110,7 @@ public class CommonContext {
    * @param handler
    * @return
    */
-  @Qualifier("notification")
+  @Qualifier(Destinations.NOTIFICATIONS_BUS)
   @Bean(destroyMethod = "shutdown")
   public MBassador<Serializable> buildNotificaitonEventBus(BusConfiguration handler) {
     return new MBassador<Serializable>(handler);
@@ -121,7 +123,7 @@ public class CommonContext {
    * @param handler
    * @return
    */
-  @Qualifier("modelData")
+  @Qualifier(Destinations.MODEL_DATA_BUS)
   @Bean(destroyMethod = "shutdown")
   public MBassador<Map<String, Object>> buildModelDataEventBus(BusConfiguration handler) {
     return new MBassador<Map<String, Object>>(handler);
@@ -134,7 +136,7 @@ public class CommonContext {
    * @param handler
    * @return
    */
-  @Qualifier("retroModelData")
+  @Qualifier(Destinations.RETRO_MODEL_DATA_BUS)
   @Bean(destroyMethod = "shutdown")
   public MBassador<Map<String, Object>> buildRetroModelDataEventBus(BusConfiguration handler) {
     return new MBassador<Map<String, Object>>(handler);

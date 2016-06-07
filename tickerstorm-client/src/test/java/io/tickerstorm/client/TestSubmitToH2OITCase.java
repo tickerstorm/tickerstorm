@@ -14,6 +14,7 @@ import org.testng.annotations.Test;
 
 import com.google.common.io.Files;
 
+import io.tickerstorm.common.data.eventbus.Destinations;
 import io.tickerstorm.common.entity.Markers;
 import io.tickerstorm.common.entity.Notification;
 import net.engio.mbassy.bus.MBassador;
@@ -21,7 +22,7 @@ import net.engio.mbassy.bus.MBassador;
 @ContextConfiguration(classes = {TestBacktestRunnerClientContext.class})
 public class TestSubmitToH2OITCase extends AbstractTestNGSpringContextTests {
 
-  @Qualifier("notification")
+  @Qualifier(Destinations.NOTIFICATIONS_BUS)
   @Autowired
   private MBassador<Serializable> notifications;
 

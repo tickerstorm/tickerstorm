@@ -50,5 +50,19 @@ public class TestField {
     assertEquals(f.getFieldType().getName(), Integer.class.getName());
     assertEquals(f.getFieldType(), Field.Name.VOLUME.fieldType());
   }
+  
+  @Test
+  public void testSerializeNullField(){
+    
+    c.setStream("default");
+    Map<String, Field<?>> fields = c.getFieldsAsMap();
+    Field<Integer> vol = (Field<Integer>) fields.get(Field.Name.VOLUME.field());
+    
+    Field<Integer> nullField = new BaseField<Integer>(vol, Field.Name.MAX.field() + "-p" + 5, Integer.class);
+    String serialized = nullField.serialize();
+    
+    Field<Integer> newNullField = (Field<Integer>) Field.deserialize(serialized);
+    assertEquals(nullField, newNullField);
+  }
 
 }

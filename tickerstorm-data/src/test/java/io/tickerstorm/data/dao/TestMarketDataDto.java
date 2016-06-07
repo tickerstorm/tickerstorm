@@ -58,8 +58,11 @@ public class TestMarketDataDto {
     assertEquals(d.symbol, c.symbol.toLowerCase());
 
   }
-
-  @Test
+  
+  /**
+   * Not currently supported
+   */
+  @Test(enabled=false)
   public void convertQuote() {
 
     Quote c = new Quote();
@@ -98,7 +101,10 @@ public class TestMarketDataDto {
 
   }
 
-  @Test
+  /**
+   * Not currently supported
+   */
+  @Test(enabled=false)
   public void convertTick() {
 
     Tick c = new Tick();

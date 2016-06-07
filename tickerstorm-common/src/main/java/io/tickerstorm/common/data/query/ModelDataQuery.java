@@ -15,5 +15,10 @@ public class ModelDataQuery implements DataFeedQuery {
   public LocalDateTime from = LocalDateTime.now().minusYears(1);
   public LocalDateTime until = LocalDateTime.now();
   public OrderBy sort = OrderBy.DESC;
+  
+  @Override
+  public String id() {
+    return id;
+  }
 
 }

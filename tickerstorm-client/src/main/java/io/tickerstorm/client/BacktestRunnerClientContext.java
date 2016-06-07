@@ -18,7 +18,7 @@ import org.springframework.jms.core.JmsTemplate;
 
 import com.appx.h2o.H2ORestClient;
 
-import io.tickerstorm.common.data.CommonContext;
+import io.tickerstorm.common.CommonContext;
 import io.tickerstorm.common.data.eventbus.ByDestinationNameJmsResolver;
 import io.tickerstorm.common.data.eventbus.Destinations;
 import io.tickerstorm.common.data.eventbus.EventBusToJMSBridge;
@@ -42,26 +42,26 @@ public class BacktestRunnerClientContext {
 
   // SENDERS
   @Bean
-  public EventBusToJMSBridge buildQueryJmsBridge(@Qualifier("query") MBassador<DataFeedQuery> eventbus, JmsTemplate template) {
+  public EventBusToJMSBridge buildQueryJmsBridge(@Qualifier(Destinations.HISTORICAL_DATA_QUERY_BUS) MBassador<DataFeedQuery> eventbus, JmsTemplate template) {
     return new EventBusToJMSBridge(eventbus, Destinations.QUEUE_QUERY, template);
   }
 
   @Bean
-  public EventBusToJMSBridge buildCommandsJmsBridge(@Qualifier("commands") MBassador<Serializable> eventbus, JmsTemplate template) {
+  public EventBusToJMSBridge buildCommandsJmsBridge(@Qualifier(Destinations.COMMANDS_BUS) MBassador<Serializable> eventbus, JmsTemplate template) {
     return new EventBusToJMSBridge(eventbus, Destinations.TOPIC_COMMANDS, template);
   }
 
 
   // RECEIVERS
   @Bean
-  public JMSToEventBusBridge buildRealtimeEventBridge(@Qualifier("realtime") MBassador<MarketData> realtimeBus) {
+  public JMSToEventBusBridge buildRealtimeEventBridge(@Qualifier(Destinations.REALTIME_MARKETDATA_BUS) MBassador<MarketData> realtimeBus) {
     JMSToEventBusBridge bridge = new JMSToEventBusBridge();
     bridge.setRealtimeBus(realtimeBus);
     return bridge;
   }
 
   @Bean
-  public JMSToEventBusBridge buildNotificationsEventBridge(@Qualifier("notification") MBassador<Serializable> bus) {
+  public JMSToEventBusBridge buildNotificationsEventBridge(@Qualifier(Destinations.NOTIFICATIONS_BUS) MBassador<Serializable> bus) {
     JMSToEventBusBridge bridge = new JMSToEventBusBridge();
     bridge.setNotificationBus(bus);
     bridge.setExplodeCollections(true);

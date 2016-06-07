@@ -1,11 +1,6 @@
 package io.tickerstorm.client;
 
-import java.io.File;
 import java.io.Serializable;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.util.concurrent.Future;
 
 import javax.annotation.PostConstruct;
 
@@ -15,45 +10,28 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
-import org.springframework.stereotype.Service;
 
-import com.appx.h2o.H2ORestClient;
-
+import io.tickerstorm.common.data.eventbus.Destinations;
 import io.tickerstorm.common.data.query.DataFeedQuery;
-import io.tickerstorm.common.data.query.HistoricalFeedQuery;
-import io.tickerstorm.common.entity.BaseMarker;
-import io.tickerstorm.common.entity.Candle;
-import io.tickerstorm.common.entity.Command;
-import io.tickerstorm.common.entity.Marker;
-import io.tickerstorm.common.entity.Markers;
-import io.tickerstorm.common.entity.Notification;
 import net.engio.mbassy.bus.MBassador;
-import net.engio.mbassy.listener.Handler;
-import water.bindings.pojos.ImportFilesV3;
-import water.bindings.pojos.ParseSetupV3;
-import water.bindings.pojos.ParseV3;
 
-@Service
-public class BacktestRunnerClient implements ApplicationListener<ContextRefreshedEvent> {
+
+public abstract class BacktestRunnerClient implements ApplicationListener<ContextRefreshedEvent> {
 
   private static final Logger logger = LoggerFactory.getLogger(BacktestRunnerClient.class);
   private static final String clientName = "TickerStorm client";
 
-  @Qualifier("query")
+  @Qualifier(Destinations.HISTORICAL_DATA_QUERY_BUS)
   @Autowired
   private MBassador<DataFeedQuery> queryBus;
 
-  @Qualifier("commands")
+  @Qualifier(Destinations.COMMANDS_BUS)
   @Autowired
   private MBassador<Serializable> commandsBus;
 
-  @Qualifier("notification")
+  @Qualifier(Destinations.NOTIFICATIONS_BUS)
   @Autowired
   private MBassador<Serializable> notificationBus;
-
-  @Autowired
-  private H2ORestClient h2oClient;
-
 
   @PostConstruct
   protected void init() throws Exception {
@@ -61,55 +39,13 @@ public class BacktestRunnerClient implements ApplicationListener<ContextRefreshe
     notificationBus.subscribe(this);
   }
 
-  @Handler
-  public void onCommandNotification(BaseMarker data) throws Exception {
+  public void onStart() {
 
-    logger.info("Marker : " + ((BaseMarker) data).markers);
-    logger.info("Marker : " + ((BaseMarker) data).expect);
-
-    if (Markers.is((Marker) data, Markers.QUERY_END) && ((BaseMarker) data).expect == 0) {
-      Command marker = new Command(clientName, Instant.now());
-      marker.addMarker(Markers.SESSION_END.toString());
-
-      Thread.sleep(2000);
-      commandsBus.publish(marker);
-    }
-  }
-
-  @Handler
-  public void onCommandNotification(Notification not) throws Exception {
-
-    logger.debug("Client recieved notification " + not.toString());
-
-    if (Markers.is((Marker) not, Markers.CSV_CREATED)) {
-      String path = not.getProperties().get("output.file.csv.path");
-
-      assert new File(path).exists() : "File " + path + " doesn't exist";
-
-      ImportFilesV3 importF = h2oClient.importFiles(path);
-      ParseSetupV3 setup = h2oClient.guessSetup(importF);
-      Future<ParseV3> parse = h2oClient.parse(setup);
-
-    }
   }
 
   @Override
   public void onApplicationEvent(ContextRefreshedEvent arg0) {
-
-    Command marker = new Command(clientName);
-    marker.addMarker(Markers.SESSION_START.toString());
-    marker.config.put("output.file.csv.path", "/tmp/MarketDataFile-" + Instant.now() + ".csv");
-    commandsBus.publish(marker);
-
-    HistoricalFeedQuery query = new HistoricalFeedQuery("TOL");
-    query.from = LocalDateTime.of(2015, 6, 10, 0, 0);
-    query.until = LocalDateTime.of(2015, 6, 20, 0, 0);
-    query.source = "google";
-    query.periods.add(Candle.MIN_1_INTERVAL);
-    query.zone = ZoneOffset.ofHours(-7);
-    query.stream = "TestModel";
-    queryBus.publish(query);
-
+    onStart();
   }
 
 

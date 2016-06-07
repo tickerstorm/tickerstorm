@@ -22,7 +22,7 @@ import org.springframework.data.cassandra.repository.config.EnableCassandraRepos
 import org.springframework.jms.annotation.EnableJms;
 import org.springframework.jms.core.JmsTemplate;
 
-import io.tickerstorm.common.data.CommonContext;
+import io.tickerstorm.common.CommonContext;
 import io.tickerstorm.common.data.eventbus.ByDestinationNameJmsResolver;
 import io.tickerstorm.common.data.eventbus.Destinations;
 import io.tickerstorm.common.data.eventbus.EventBusToEventBusBridge;

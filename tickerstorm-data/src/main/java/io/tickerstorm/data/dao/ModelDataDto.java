@@ -56,7 +56,7 @@ public class ModelDataDto implements Serializable {
 
       if (StringUtils.isEmpty(collectionName) && !row.containsKey(collectionName))
 
-        row.put(k, f);
+        row.put(f.getName(), f);
 
       else if (!StringUtils.isEmpty(collectionName) && row.containsKey(collectionName))
 

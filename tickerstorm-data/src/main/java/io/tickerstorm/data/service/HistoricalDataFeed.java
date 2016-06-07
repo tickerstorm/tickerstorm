@@ -19,6 +19,7 @@ import org.springframework.stereotype.Repository;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
 
+import io.tickerstorm.common.data.eventbus.Destinations;
 import io.tickerstorm.common.data.query.DataFeedQuery;
 import io.tickerstorm.common.data.query.HistoricalFeedQuery;
 import io.tickerstorm.common.entity.BaseMarker;
@@ -36,15 +37,15 @@ public class HistoricalDataFeed {
 
   private static final Logger logger = LoggerFactory.getLogger(HistoricalDataFeed.class);
 
-  @Qualifier("realtime")
+  @Qualifier(Destinations.REALTIME_MARKETDATA_BUS)
   @Autowired
   private MBassador<MarketData> realtimeBus;
 
-  @Qualifier("notification")
+  @Qualifier(Destinations.NOTIFICATIONS_BUS)
   @Autowired
   private MBassador<Serializable> notificationBus;
 
-  @Qualifier("query")
+  @Qualifier(Destinations.HISTORICAL_DATA_QUERY_BUS)
   @Autowired
   private MBassador<DataFeedQuery> queryBus;
 

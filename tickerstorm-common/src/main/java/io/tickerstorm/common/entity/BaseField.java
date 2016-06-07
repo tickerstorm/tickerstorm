@@ -103,8 +103,25 @@ public class BaseField<T> implements Field<T> {
    */
   public BaseField(String eventId, String stream, String field, T value) {
     this.field = field;
+
+    if (value == null)
+      throw new IllegalArgumentException("Value must not be null");
+
     this.value = value;
     this.type = value.getClass();
+    this.eventId = eventId;
+    this.stream = stream;
+  }
+
+  protected BaseField(String eventId, String stream, String field, T value, Class<?> clazz) {
+    this.field = field;
+    this.value = value;
+
+    if (value == null)
+      this.type = clazz;
+    else
+      this.type = value.getClass();
+
     this.eventId = eventId;
     this.stream = stream;
   }

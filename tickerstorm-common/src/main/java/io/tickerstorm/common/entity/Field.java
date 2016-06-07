@@ -95,7 +95,7 @@ public interface Field<T> extends Serializable {
     String field = parseField(value);
     String eventId = parseEventId(value);
     String stream = parseStream(value);
-    return new BaseField(eventId, stream, field, vals);
+    return new BaseField(eventId, stream, field, vals, clazz);
 
   }
 

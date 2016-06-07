@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.PropertySource;
 
-import io.tickerstorm.common.data.CommonContext;
+import io.tickerstorm.common.CommonContext;
 import io.tickerstorm.data.TestMarketDataServiceConfig;
 import io.tickerstorm.strategy.StrategyServiceTestApplication;
 
