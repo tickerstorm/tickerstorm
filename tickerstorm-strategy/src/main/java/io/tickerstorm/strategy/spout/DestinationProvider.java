@@ -5,9 +5,8 @@ import javax.jms.Destination;
 import javax.jms.Session;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.storm.jms.JmsProvider;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import backtype.storm.contrib.jms.JmsProvider;
 
 @SuppressWarnings("serial")
 public class DestinationProvider implements JmsProvider {

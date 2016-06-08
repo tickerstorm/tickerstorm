@@ -7,15 +7,16 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
+import org.apache.storm.topology.OutputFieldsDeclarer;
+import org.apache.storm.tuple.Fields;
+import org.apache.storm.tuple.Tuple;
+import org.apache.storm.tuple.Values;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Lists;
 
-import backtype.storm.topology.OutputFieldsDeclarer;
-import backtype.storm.tuple.Tuple;
-import backtype.storm.tuple.Values;
 import io.tickerstorm.common.entity.BaseField;
 import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.strategy.util.CacheManager;
@@ -29,7 +30,7 @@ public class BasicStatsBolt extends BaseBolt {
 
   @Override
   public void declareOutputFields(OutputFieldsDeclarer dec) {
-    dec.declare(new backtype.storm.tuple.Fields("simple-statistics"));
+    dec.declare(new Fields("simple-statistics"));
   }
 
   @Override

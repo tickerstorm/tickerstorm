@@ -4,6 +4,8 @@ import javax.jms.ConnectionFactory;
 import javax.jms.Session;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
+import org.apache.storm.jms.bolt.JmsBolt;
+import org.apache.storm.jms.spout.JmsSpout;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,8 +17,6 @@ import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.jms.annotation.EnableJms;
 
-import backtype.storm.contrib.jms.bolt.JmsBolt;
-import backtype.storm.contrib.jms.spout.JmsSpout;
 import io.tickerstorm.common.CommonContext;
 import io.tickerstorm.common.data.eventbus.Destinations;
 import io.tickerstorm.strategy.bolt.FieldTypeSplittingBolt;

@@ -10,8 +10,9 @@ import javax.jms.Message;
 import javax.jms.ObjectMessage;
 import javax.jms.Session;
 
-import backtype.storm.contrib.jms.JmsMessageProducer;
-import backtype.storm.tuple.Tuple;
+import org.apache.storm.jms.JmsMessageProducer;
+import org.apache.storm.tuple.Tuple;
+
 import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.entity.MarketData;
 import io.tickerstorm.strategy.util.TupleUtil;

@@ -3,11 +3,12 @@ package io.tickerstorm.strategy.backtest;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
+import org.apache.storm.Config;
+import org.apache.storm.LocalCluster;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import backtype.storm.Config;
-import backtype.storm.LocalCluster;
+
 
 @Service
 public class BacktestTopology {

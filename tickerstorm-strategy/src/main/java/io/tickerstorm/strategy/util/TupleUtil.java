@@ -13,9 +13,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.google.common.collect.Sets;
+import org.apache.storm.tuple.Fields;
+import org.apache.storm.tuple.Tuple;
 
-import backtype.storm.tuple.Tuple;
+import com.google.common.collect.Sets;
 import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.entity.Marker;
 import io.tickerstorm.common.entity.MarketData;
@@ -46,7 +47,7 @@ public class TupleUtil {
   public static Map<String, Field<?>> flattenFields(Tuple tuple) {
 
     Map<String, Field<?>> columns = new HashMap<>();
-    backtype.storm.tuple.Fields fields = tuple.getFields();
+    Fields fields = tuple.getFields();
 
     for (String f : fields) {
 
@@ -81,7 +82,7 @@ public class TupleUtil {
   public static HashMap<String, Object> toMap(Tuple tuple) {
 
     HashMap<String, Object> columns = new HashMap<>();
-    backtype.storm.tuple.Fields fields = tuple.getFields();
+    Fields fields = tuple.getFields();
 
     for (String f : fields) {
 
@@ -100,10 +101,10 @@ public class TupleUtil {
 
   }
 
-  public static List<Field<?>> listFields(Tuple tuple) {
+  public static List<Field<?>> listFields(org.apache.storm.tuple.Tuple tuple) {
 
     List<Field<?>> columns = new ArrayList<>();
-    backtype.storm.tuple.Fields fields = tuple.getFields();
+    Fields fields = tuple.getFields();
 
     for (String f : fields) {
 

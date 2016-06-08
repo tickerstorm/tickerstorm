@@ -1,7 +1,10 @@
 package io.tickerstorm.strategy.bolt;
 
-import backtype.storm.topology.OutputFieldsDeclarer;
-import backtype.storm.tuple.Tuple;
+
+import org.apache.storm.topology.OutputFieldsDeclarer;
+import org.apache.storm.tuple.Fields;
+import org.apache.storm.tuple.Tuple;
+
 import io.tickerstorm.common.entity.Field;
 
 @SuppressWarnings("serial")
@@ -33,7 +36,7 @@ public class NumericChangeBolt extends BaseBolt {
 
   @Override
   public void declareOutputFields(OutputFieldsDeclarer declarer) {
-    declarer.declare(new backtype.storm.tuple.Fields(Field.Name.CHANGE.field()));
+    declarer.declare(new Fields(Field.Name.CHANGE.field()));
   }
 
 }

@@ -8,9 +8,8 @@ import javax.jms.Message;
 import javax.jms.Session;
 
 import org.apache.commons.lang3.StringUtils;
-
-import backtype.storm.contrib.jms.JmsMessageProducer;
-import backtype.storm.tuple.Tuple;
+import org.apache.storm.jms.JmsMessageProducer;
+import org.apache.storm.tuple.Tuple;
 
 @SuppressWarnings("serial")
 public class NotificationMessageProducer implements JmsMessageProducer {

@@ -1,9 +1,9 @@
 package io.tickerstorm.strategy.bolt;
 
+import org.apache.storm.tuple.Tuple;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import backtype.storm.tuple.Tuple;
 import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.entity.MarketData;
 import io.tickerstorm.strategy.util.Clock;

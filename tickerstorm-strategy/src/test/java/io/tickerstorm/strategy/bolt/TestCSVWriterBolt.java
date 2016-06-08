@@ -12,6 +12,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.storm.task.OutputCollector;
+import org.apache.storm.task.TopologyContext;
+import org.apache.storm.tuple.Fields;
+import org.apache.storm.tuple.Tuple;
+import org.apache.storm.tuple.TupleImpl;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
@@ -22,10 +27,6 @@ import org.testng.annotations.Test;
 
 import com.google.common.collect.Sets;
 
-import backtype.storm.task.OutputCollector;
-import backtype.storm.task.TopologyContext;
-import backtype.storm.tuple.Tuple;
-import backtype.storm.tuple.TupleImpl;
 import io.tickerstorm.common.entity.BaseField;
 import io.tickerstorm.common.entity.Candle;
 import io.tickerstorm.common.entity.Command;
@@ -52,7 +53,7 @@ public class TestCSVWriterBolt {
     Mockito.doNothing().when(collector).ack(Mockito.any(Tuple.class));
     bolt.prepare(config, context, collector);
 
-    backtype.storm.tuple.Fields f = new backtype.storm.tuple.Fields(MARKER.field(), MARKETDATA.field(), SMA.field(), "category");
+    Fields f = new Fields(MARKER.field(), MARKETDATA.field(), SMA.field(), "category");
 
     Mockito.doReturn("1").when(context).getComponentId(1);
     Mockito.doReturn(f).when(context).getComponentOutputFields("1", "1");
