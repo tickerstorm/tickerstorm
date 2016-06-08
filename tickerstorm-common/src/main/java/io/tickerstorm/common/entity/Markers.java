@@ -34,7 +34,15 @@ public enum Markers {
   /**
    * Backtest session end
    */
-  CSV_CREATED("csv_created"),;
+  CSV_CREATED("csv_created"),
+  /**
+   * Backtest session end
+   */
+  MODEL_DATA_SAVED("model_data_saved"),
+  /**
+   * Backtest session end
+   */
+  MARKET_DATA_SAVED("market_data_saved");
 
 
   public String marker;

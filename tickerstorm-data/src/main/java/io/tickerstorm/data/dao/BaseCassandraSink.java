@@ -18,6 +18,7 @@ import org.springframework.data.cassandra.core.CassandraOperations;
 
 import com.datastax.driver.core.ExecutionInfo;
 import com.datastax.driver.core.ResultSetFuture;
+import com.google.common.collect.Lists;
 
 import net.engio.mbassy.listener.Handler;
 
@@ -85,7 +86,7 @@ public abstract class BaseCassandraSink<T> {
         }
 
       } else if (d != null && batchSize() == 1) {
-        persist(d);
+        persist(Lists.newArrayList(d));
       }
 
     } catch (Exception e) {
@@ -95,8 +96,6 @@ public abstract class BaseCassandraSink<T> {
   }
 
   protected abstract void persist(List<T> batch);
-
-  protected abstract void persist(T data);
 
   protected Serializable convert(Serializable data) {
     return data;

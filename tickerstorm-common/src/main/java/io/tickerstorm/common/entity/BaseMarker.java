@@ -10,13 +10,18 @@ public class BaseMarker implements Marker, Stream {
   public static final String TYPE = "marker";
   public Integer expect = null;
   public String stream;
-  
+
   public Set<String> markers = new HashSet<>();
 
-  public String id = UUID.randomUUID().toString();
+  public final String id;
 
   public BaseMarker(String id, String stream) {
     this.id = id;
+    this.stream = stream;
+  }
+
+  public BaseMarker(String stream) {
+    this.id = UUID.randomUUID().toString();
     this.stream = stream;
   }
 

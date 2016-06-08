@@ -3,6 +3,7 @@ package io.tickerstorm.data.dao;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -15,21 +16,29 @@ import org.springframework.stereotype.Repository;
 
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.SimpleStatement;
+import com.google.common.collect.Maps;
 
+import io.tickerstorm.common.data.eventbus.Destinations;
+import io.tickerstorm.common.entity.BaseMarker;
+import io.tickerstorm.common.entity.Markers;
 import net.engio.mbassy.bus.MBassador;
 import net.engio.mbassy.listener.Listener;
 import net.engio.mbassy.listener.References;
 
-@DependsOn(value={"cassandraSetup"})
+@DependsOn(value = {"cassandraSetup"})
 @Repository
 @Listener(references = References.Strong)
 public class ModelDataCassandraSink extends BaseCassandraSink<ModelDataDto> {
-  
+
   protected static final org.slf4j.Logger logger = LoggerFactory.getLogger(ModelDataCassandraSink.class);
 
-  @Qualifier("modelData")
+  @Qualifier(Destinations.MODEL_DATA_BUS)
   @Autowired
   private MBassador<Map<String, Object>> modelDataBus;
+
+  @Qualifier(Destinations.NOTIFICATIONS_BUS)
+  @Autowired
+  private MBassador<Serializable> notificationsBus;
 
   private PreparedStatement insert;
 
@@ -70,47 +79,41 @@ public class ModelDataCassandraSink extends BaseCassandraSink<ModelDataDto> {
     return s;
   }
 
-  /*
-   * @Override protected void persist(List<Object> data) { try { synchronized (data) { logger.debug(
-   * "Persisting " + data.size() + " records, " + count.addAndGet(data.size()) + " total saved and "
-   * + received.get() + " received"); dao.save((List) data); }
-   * 
-   * } catch (Exception e) { logger.error(e.getMessage(), e); } }
-   */
-
   @Override
   protected void persist(List<ModelDataDto> data) {
     try {
       synchronized (data) {
+
+        logger.debug(
+            "Persisting " + data.size() + " records, " + count.addAndGet(data.size()) + " total saved and " + received.get() + " received");
         
         dao.save(data);
         
-//        logger.debug(
-//            "Persisting " + data.size() + " records, " + count.addAndGet(data.size()) + " total saved and " + received.get() + " received");
-//
-//        BatchStatement batch = new BatchStatement();
-//        for (ModelDataDto o : data) {
-//          batch.add(insert.bind(o.primarykey.stream, BigInteger.valueOf(o.primarykey.date), o.primarykey.timestamp, o.fields));
-//        }
-//
-//        org.springframework.cassandra.core.Cancellable c = session.executeAsynchronously(batch, listener);
-      
+        Map<String, Integer> streamCounts = countEntries(data);
+
+        for (Entry<String, Integer> e : streamCounts.entrySet()) {
+          BaseMarker marker = new BaseMarker(e.getKey());
+          marker.addMarker(Markers.MODEL_DATA_SAVED.toString());
+          marker.expect = e.getValue();
+          notificationsBus.publishAsync(marker);
+        }
+
       }
 
     } catch (Exception e) {
       logger.error(e.getMessage(), e);
     }
   }
+  
+  private Map<String, Integer> countEntries(List<ModelDataDto> data){
+    Map<String, Integer> streamCounts = Maps.newHashMap();
+    for (ModelDataDto dto : data) {
+      Integer count = streamCounts.putIfAbsent(dto.primarykey.stream, 1);
 
-  protected void persist(ModelDataDto data) {
-    try {
-
-      logger.debug("Persisting model data records, " + count.addAndGet(1) + " total saved and " + received.get() + " received");
-      dao.save((ModelDataDto) data);
-
-    } catch (Exception e) {
-      logger.error(e.getMessage(), e);
+      if (count != null)
+        streamCounts.replace(dto.primarykey.stream, (count+1));
     }
+    return streamCounts;
   }
 
-}
+};
