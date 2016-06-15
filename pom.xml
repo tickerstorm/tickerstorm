@@ -8,7 +8,7 @@
 	<modules>
 		<module>tickerstorm-data</module>
 		<module>tickerstorm-strategy</module>
-		<module>tickerstorm-client</module>
+		
 		<module>tickerstorm-common</module>
 		<module>tickerstorm-integration-test</module>
 	</modules>
