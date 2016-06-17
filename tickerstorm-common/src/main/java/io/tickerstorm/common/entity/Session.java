@@ -12,18 +12,18 @@ import net.engio.mbassy.bus.MBassador;
 @SuppressWarnings("serial")
 public class Session implements Serializable {
 
-  public final String id;
+  public final String stream;
   public final Map<String, String> config = new HashMap<>();
   private MBassador<Serializable> commandsBus;
   private final AtomicBoolean live = new AtomicBoolean(false);
 
   Session(MBassador<Serializable> commandBus) {
-    id = UUID.randomUUID().toString();
+    stream = UUID.randomUUID().toString();
     this.commandsBus = commandBus;
   };
 
   Session(String id, MBassador<Serializable> commandBus) {
-    this.id = id;
+    this.stream = id;
     this.commandsBus = commandBus;
   }
 
@@ -33,7 +33,7 @@ public class Session implements Serializable {
 
   public void start() {
     live.set(true);
-    Command marker = new Command(id, Instant.now());
+    Command marker = new Command(stream, Instant.now());
     marker.addMarker(Markers.SESSION_START.toString());
     marker.config.putAll(this.config);
     commandsBus.publish(marker);
@@ -45,7 +45,7 @@ public class Session implements Serializable {
   
   public void end() {
     live.set(false);
-    Command marker = new Command(id, Instant.now());
+    Command marker = new Command(stream, Instant.now());
     marker.addMarker(Markers.SESSION_END.toString());
     marker.config.putAll(this.config);
     commandsBus.publish(marker);
