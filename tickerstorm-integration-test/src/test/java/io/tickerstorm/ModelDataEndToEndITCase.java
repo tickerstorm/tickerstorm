@@ -24,6 +24,8 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import io.tickerstorm.common.data.eventbus.Destinations;
+import io.tickerstorm.common.data.query.DataFeedQuery;
+import io.tickerstorm.common.data.query.ModelDataQuery;
 import io.tickerstorm.common.entity.BaseMarker;
 import io.tickerstorm.common.entity.Candle;
 import io.tickerstorm.common.entity.Field;
@@ -65,6 +67,10 @@ public class ModelDataEndToEndITCase extends AbstractTestNGSpringContextTests {
   @Autowired
   private MBassador<Serializable> notificationBus;
 
+  @Qualifier(Destinations.HISTORICAL_DATA_QUERY_BUS)
+  @Autowired
+  private MBassador<DataFeedQuery> queryBus;
+
   @BeforeMethod
   public void init() throws Exception {
 
@@ -85,21 +91,33 @@ public class ModelDataEndToEndITCase extends AbstractTestNGSpringContextTests {
 
     AtomicBoolean triggeredModel = new AtomicBoolean(false);
     AtomicBoolean triggeredMarket = new AtomicBoolean(false);
+    AtomicBoolean triggeredRetro = new AtomicBoolean(false);
     VerifyModelDataStoredHandler handler1 = new VerifyModelDataStoredHandler(triggeredModel);
     VerifyMarketDataStoredHandler handler2 = new VerifyMarketDataStoredHandler(triggeredMarket);
+
     notificationBus.subscribe(handler1);
     notificationBus.subscribe(handler2);
 
+
     Candle c = new Candle("goog", "google", Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ONE, BigDecimal.ONE, "1m", 1000);
-    c.setStream(s.id);
+    c.setStream(s.stream);
     brokderFeed.publishAsync(c);
     Thread.sleep(8000);
 
     Assert.assertTrue(triggeredModel.get());
     Assert.assertTrue(triggeredMarket.get());
 
+    ModelDataQuery q = new ModelDataQuery(s.stream);
+    VerifyRetroModelQueryEnded handler3 = new VerifyRetroModelQueryEnded(triggeredRetro, q);
+    notificationBus.subscribe(handler3);
+    queryBus.publish(q);
+    
+    Thread.sleep(2000);
+    Assert.assertTrue(triggeredRetro.get());
+
     notificationBus.unsubscribe(handler1);
     notificationBus.unsubscribe(handler2);
+    notificationBus.unsubscribe(handler3);
   }
 
   private class VerifyMarketDataStoredHandler {
@@ -119,6 +137,26 @@ public class ModelDataEndToEndITCase extends AbstractTestNGSpringContextTests {
     }
   }
 
+  private class VerifyRetroModelQueryEnded {
+
+    AtomicBoolean result;
+    ModelDataQuery q;
+
+    public VerifyRetroModelQueryEnded(AtomicBoolean result, ModelDataQuery q) {
+      this.result = result;
+      this.q = q;
+    }
+
+    @Handler(condition = "msg.markers.contains('query_end')")
+    public void onData(BaseMarker marker) throws Exception {
+
+      if (marker.id.equals(q.id) && marker.markers.contains(Markers.QUERY_END.toString())) {
+        result.set(true);
+      }
+    }
+
+  }
+
   private class VerifyModelDataStoredHandler {
 
     AtomicBoolean result;
@@ -127,10 +165,10 @@ public class ModelDataEndToEndITCase extends AbstractTestNGSpringContextTests {
       this.result = result;
     }
 
-    @Handler
+    @Handler(condition = "msg.markers.contains('model_data_saved')")
     public void onData(BaseMarker marker) throws Exception {
 
-      if (s.id.equals(marker.stream) && marker.markers.contains(Markers.MODEL_DATA_SAVED.toString())) {
+      if (s.stream.equals(marker.stream) && marker.markers.contains(Markers.MODEL_DATA_SAVED.toString())) {
 
         Assert.assertEquals(new Integer(3), marker.expect);
 
