@@ -78,17 +78,27 @@ public class CacheManager {
   }
 
   /**
-   * Build a common key for the field regardless of the period
+   * Build a common key for a field
    * 
    * @param f
    * @return
    */
-  private static StringBuffer buildKey(Field<?> f) {
-
+  public static StringBuffer buildKey(Field<?> f) {
     return new StringBuffer(MarketData.parseSource(f.getEventId())).append(MarketData.parseSymbol(f.getEventId()))
         .append(Candle.parseInterval(f.getEventId()));
   }
 
+  /**
+   * Build a common key for market data
+   * 
+   * @param f
+   * @return
+   */
+  public static StringBuffer buildKey(MarketData f) {
+    return new StringBuffer(f.getStream()).append("|").append(f.getSymbol()).append("|")
+        .append(Candle.parseInterval(f.getEventId()));
+  }
+  
   /**
    * Build a key factoring in period which makes each time series unique for the period
    * 

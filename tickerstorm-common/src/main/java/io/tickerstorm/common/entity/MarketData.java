@@ -2,68 +2,29 @@ package io.tickerstorm.common.entity;
 
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.Map;
 import java.util.Set;
 
-public interface MarketData extends Event, Stream, Serializable {
+public interface MarketData extends Event, Stream, Serializable, Comparable<MarketData> {
 
-  public String getSymbol();
+  public static final Comparator<MarketData> SORT_BY_TIMESTAMP = new Comparator<MarketData>() {
 
-  public Instant getTimestamp();
+    @Override
+    public int compare(MarketData o1, MarketData o2) {
+      return o2.getTimestamp().compareTo(o1.getTimestamp());
+    }
 
-  public String getSource();
+  };
 
-  public String getStream();
+  public static final Comparator<MarketData> SORT_REVERSE_TIMESTAMP = new Comparator<MarketData>() {
 
-  /**
-   * Format: source|symbol|timestamp
-   * 
-   * @return
-   */
-  default String getEventId() {
-    return new StringBuffer(getSource()).append("|").append(getSymbol()).append("|").append(getTimestamp().toEpochMilli()).toString();
-  }
+    @Override
+    public int compare(MarketData o1, MarketData o2) {
+      return o1.getTimestamp().compareTo(o2.getTimestamp());
+    }
 
-  default Map<String, Field<?>> getFieldsAsMap() {
-    return Field.toMap(getFields());
-  }
-
-  public static String[] parseEventId(String eventId) {
-    String[] parts = eventId.split("\\|");
-    return parts;
-  }
-
-  public static String parseSymbol(String eventId) {
-    return MarketData.parseEventId(eventId)[1];
-  }
-
-  public static String parseSource(String eventId) {
-    return MarketData.parseEventId(eventId)[0];
-  }
-
-  public static Instant parseTimestamp(String eventId) {
-    String part = MarketData.parseEventId(eventId)[2];
-    return Instant.ofEpochMilli(Long.valueOf(part));
-  }
-
-  public Set<Field<?>> getFields();
-
-  public static String getMarketDataType(Set<Field<?>> fields) {
-
-    Field<String> interval = (Field<String>) Field.findField(Field.Name.INTERVAL.field(), fields);
-
-    if (interval != null)
-      return Candle.TYPE;
-
-    if (Field.findField(Field.Name.ASK.field(), fields) != null)
-      return Quote.TYPE;
-
-    if (Field.findField(Field.Name.PRICE.field(), fields) != null)
-      return Tick.TYPE;
-
-    throw new IllegalArgumentException("Unknown market data type");
-
-  }
+  };
 
   public static MarketData build(Set<Field<?>> fields) {
 
@@ -84,5 +45,63 @@ public interface MarketData extends Event, Stream, Serializable {
     throw new IllegalArgumentException("Unknown market data type");
 
   }
+
+  public static String getMarketDataType(Set<Field<?>> fields) {
+
+    Field<String> interval = (Field<String>) Field.findField(Field.Name.INTERVAL.field(), fields);
+
+    if (interval != null)
+      return Candle.TYPE;
+
+    if (Field.findField(Field.Name.ASK.field(), fields) != null)
+      return Quote.TYPE;
+
+    if (Field.findField(Field.Name.PRICE.field(), fields) != null)
+      return Tick.TYPE;
+
+    throw new IllegalArgumentException("Unknown market data type");
+
+  }
+  
+  public static String[] parseEventId(String eventId) {
+    String[] parts = eventId.split("\\|");
+    return parts;
+  }
+
+  public static String parseSource(String eventId) {
+    return MarketData.parseEventId(eventId)[0];
+  }
+
+  public static String parseSymbol(String eventId) {
+    return MarketData.parseEventId(eventId)[1];
+  }
+
+  public static Instant parseTimestamp(String eventId) {
+    String part = MarketData.parseEventId(eventId)[2];
+    return Instant.ofEpochMilli(Long.valueOf(part));
+  }
+
+  /**
+   * Format: source|symbol|timestamp
+   * 
+   * @return
+   */
+  default String getEventId() {
+    return new StringBuffer(getSource()).append("|").append(getSymbol()).append("|").append(getTimestamp().toEpochMilli()).toString();
+  }
+
+  public Set<Field<?>> getFields();
+
+  default Map<String, Field<?>> getFieldsAsMap() {
+    return Field.toMap(getFields());
+  }
+
+  public String getSource();
+
+  public String getStream();
+
+  public String getSymbol();
+
+  public Instant getTimestamp();
 
 }

@@ -2,6 +2,7 @@ package io.tickerstorm.common.entity;
 
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -19,6 +20,8 @@ public abstract class BaseMarketData implements MarketData, Serializable {
   public String symbol;
   public String stream;
   protected Map<String, Field<?>> fields = new HashMap<>();
+
+  
 
   public BaseMarketData(Set<Field<?>> fs) {
 
@@ -45,6 +48,15 @@ public abstract class BaseMarketData implements MarketData, Serializable {
     this.timestamp = timestamp;
     this.source = source;
     this.stream = stream;
+  }
+
+  /**
+   * Items will be sorted in chronological order so that the newest event is always first
+   * in a collection
+   */
+  @Override
+  public int compareTo(MarketData o) {
+    return o.getTimestamp().compareTo(this.getTimestamp());
   }
 
   public Set<Field<?>> getFields() {
