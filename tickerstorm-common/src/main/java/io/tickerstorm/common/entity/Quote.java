@@ -124,10 +124,10 @@ public class Quote extends BaseMarketData {
   public Set<Field<?>> getFields() {
     Set<Field<?>> fields = new HashSet<Field<?>>();
     fields.addAll(super.getFields());
-    fields.add(new BaseField<BigDecimal>(getEventId(), stream, Field.Name.ASK.field(), ask));
-    fields.add(new BaseField<BigDecimal>(getEventId(), stream, Field.Name.BID.field(), bid));
-    fields.add(new BaseField<Integer>(getEventId(), stream, Field.Name.ASK_SIZE.field(), askSize));
-    fields.add(new BaseField<Integer>(getEventId(), stream, Field.Name.BID_SIZE.field(), bidSize));
+    fields.add(new BaseField<BigDecimal>(getEventId(), Field.Name.ASK.field(), ask));
+    fields.add(new BaseField<BigDecimal>(getEventId(), Field.Name.BID.field(), bid));
+    fields.add(new BaseField<Integer>(getEventId(), Field.Name.ASK_SIZE.field(), askSize));
+    fields.add(new BaseField<Integer>(getEventId(), Field.Name.BID_SIZE.field(), bidSize));
     return fields;
   }
 }

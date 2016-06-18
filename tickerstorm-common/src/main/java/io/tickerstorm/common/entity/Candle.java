@@ -22,8 +22,8 @@ public class Candle extends BaseMarketData {
 
   public static String parseInterval(String eventId) {
 
-    if (MarketData.parseEventId(eventId).length == 4) {
-      return MarketData.parseEventId(eventId)[3];
+    if (MarketData.parseEventId(eventId).length == 5) {
+      return MarketData.parseEventId(eventId)[4];
     }
 
     return null;
@@ -230,12 +230,12 @@ public class Candle extends BaseMarketData {
   @Override
   public Set<Field<?>> getFields() {
     Set<Field<?>> fields = super.getFields();
-    fields.add(new BaseField<BigDecimal>(getEventId(), stream, Field.Name.HIGH.field(), high));
-    fields.add(new BaseField<BigDecimal>(getEventId(), stream, Field.Name.LOW.field(), low));
-    fields.add(new BaseField<BigDecimal>(getEventId(), stream, Field.Name.OPEN.field(), open));
-    fields.add(new BaseField<BigDecimal>(getEventId(), stream, Field.Name.CLOSE.field(), close));
-    fields.add(new BaseField<Integer>(getEventId(), stream, Field.Name.VOLUME.field(), volume));
-    fields.add(new BaseField<String>(getEventId(), stream, Field.Name.INTERVAL.field(), interval));
+    fields.add(new BaseField<BigDecimal>(getEventId(), Field.Name.HIGH.field(), high));
+    fields.add(new BaseField<BigDecimal>(getEventId(), Field.Name.LOW.field(), low));
+    fields.add(new BaseField<BigDecimal>(getEventId(), Field.Name.OPEN.field(), open));
+    fields.add(new BaseField<BigDecimal>(getEventId(), Field.Name.CLOSE.field(), close));
+    fields.add(new BaseField<Integer>(getEventId(), Field.Name.VOLUME.field(), volume));
+    fields.add(new BaseField<String>(getEventId(), Field.Name.INTERVAL.field(), interval));
     return fields;
 
   }

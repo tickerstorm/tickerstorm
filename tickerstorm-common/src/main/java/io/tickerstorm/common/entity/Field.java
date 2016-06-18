@@ -16,7 +16,7 @@ import org.apache.commons.lang3.StringUtils;
  *
  * @param <T>
  */
-public interface Field<T> extends Serializable {
+public interface Field<T> extends Serializable, Comparable<Field<T>> {
 
   public enum Name {
 
@@ -31,7 +31,7 @@ public interface Field<T> extends Serializable {
                                     "discrete_fields", Collection.class,
                                     2), CONTINOUS_FIELDS("continous_fields", Collection.class, 3), TEMPORAL_FIELDS("temporal_fields",
                                         Collection.class, 4), CATEGORICAL_FIELDS("categorical_fields", Collection.class, 1), MIN("min",
-                                            Collection.class), MAX("max", Collection.class), CHANGE("buyholdsell", Collection.class);
+                                            Collection.class), MAX("max", Collection.class),PCT_CHANGE("pct_change", Collection.class), ABS_CHANGE("abs_change", Collection.class);
 
     private Class<?> type;
     private String field;
@@ -94,8 +94,7 @@ public interface Field<T> extends Serializable {
     Object vals = parseValue(value, clazz);
     String field = parseField(value);
     String eventId = parseEventId(value);
-    String stream = parseStream(value);
-    return new BaseField(eventId, stream, field, vals, clazz);
+    return new BaseField(eventId, field, vals, clazz);
 
   }
 
@@ -110,26 +109,39 @@ public interface Field<T> extends Serializable {
 
   }
 
+  /**
+   * Find the field's event id in the input string. This method is not compaible with the market data event's eventId. Must be a field's event id
+   * @param value
+   * @return
+   */
   static String parseEventId(String value) {
     String[] vals = value.split(":");
-    return vals[2];
+    return vals[1];
+  }
+  
+  /**
+   * Find the field's timestamp value from a serialized field string. This method is not compatible with the market data event's eventId. Must be a field's event id
+   * 
+   * @param value
+   * @return
+   */
+  static Instant parseTimestamp(String value){
+    return MarketData.parseTimestamp(parseEventId(value));
   }
 
 
   static String parseField(String value) {
     String[] vals = value.split("=");
     String[] fields = vals[0].split(":");
-    return fields[3];
+    return fields[2];
   }
 
   static String parseStream(String value) {
-    String[] vals = value.split("=");
-    String[] fields = vals[0].split(":");
-
-    if (fields[1].equalsIgnoreCase("null"))
-      return null;
-
-    return fields[1];
+    return MarketData.parseStream(parseEventId(value));
+  }
+  
+  static String parseSource(String value){
+    return MarketData.parseSource(parseEventId(value));
   }
 
   static Class<?> parseType(String value) {
@@ -197,15 +209,15 @@ public interface Field<T> extends Serializable {
 
   /**
    * 
-   * Serialized: type:stream:eventId:fieldName=value
+   * Serialized: type:eventId:fieldName=value
    * 
-   * type : 0, stream : 1, eventId: 2, name: 3
+   * type : 0, eventId: 1, name: 2
    * 
    * @return
    */
   default String serialize() {
-    StringBuffer buff = new StringBuffer(getFieldType().getName()).append(":").append(getStream()).append(":").append(getEventId())
-        .append(":").append(getName()).append("=").append(getValue());
+    StringBuffer buff = new StringBuffer(getFieldType().getName()).append(":").append(getEventId()).append(":").append(getName())
+        .append("=").append(getValue());
     return buff.toString();
   }
 

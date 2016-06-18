@@ -70,11 +70,12 @@ public class TestCSVWriterBolt {
     values.add(m);
     Candle md = new Candle("TOL", "Google", now, BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.TEN, Candle.MIN_1_INTERVAL,
         Integer.MAX_VALUE);
+    md.stream = "Default";
     values.add(md);
 
-    values.add(Sets.newHashSet(new BaseField<BigDecimal>(md.getEventId(), null, "sma", BigDecimal.ONE)));
+    values.add(Sets.newHashSet(new BaseField<BigDecimal>(md.getEventId(), "sma", BigDecimal.ONE)));
 
-    values.add(Sets.newHashSet(new BaseField<String>(md.getEventId(), null, "category", "Some String")));
+    values.add(Sets.newHashSet(new BaseField<String>(md.getEventId(), "category", "Some String")));
 
     Tuple t = new TupleImpl(context, values, 1, "1");
     bolt.execute(t);

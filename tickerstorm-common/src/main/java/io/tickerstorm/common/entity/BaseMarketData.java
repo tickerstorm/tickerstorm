@@ -2,7 +2,6 @@ package io.tickerstorm.common.entity;
 
 import java.io.Serializable;
 import java.time.Instant;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -21,7 +20,7 @@ public abstract class BaseMarketData implements MarketData, Serializable {
   public String stream;
   protected Map<String, Field<?>> fields = new HashMap<>();
 
-  
+
 
   public BaseMarketData(Set<Field<?>> fs) {
 
@@ -51,8 +50,8 @@ public abstract class BaseMarketData implements MarketData, Serializable {
   }
 
   /**
-   * Items will be sorted in chronological order so that the newest event is always first
-   * in a collection
+   * Items will be sorted in chronological order so that the newest event is always first in a
+   * collection
    */
   @Override
   public int compareTo(MarketData o) {
@@ -62,14 +61,14 @@ public abstract class BaseMarketData implements MarketData, Serializable {
   public Set<Field<?>> getFields() {
 
     Set<Field<?>> fields = new HashSet<Field<?>>();
-    fields.add(new BaseField<String>(getEventId(), stream, Field.Name.SYMBOL.field(), symbol));
-    fields.add(new BaseField<Instant>(getEventId(), stream, Field.Name.TIMESTAMP.field(), timestamp));
-    fields.add(new BaseField<String>(getEventId(), stream, Field.Name.SOURCE.field(), source));
+    fields.add(new BaseField<String>(getEventId(), Field.Name.SYMBOL.field(), symbol));
+    fields.add(new BaseField<Instant>(getEventId(), Field.Name.TIMESTAMP.field(), timestamp));
+    fields.add(new BaseField<String>(getEventId(), Field.Name.SOURCE.field(), source));
 
     if (!StringUtils.isEmpty(stream))
-      fields.add(new BaseField<String>(getEventId(), stream, Field.Name.STREAM.field(), stream));
+      fields.add(new BaseField<String>(getEventId(), Field.Name.STREAM.field(), stream));
     else
-      fields.add(new BaseField<String>(getEventId(), stream, Field.Name.STREAM.field(), String.class));
+      fields.add(new BaseField<String>(getEventId(), Field.Name.STREAM.field(), String.class));
 
     return fields;
 

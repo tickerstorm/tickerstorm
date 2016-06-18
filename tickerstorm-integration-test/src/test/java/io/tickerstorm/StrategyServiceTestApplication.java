@@ -1,4 +1,4 @@
-package io.tickerstorm.strategy;
+package io.tickerstorm;
 
 import java.net.URI;
 import java.util.Map;
@@ -20,6 +20,7 @@ import io.tickerstorm.common.data.eventbus.Destinations;
 import io.tickerstorm.common.data.eventbus.EventBusToJMSBridge;
 import io.tickerstorm.common.data.eventbus.JMSToEventBusBridge;
 import io.tickerstorm.common.entity.MarketData;
+import io.tickerstorm.strategy.StrategyServiceApplication;
 import net.engio.mbassy.bus.MBassador;
 
 @EnableAutoConfiguration
@@ -60,13 +61,13 @@ public class StrategyServiceTestApplication extends StrategyServiceApplication {
 
   // SENDERS
   @Bean
-  public EventBusToJMSBridge buildRealtimeJmsBridge(@Qualifier("realtime") MBassador<MarketData> eventbus, JmsTemplate template) {
+  public EventBusToJMSBridge buildRealtimeJmsBridge(@Qualifier(Destinations.REALTIME_MARKETDATA_BUS) MBassador<MarketData> eventbus, JmsTemplate template) {
     return new EventBusToJMSBridge(eventbus, Destinations.TOPIC_REALTIME_MARKETDATA, template);
   }
 
   // RECEIVERS
   @Bean
-  public JMSToEventBusBridge buildQueryEventBridge(@Qualifier("modelData") MBassador<Map<String, Object>> modelDataBus) {
+  public JMSToEventBusBridge buildQueryEventBridge(@Qualifier(Destinations.MODEL_DATA_BUS) MBassador<Map<String, Object>> modelDataBus) {
     JMSToEventBusBridge bridge = new JMSToEventBusBridge();
     bridge.setModelDataBus(modelDataBus);
     return bridge;

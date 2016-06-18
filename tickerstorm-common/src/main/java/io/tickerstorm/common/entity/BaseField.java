@@ -101,7 +101,7 @@ public class BaseField<T> implements Field<T> {
    * @param field
    * @param value
    */
-  public BaseField(String eventId, String stream, String field, T value) {
+  public BaseField(String eventId, String field, T value) {
     this.field = field;
 
     if (value == null)
@@ -110,10 +110,10 @@ public class BaseField<T> implements Field<T> {
     this.value = value;
     this.type = value.getClass();
     this.eventId = eventId;
-    this.stream = stream;
+    this.stream = MarketData.parseStream(eventId);
   }
 
-  protected BaseField(String eventId, String stream, String field, T value, Class<?> clazz) {
+  protected BaseField(String eventId, String field, T value, Class<?> clazz) {
     this.field = field;
     this.value = value;
 
@@ -123,7 +123,7 @@ public class BaseField<T> implements Field<T> {
       this.type = value.getClass();
 
     this.eventId = eventId;
-    this.stream = stream;
+    this.stream = MarketData.parseStream(eventId);
   }
 
   /**
@@ -133,12 +133,12 @@ public class BaseField<T> implements Field<T> {
    * @param field
    * @param clazz
    */
-  public BaseField(String eventId, String stream, String field, Class<?> clazz) {
+  public BaseField(String eventId, String field, Class<?> clazz) {
     this.field = field;
     this.value = null;
     this.type = clazz;
     this.eventId = eventId;
-    this.stream = stream;
+    this.stream = MarketData.parseStream(eventId);
   }
 
   @Override
@@ -161,8 +161,13 @@ public class BaseField<T> implements Field<T> {
   }
 
   @Override
+  public int compareTo(Field<T> o) {
+    return MarketData.parseTimestamp(o.getEventId()).compareTo(MarketData.parseTimestamp(this.getEventId()));
+  }
+  
+  @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this).add("name", this.field).add("value", this.value).add("class", this.type).add("eventId", eventId)
+    return MoreObjects.toStringHelper(this).add("stream", this.stream).add("name", this.field).add("value", this.value).add("class", this.type).add("eventId", eventId)
         .toString();
   }
 

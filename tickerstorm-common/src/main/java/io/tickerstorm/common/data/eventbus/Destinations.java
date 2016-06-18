@@ -10,6 +10,7 @@ public interface Destinations {
   public static final String QUEUE_MODEL_DATA = "queue.modeldata";
   public static final String QUEUE_RETRO_MODEL_DATA = "queue.retromodeldata";
   
+  public static final String HISTORICL_MARKETDATA_BUS = "historical";
   public static final String REALTIME_MARKETDATA_BUS = "realtime";
   public static final String BROKER_MARKETDATA_BUS = "brokerfeed";
   public static final String HISTORICAL_DATA_QUERY_BUS = "query";

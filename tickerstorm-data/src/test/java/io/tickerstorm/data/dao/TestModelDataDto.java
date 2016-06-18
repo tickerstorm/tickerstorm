@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import com.google.common.collect.Lists;
@@ -23,6 +24,11 @@ public class TestModelDataDto {
   private final Candle c =
       new Candle("goog", "google", Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ONE, BigDecimal.ONE, "1m", 1000);
 
+  @BeforeMethod
+  public void init(){
+    c.stream = "TestModelDataDto"; 
+  }
+  
   @Test
   public void testSerializeDeserializeModelData() {
 
@@ -51,7 +57,7 @@ public class TestModelDataDto {
     Map<String, Object> fields = (Map) c.getFieldsAsMap();
     fields.put("simple-statistics", Lists.newArrayList());
     ((ArrayList<Field<?>>) fields.get("simple-statistics"))
-        .add(new BaseField<BigDecimal>(c.getEventId(), c.getStream(), Field.Name.MIN.field(), BigDecimal.ONE));
+        .add(new BaseField<BigDecimal>(c.getEventId(), Field.Name.MIN.field(), BigDecimal.ONE));
 
 
     assertTrue(fields.size() > 0);

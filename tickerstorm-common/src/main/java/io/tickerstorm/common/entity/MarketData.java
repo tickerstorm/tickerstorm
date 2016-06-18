@@ -62,32 +62,37 @@ public interface MarketData extends Event, Stream, Serializable, Comparable<Mark
     throw new IllegalArgumentException("Unknown market data type");
 
   }
-  
+
   public static String[] parseEventId(String eventId) {
     String[] parts = eventId.split("\\|");
     return parts;
   }
 
-  public static String parseSource(String eventId) {
+  public static String parseStream(String eventId) {
     return MarketData.parseEventId(eventId)[0];
   }
-
-  public static String parseSymbol(String eventId) {
+  
+  public static String parseSource(String eventId) {
     return MarketData.parseEventId(eventId)[1];
   }
 
+  public static String parseSymbol(String eventId) {
+    return MarketData.parseEventId(eventId)[2];
+  }
+
   public static Instant parseTimestamp(String eventId) {
-    String part = MarketData.parseEventId(eventId)[2];
+    String part = MarketData.parseEventId(eventId)[3];
     return Instant.ofEpochMilli(Long.valueOf(part));
   }
 
   /**
-   * Format: source|symbol|timestamp
+   * Format: stream|source|symbol|timestamp
    * 
    * @return
    */
   default String getEventId() {
-    return new StringBuffer(getSource()).append("|").append(getSymbol()).append("|").append(getTimestamp().toEpochMilli()).toString();
+    return new StringBuffer(getStream()).append("|").append(getSource()).append("|").append(getSymbol()).append("|")
+        .append(getTimestamp().toEpochMilli()).toString();
   }
 
   public Set<Field<?>> getFields();

@@ -14,7 +14,6 @@ import org.springframework.context.annotation.PropertySource;
 
 import io.tickerstorm.common.CommonContext;
 import io.tickerstorm.data.TestMarketDataServiceConfig;
-import io.tickerstorm.strategy.StrategyServiceTestApplication;
 
 @EnableAutoConfiguration
 @Configuration

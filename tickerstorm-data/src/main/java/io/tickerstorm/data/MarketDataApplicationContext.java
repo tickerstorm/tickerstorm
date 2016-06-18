@@ -81,10 +81,10 @@ public class MarketDataApplicationContext {
     return template;
   }
 
-  @Qualifier("historical")
+  @Qualifier(Destinations.HISTORICL_MARKETDATA_BUS)
   @Bean(destroyMethod = "shutdown")
   public MBassador<MarketData> buildEventBus(IPublicationErrorHandler handler,
-      @Qualifier("brokerfeed") EventBusToEventBusBridge brokerFeed) {
+      @Qualifier(Destinations.BROKER_MARKETDATA_BUS) EventBusToEventBusBridge brokerFeed) {
     MBassador<MarketData> historical = new MBassador<MarketData>(new BusConfiguration().addFeature(Feature.SyncPubSub.Default())
         .addFeature(Feature.AsynchronousHandlerInvocation.Default(1, 4)).addFeature(Feature.AsynchronousMessageDispatch.Default())
         .addPublicationErrorHandler(handler).setProperty(Properties.Common.Id, "historical bus"));
@@ -94,18 +94,19 @@ public class MarketDataApplicationContext {
 
   // SENDERS
   @Bean
-  public EventBusToJMSBridge buildRealtimeJmsBridge(@Qualifier("realtime") MBassador<MarketData> eventbus, JmsTemplate template) {
+  public EventBusToJMSBridge buildRealtimeJmsBridge(@Qualifier(Destinations.REALTIME_MARKETDATA_BUS) MBassador<MarketData> eventbus,
+      JmsTemplate template) {
     return new EventBusToJMSBridge(eventbus, Destinations.TOPIC_REALTIME_MARKETDATA, template);
   }
 
   @Bean
-  public EventBusToJMSBridge buildRetroModelDataJmsBridge(@Qualifier("retroModelData") MBassador<Map<String, Object>> eventbus,
-      JmsTemplate template) {
+  public EventBusToJMSBridge buildRetroModelDataJmsBridge(
+      @Qualifier(Destinations.RETRO_MODEL_DATA_BUS) MBassador<Map<String, Object>> eventbus, JmsTemplate template) {
     return new EventBusToJMSBridge(eventbus, Destinations.QUEUE_RETRO_MODEL_DATA, template);
   }
 
   @Bean
-  public EventBusToJMSBridge buildNotificationsJmsBridge(@Qualifier("notification") MBassador<Serializable> eventbus,
+  public EventBusToJMSBridge buildNotificationsJmsBridge(@Qualifier(Destinations.NOTIFICATIONS_BUS) MBassador<Serializable> eventbus,
       JmsTemplate template) {
     return new EventBusToJMSBridge(eventbus, Destinations.TOPIC_NOTIFICATIONS, template);
   }
@@ -113,8 +114,9 @@ public class MarketDataApplicationContext {
 
   // RECEIVERS
   @Bean
-  public JMSToEventBusBridge buildQueryEventBridge(@Qualifier("query") MBassador<DataFeedQuery> queryBus,
-      @Qualifier("commands") MBassador<Serializable> commandsBus, @Qualifier("modelData") MBassador<Map<String, Object>> modelDataBus) {
+  public JMSToEventBusBridge buildQueryEventBridge(@Qualifier(Destinations.HISTORICAL_DATA_QUERY_BUS) MBassador<DataFeedQuery> queryBus,
+      @Qualifier(Destinations.COMMANDS_BUS) MBassador<Serializable> commandsBus,
+      @Qualifier(Destinations.MODEL_DATA_BUS) MBassador<Map<String, Object>> modelDataBus) {
     JMSToEventBusBridge bridge = new JMSToEventBusBridge();
     bridge.setQueryBus(queryBus);
     bridge.setCommandsBus(commandsBus);

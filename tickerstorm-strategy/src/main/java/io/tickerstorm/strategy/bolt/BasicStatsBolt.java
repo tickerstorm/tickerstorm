@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
+import org.apache.commons.math3.stat.descriptive.SynchronizedDescriptiveStatistics;
 import org.apache.storm.topology.OutputFieldsDeclarer;
 import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Tuple;
@@ -20,6 +21,7 @@ import com.google.common.collect.Lists;
 import io.tickerstorm.common.entity.BaseField;
 import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.strategy.util.CacheManager;
+import net.sf.ehcache.Element;
 
 @Component
 @SuppressWarnings("serial")
@@ -50,7 +52,7 @@ public class BasicStatsBolt extends BaseBolt {
 
       for (Field<BigDecimal> f : bg) {
 
-        DescriptiveStatistics ds = CacheManager.cacheAsDescriptive("md-cache", f, p);
+        DescriptiveStatistics ds = cache(CacheManager.buildKey(f).toString(), f, p);
 
         if (ds.getValues().length == p) {
           fields.add(new BaseField<BigDecimal>(f, Field.Name.MAX.field() + "-p" + p, new BigDecimal(ds.getMax())));
@@ -67,7 +69,7 @@ public class BasicStatsBolt extends BaseBolt {
 
       for (Field<Integer> f : is) {
 
-        DescriptiveStatistics ds = CacheManager.cacheAsDescriptive("md-cache", f, p);
+        DescriptiveStatistics ds = cache(CacheManager.buildKey(f).toString(), f, p);
 
         // Only compute statistics if we have enough periods to compute on in the array
         if (ds.getValues().length == p) {
@@ -79,6 +81,28 @@ public class BasicStatsBolt extends BaseBolt {
     }
     coll.emit(tuple, new Values(fields));
     ack(tuple);
+  }
+
+  private SynchronizedDescriptiveStatistics cache(String key, Field<?> f, int period) {
+    SynchronizedDescriptiveStatistics q = null;
+    try {
+
+      CacheManager.getInstance("md-cache").acquireWriteLockOnKey(key);
+      CacheManager.getInstance("md-cache").putIfAbsent(new Element(key, new SynchronizedDescriptiveStatistics(period)));
+
+      q = (SynchronizedDescriptiveStatistics) CacheManager.getInstance("md-cache").get(key).getObjectValue();
+
+      if (f.getFieldType().isAssignableFrom(BigDecimal.class))
+        q.addValue(((BigDecimal) f.getValue()).doubleValue());
+
+      if (f.getFieldType().isAssignableFrom(Integer.class))
+        q.addValue(((Integer) f.getValue()).doubleValue());
+
+    } finally {
+      CacheManager.getInstance("md-cache").releaseWriteLockOnKey(key);
+    }
+
+    return q;
   }
 
   @Override

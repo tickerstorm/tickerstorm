@@ -27,6 +27,8 @@ public class TestField {
     assertEquals(Field.parseField(vol.serialize()), vol.getName());
     assertEquals(Field.parseValue(vol.serialize(), Field.Name.VOLUME.fieldType()), vol.getValue());
     assertEquals(Field.parseStream(vol.serialize()), vol.getStream());
+    assertEquals(Field.parseSource(vol.serialize()), c.getSource());
+    assertEquals(Field.parseTimestamp(vol.serialize()), c.getTimestamp());
     assertEquals(Field.parseEventId(vol.serialize()), vol.getEventId());
 
   }
