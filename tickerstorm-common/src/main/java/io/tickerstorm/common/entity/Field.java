@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -18,6 +19,24 @@ import org.apache.commons.lang3.StringUtils;
  */
 public interface Field<T> extends Serializable, Comparable<Field<T>> {
 
+  public static final Comparator<Field<?>> SORT_BY_TIMESTAMP = new Comparator<Field<?>>() {
+
+    @Override
+    public int compare(Field<?> o1, Field<?> o2) {
+      return Field.parseTimestamp(o2.getEventId()).compareTo(Field.parseTimestamp(o1.getEventId()));
+    }
+
+  };
+
+  public static Comparator<Field<?>> SORT_REVERSE_TIMESTAMP = new Comparator<Field<?>>() {
+
+    @Override
+    public int compare(Field<?> o1, Field<?> o2) {
+      return Field.parseTimestamp(o1.getEventId()).compareTo(Field.parseTimestamp(o2.getEventId()));
+    }
+
+  };
+
   public enum Name {
 
     SYMBOL("symbol", String.class), TIMESTAMP("timestamp", Instant.class), SOURCE("source", String.class), STREAM("stream",
@@ -31,7 +50,8 @@ public interface Field<T> extends Serializable, Comparable<Field<T>> {
                                     "discrete_fields", Collection.class,
                                     2), CONTINOUS_FIELDS("continous_fields", Collection.class, 3), TEMPORAL_FIELDS("temporal_fields",
                                         Collection.class, 4), CATEGORICAL_FIELDS("categorical_fields", Collection.class, 1), MIN("min",
-                                            Collection.class), MAX("max", Collection.class),PCT_CHANGE("pct_change", Collection.class), ABS_CHANGE("abs_change", Collection.class);
+                                            Collection.class), MAX("max", Collection.class), PCT_CHANGE("pct_change",
+                                                Collection.class), ABS_CHANGE("abs_change", Collection.class);
 
     private Class<?> type;
     private String field;
@@ -110,7 +130,9 @@ public interface Field<T> extends Serializable, Comparable<Field<T>> {
   }
 
   /**
-   * Find the field's event id in the input string. This method is not compaible with the market data event's eventId. Must be a field's event id
+   * Find the field's event id in the input string. This method is not compaible with the market
+   * data event's eventId. Must be a field's event id
+   * 
    * @param value
    * @return
    */
@@ -118,14 +140,15 @@ public interface Field<T> extends Serializable, Comparable<Field<T>> {
     String[] vals = value.split(":");
     return vals[1];
   }
-  
+
   /**
-   * Find the field's timestamp value from a serialized field string. This method is not compatible with the market data event's eventId. Must be a field's event id
+   * Find the field's timestamp value from a serialized field string. This method is not compatible
+   * with the market data event's eventId. Must be a field's event id
    * 
    * @param value
    * @return
    */
-  static Instant parseTimestamp(String value){
+  static Instant parseTimestamp(String value) {
     return MarketData.parseTimestamp(parseEventId(value));
   }
 
@@ -139,8 +162,8 @@ public interface Field<T> extends Serializable, Comparable<Field<T>> {
   static String parseStream(String value) {
     return MarketData.parseStream(parseEventId(value));
   }
-  
-  static String parseSource(String value){
+
+  static String parseSource(String value) {
     return MarketData.parseSource(parseEventId(value));
   }
 
@@ -191,9 +214,15 @@ public interface Field<T> extends Serializable, Comparable<Field<T>> {
 
   public String getName();
 
-  public T getValue();
+  default Instant getTimestamp() {
+    return MarketData.parseTimestamp(getEventId());
+  }
 
-  public String getStream();
+  default String getStream() {
+    return MarketData.parseStream(getEventId());
+  }
+
+  public T getValue();
 
   default boolean isEmpty() {
 

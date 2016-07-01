@@ -11,7 +11,6 @@ public class BaseField<T> implements Field<T> {
     int result = 1;
     result = prime * result + ((eventId == null) ? 0 : eventId.hashCode());
     result = prime * result + ((field == null) ? 0 : field.hashCode());
-    result = prime * result + ((stream == null) ? 0 : stream.hashCode());
     result = prime * result + ((type == null) ? 0 : type.hashCode());
     result = prime * result + ((value == null) ? 0 : value.hashCode());
     return result;
@@ -37,11 +36,6 @@ public class BaseField<T> implements Field<T> {
         return false;
     } else if (!field.equals(other.field))
       return false;
-    if (stream == null) {
-      if (other.stream != null)
-        return false;
-    } else if (!stream.equals(other.stream))
-      return false;
     if (type == null) {
       if (other.type != null)
         return false;
@@ -59,7 +53,7 @@ public class BaseField<T> implements Field<T> {
   public final T value;
   public final Class<?> type;
   public final String eventId;
-  public final String stream;
+  // public final String stream;
 
   /**
    * Convenience constructor when extrapolating a new field based on an existing field of the same
@@ -74,7 +68,6 @@ public class BaseField<T> implements Field<T> {
     this.value = value;
     this.type = value.getClass();
     this.eventId = f.getEventId();
-    this.stream = f.getStream();
   }
 
 
@@ -91,7 +84,6 @@ public class BaseField<T> implements Field<T> {
     this.value = null;
     this.type = clazz;
     this.eventId = f.getEventId();
-    this.stream = f.getStream();
   }
 
   /**
@@ -110,7 +102,7 @@ public class BaseField<T> implements Field<T> {
     this.value = value;
     this.type = value.getClass();
     this.eventId = eventId;
-    this.stream = MarketData.parseStream(eventId);
+
   }
 
   protected BaseField(String eventId, String field, T value, Class<?> clazz) {
@@ -123,7 +115,7 @@ public class BaseField<T> implements Field<T> {
       this.type = value.getClass();
 
     this.eventId = eventId;
-    this.stream = MarketData.parseStream(eventId);
+
   }
 
   /**
@@ -138,19 +130,12 @@ public class BaseField<T> implements Field<T> {
     this.value = null;
     this.type = clazz;
     this.eventId = eventId;
-    this.stream = MarketData.parseStream(eventId);
   }
 
   @Override
   public Class<?> getFieldType() {
     return type;
   }
-
-  @Override
-  public String getStream() {
-    return stream;
-  }
-
 
   public String getName() {
     return field;
@@ -164,11 +149,11 @@ public class BaseField<T> implements Field<T> {
   public int compareTo(Field<T> o) {
     return MarketData.parseTimestamp(o.getEventId()).compareTo(MarketData.parseTimestamp(this.getEventId()));
   }
-  
+
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this).add("stream", this.stream).add("name", this.field).add("value", this.value).add("class", this.type).add("eventId", eventId)
-        .toString();
+    return MoreObjects.toStringHelper(this).add("stream", this.getStream()).add("name", this.field).add("value", this.value)
+        .add("class", this.type).add("eventId", eventId).toString();
   }
 
   public String getEventId() {

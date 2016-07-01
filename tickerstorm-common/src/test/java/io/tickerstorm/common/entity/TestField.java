@@ -16,13 +16,14 @@ public class TestField {
   @Test
   public void testFieldParsing() {
 
-    c.setStream("default");
+    c.setStream("TestField");
     Map<String, Field<?>> fields = c.getFieldsAsMap();
 
     Field<Integer> vol = (Field<Integer>) fields.get(Field.Name.VOLUME.field());
     assertEquals(vol.getEventId(), c.getEventId());
     assertEquals(vol.getName(), Field.Name.VOLUME.field());
     assertEquals(vol.getStream(), c.getStream());
+    assertEquals(vol.getTimestamp(), c.getTimestamp());
     assertEquals(Field.parseType(vol.serialize()).getName(), vol.getValue().getClass().getName());
     assertEquals(Field.parseField(vol.serialize()), vol.getName());
     assertEquals(Field.parseValue(vol.serialize(), Field.Name.VOLUME.fieldType()), vol.getValue());
@@ -36,7 +37,7 @@ public class TestField {
   @Test
   public void testFieldDeserialization() {
 
-    c.setStream("default");
+    c.setStream("TestField");
     Map<String, Field<?>> fields = c.getFieldsAsMap();
 
     Field<Integer> vol = (Field<Integer>) fields.get(Field.Name.VOLUME.field());
@@ -56,7 +57,7 @@ public class TestField {
   @Test
   public void testSerializeNullField(){
     
-    c.setStream("default");
+    c.setStream("TestField");
     Map<String, Field<?>> fields = c.getFieldsAsMap();
     Field<Integer> vol = (Field<Integer>) fields.get(Field.Name.VOLUME.field());
     
