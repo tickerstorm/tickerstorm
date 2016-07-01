@@ -15,7 +15,6 @@ import org.apache.storm.tuple.Tuple;
 import org.apache.storm.tuple.Values;
 
 import io.tickerstorm.common.entity.BaseField;
-import io.tickerstorm.common.entity.Candle;
 import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.strategy.util.CacheManager;
 import net.sf.ehcache.Element;
@@ -36,37 +35,27 @@ public class NumericChangeBolt extends BaseBolt {
       Collection<Field<Integer>> current = (Collection<Field<Integer>>) input.getValueByField(Field.Name.DISCRETE_FIELDS.field());
 
       for (Field<Integer> f : current) {
-
-        final String key = CacheManager.buildKey(f).toString();
-        CacheManager.getInstance(CACHE).putIfAbsent(new Element(key, new ArrayList<Candle>()));
-        List<Field<Integer>> previous = new ArrayList<>();
-
-        try {
-
-          CacheManager.getInstance(CACHE).acquireWriteLockOnKey(key);
-          previous = (List<Field<Integer>>) CacheManager.getInstance(CACHE).get(key).getObjectValue();
-          previous.add(f);
-          CacheManager.getInstance(CACHE).put(new Element(key, previous));
-
-        } finally {
-
-          CacheManager.getInstance(CACHE).releaseWriteLockOnKey(key);
-
-        }
-
+        
+        List<Field<Integer>> previous = (List) cache(f);
         Collections.sort(previous);
+        
         int i = previous.indexOf(f);
         Field<Integer> prior = null;
+        int p = 2;
 
-        if (i >= 0 && previous.size() >= (i + 2)) {
-          prior = previous.get(i + 1);
+        if (i >= 0 && previous.size() >= (i + (p+1))) {
+          
+          prior = (Field<Integer>) previous.get(i + p);
           Integer absDiff = (f.getValue() - prior.getValue());
           BigDecimal pctDiff = BigDecimal.valueOf(absDiff).divide(BigDecimal.valueOf(prior.getValue()), 4, BigDecimal.ROUND_HALF_UP);
           abs.add(new BaseField<>(f, Field.Name.ABS_CHANGE.field(), BigDecimal.valueOf(absDiff)));
           pct.add(new BaseField<>(f, Field.Name.PCT_CHANGE.field(), pctDiff));
+        
         } else {
+          
           abs.add(new BaseField(f, Field.Name.ABS_CHANGE.field(), BigDecimal.class));
           pct.add(new BaseField(f, Field.Name.PCT_CHANGE.field(), BigDecimal.class));
+        
         }
 
       }
@@ -78,33 +67,21 @@ public class NumericChangeBolt extends BaseBolt {
 
       for (Field<BigDecimal> f : current) {
 
-        final String key = CacheManager.buildKey(f).toString();
-        CacheManager.getInstance(CACHE).putIfAbsent(new Element(key, new ArrayList<Candle>()));
-        List<Field<BigDecimal>> previous = new ArrayList<>();
-
-        try {
-
-          CacheManager.getInstance(CACHE).acquireWriteLockOnKey(key);
-          previous = (List<Field<BigDecimal>>) CacheManager.getInstance(CACHE).get(key).getObjectValue();
-          previous.add(f);
-          CacheManager.getInstance(CACHE).put(new Element(key, previous));
-
-        } finally {
-
-          CacheManager.getInstance(CACHE).releaseWriteLockOnKey(key);
-
-        }
-
+        List<Field<BigDecimal>> previous = (List) cache(f);
         Collections.sort(previous);
+        
         int i = previous.indexOf(f);
         Field<BigDecimal> prior = null;
+        BigDecimal absDiff = BigDecimal.ZERO;
+        BigDecimal pctDiff = BigDecimal.ZERO;
+        int p = 2;
 
-        if (i >= 0 && previous.size() >= (i + 1)) {
+        if (i >= 0 && previous.size() >= (i + (p+1))) {
 
-          prior = previous.get(i + 1);
+          prior = (Field<BigDecimal>) previous.get(i + p);
 
-          BigDecimal absDiff = (f.getValue().subtract(prior.getValue()));
-          BigDecimal pctDiff = absDiff.divide(prior.getValue(), 4, BigDecimal.ROUND_HALF_UP);
+          absDiff = (f.getValue().subtract(prior.getValue()));
+          pctDiff = absDiff.divide(prior.getValue(), 4, BigDecimal.ROUND_HALF_UP);
           abs.add(new BaseField<>(f, Field.Name.ABS_CHANGE.field(), absDiff));
           pct.add(new BaseField<>(f, Field.Name.PCT_CHANGE.field(), pctDiff));
 
@@ -117,7 +94,30 @@ public class NumericChangeBolt extends BaseBolt {
     }
 
     coll.emit(input, new Values(abs, pct));
+
     ack(input);
+  }
+
+  List<Field<?>> cache(Field<?> f) {
+
+    final String key = CacheManager.buildKey(f).toString();
+    CacheManager.getInstance(CACHE).putIfAbsent(new Element(key, new ArrayList<Field<?>>()));
+    List<Field<?>> previous = new ArrayList<>();
+
+    try {
+
+      CacheManager.getInstance(CACHE).acquireWriteLockOnKey(key);
+      previous = (List<Field<?>>) CacheManager.getInstance(CACHE).get(key).getObjectValue();
+      previous.add(f);
+      CacheManager.getInstance(CACHE).put(new Element(key, previous));
+
+    } finally {
+
+      CacheManager.getInstance(CACHE).releaseWriteLockOnKey(key);
+
+    }
+    
+    return previous;
   }
 
   @Override

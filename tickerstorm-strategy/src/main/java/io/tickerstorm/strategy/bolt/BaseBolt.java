@@ -1,6 +1,9 @@
 package io.tickerstorm.strategy.bolt;
 
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
@@ -11,6 +14,7 @@ import org.apache.storm.tuple.Tuple;
 import io.tickerstorm.common.entity.Command;
 import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.entity.Marker;
+import io.tickerstorm.common.entity.MarketData;
 
 @SuppressWarnings("serial")
 public abstract class BaseBolt extends BaseRichBolt {
@@ -73,8 +77,6 @@ public abstract class BaseBolt extends BaseRichBolt {
   protected void process(Tuple input) {
     ack(input);
   }
-
   protected void init() {}
-
 
 }
