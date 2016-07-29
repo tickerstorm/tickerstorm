@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.test.IntegrationTest;
 import org.springframework.data.cassandra.core.CassandraOperations;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
@@ -102,16 +103,16 @@ public class ModelDataEndToEndITCase extends AbstractTestNGSpringContextTests {
     Candle c = new Candle("goog", "google", Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ONE, BigDecimal.ONE, "1m", 1000);
     c.setStream(s.stream);
     brokderFeed.publishAsync(c);
-    Thread.sleep(8000);
+    Thread.sleep(200000);
 
-    Assert.assertTrue(triggeredModel.get());
     Assert.assertTrue(triggeredMarket.get());
+    Assert.assertTrue(triggeredModel.get());
 
     ModelDataQuery q = new ModelDataQuery(s.stream);
     VerifyRetroModelQueryEnded handler3 = new VerifyRetroModelQueryEnded(triggeredRetro, q);
     notificationBus.subscribe(handler3);
     queryBus.publish(q);
-    
+
     Thread.sleep(2000);
     Assert.assertTrue(triggeredRetro.get());
 

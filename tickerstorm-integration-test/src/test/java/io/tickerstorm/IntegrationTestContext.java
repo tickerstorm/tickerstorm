@@ -1,46 +1,46 @@
 package io.tickerstorm;
 
-import java.net.URI;
+import java.io.Serializable;
 
-import org.apache.activemq.broker.BrokerService;
-import org.apache.activemq.broker.TransportConnector;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.jms.core.JmsTemplate;
 
-import io.tickerstorm.common.CommonContext;
-import io.tickerstorm.data.TestMarketDataServiceConfig;
+import io.tickerstorm.common.EventBusContext;
+import io.tickerstorm.common.JmsEventBusContext;
+import io.tickerstorm.common.data.eventbus.Destinations;
+import io.tickerstorm.common.data.eventbus.EventBusToJMSBridge;
+import io.tickerstorm.common.data.eventbus.JMSToEventBusBridge;
+import net.engio.mbassy.bus.MBassador;
 
-@EnableAutoConfiguration
 @Configuration
+@Import({EventBusContext.class, JmsEventBusContext.class})
 @PropertySource({"classpath:default.properties"})
-@Import({StrategyServiceTestApplication.class, TestMarketDataServiceConfig.class, CommonContext.class})
 public class IntegrationTestContext {
 
-  @Value("${jms.transport}")
-  protected String transport;
+  // SENDERS
+  @Bean
+  public EventBusToJMSBridge buildNotificationsJmsBridge(@Qualifier(Destinations.BROKER_MARKETDATA_BUS) MBassador<Serializable> eventbus,
+      JmsTemplate template) {
+    return new EventBusToJMSBridge(eventbus, Destinations.BROKER_MARKETDATA_BUS, template);
+  }
 
-  @Profile("embedded")
-  @Bean(initMethod = "start", destroyMethod = "stop")
-  public BrokerService startActiveMQ() {
+  @Bean
+  public EventBusToJMSBridge buildHistoricalQueryJmsBridge(
+      @Qualifier(Destinations.HISTORICAL_DATA_QUERY_BUS) MBassador<Serializable> eventbus, JmsTemplate template) {
+    return new EventBusToJMSBridge(eventbus, Destinations.QUEUE_HISTORICAL_DATA_QUERY, template);
+  }
 
-    BrokerService broker = null;
 
-    try {
-      broker = new BrokerService();
-      broker.setBrokerName("tickerstorm");
-      TransportConnector connector = new TransportConnector();
-      connector.setUri(new URI(transport));
-      broker.addConnector(connector);
-      broker.setPersistent(false);
-    } catch (Throwable e) {
-      // nothing
-    }
-    return broker;
+  // RECEIVERS
+  @Bean
+  public JMSToEventBusBridge buildQueryEventBridge(@Qualifier(Destinations.NOTIFICATIONS_BUS) MBassador<Serializable> notificaitonsBus) {
+    JMSToEventBusBridge bridge = new JMSToEventBusBridge();
+    bridge.setNotificationBus(notificaitonsBus);
+    return bridge;
   }
 
 }
