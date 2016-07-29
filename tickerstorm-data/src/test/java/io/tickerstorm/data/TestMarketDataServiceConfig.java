@@ -16,7 +16,7 @@ import io.tickerstorm.common.data.eventbus.Destinations;
 
 @EnableAutoConfiguration
 @Configuration
-public class TestMarketDataServiceConfig extends MarketDataApplicationContext {
+public class TestMarketDataServiceConfig extends MarketDataApplication {
 
   public static void main(String[] args) throws Exception {
     SpringApplication.run(TestMarketDataServiceConfig.class, args);

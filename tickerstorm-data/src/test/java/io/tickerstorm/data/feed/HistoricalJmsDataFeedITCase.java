@@ -89,7 +89,7 @@ public class HistoricalJmsDataFeedITCase extends AbstractTestNGSpringContextTest
     query.periods.add(Candle.MIN_1_INTERVAL);
     query.zone = ZoneOffset.ofHours(-7);
 
-    jmsTemplate.send(Destinations.QUEUE_QUERY, new MessageCreator() {
+    jmsTemplate.send(Destinations.QUEUE_HISTORICAL_DATA_QUERY, new MessageCreator() {
 
       @Override
       public Message createMessage(Session session) throws JMSException {

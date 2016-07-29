@@ -89,7 +89,7 @@ public class ModelDataDto implements Serializable {
 
       if (MarketData.class.isAssignableFrom(o.getClass())) {
 
-        MarketData md = (MarketData) data.get(Field.Name.MARKETDATA.field());
+        MarketData md = (MarketData) o;
 
         ModelDataPrimaryKey key = new ModelDataPrimaryKey();
         key.timestamp = Date.from(md.getTimestamp());
