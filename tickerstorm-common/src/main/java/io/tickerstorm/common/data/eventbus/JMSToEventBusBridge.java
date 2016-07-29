@@ -27,6 +27,8 @@ public class JMSToEventBusBridge {
   private MBassador<Serializable> notificationBus;
 
   private MBassador<Map<String, Object>> modelDataBus;
+  
+  private MBassador<Map<String, Object>> retroModelDataBus;
 
   public MBassador<Map<String, Object>> getModelDataBus() {
     return modelDataBus;
@@ -82,7 +84,7 @@ public class JMSToEventBusBridge {
     }
   }
 
-  @JmsListener(destination = Destinations.QUEUE_QUERY)
+  @JmsListener(destination = Destinations.QUEUE_HISTORICAL_DATA_QUERY)
   public void onMessage(@Payload HistoricalFeedQuery query) {
     if (queryBus != null) {
       logger.trace("Received query " + query.toString());
@@ -104,6 +106,22 @@ public class JMSToEventBusBridge {
       logger.trace("Received model data " + row.toString());
       modelDataBus.publishAsync(row);
     }
+  }
+  
+  @JmsListener(destination = Destinations.QUEUE_RETRO_MODEL_DATA)
+  public void onRetroMessage(@Payload Map<String, Object> row) {
+    if (retroModelDataBus != null) {
+      logger.trace("Received retro model data " + row.toString());
+      retroModelDataBus.publishAsync(row);
+    }
+  }
+
+  public MBassador<Map<String, Object>> getRetroModelDataBus() {
+    return retroModelDataBus;
+  }
+
+  public void setRetroModelDataBus(MBassador<Map<String, Object>> retroModelDataBus) {
+    this.retroModelDataBus = retroModelDataBus;
   }
 
   @JmsListener(destination = Destinations.TOPIC_NOTIFICATIONS)

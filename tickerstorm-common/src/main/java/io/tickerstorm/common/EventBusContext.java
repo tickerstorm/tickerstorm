@@ -3,20 +3,11 @@ package io.tickerstorm.common;
 import java.io.Serializable;
 import java.util.Map;
 
-import javax.jms.ConnectionFactory;
-import javax.jms.Session;
-
-import org.apache.activemq.ActiveMQConnectionFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.PropertySource;
-import org.springframework.jms.annotation.EnableJms;
-import org.springframework.jms.config.DefaultJmsListenerContainerFactory;
 
-import io.tickerstorm.common.data.eventbus.ByDestinationNameJmsResolver;
 import io.tickerstorm.common.data.eventbus.Destinations;
 import io.tickerstorm.common.data.eventbus.EventBusToEventBusBridge;
 import io.tickerstorm.common.data.query.DataFeedQuery;
@@ -24,16 +15,13 @@ import io.tickerstorm.common.entity.MarketData;
 import net.engio.mbassy.bus.MBassador;
 import net.engio.mbassy.bus.config.BusConfiguration;
 import net.engio.mbassy.bus.config.Feature;
+import net.engio.mbassy.bus.config.IBusConfiguration;
 import net.engio.mbassy.bus.error.IPublicationErrorHandler;
 
-@EnableJms
 @Configuration
 @ComponentScan("io.tickerstorm.common")
-@PropertySource({"classpath:default.properties"})
-public class CommonContext {
+public class EventBusContext {
 
-  @Value("${jms.transport}")
-  protected String transport;
 
   @Bean
   public BusConfiguration busConfiguration(IPublicationErrorHandler handler) {
@@ -43,7 +31,7 @@ public class CommonContext {
 
   // Internal messages bus
   /**
-   * Internal feed of market data which may come from brokers of historical queries. This is what
+   * Internal feed of market data which may come from brokers or historical queries. This is what
    * model pipelines listen to
    * 
    * @param handler
@@ -51,16 +39,25 @@ public class CommonContext {
    */
   @Qualifier(Destinations.REALTIME_MARKETDATA_BUS)
   @Bean(destroyMethod = "shutdown")
-  public MBassador<MarketData> buildRealtimeEventBus(BusConfiguration handler,
-      @Qualifier(Destinations.BROKER_MARKETDATA_BUS) MBassador<MarketData> brokerFeed) {
+  public MBassador<MarketData> buildRealtimeEventBus(IBusConfiguration handler) {
+    handler = handler.setProperty(IBusConfiguration.Properties.BusId, Destinations.REALTIME_MARKETDATA_BUS);
     MBassador<MarketData> bus = new MBassador<MarketData>(handler);
     return bus;
   }
 
-  @Qualifier("brokerfeed")
+  /**
+   * Enable market realtime data from broker to be directly streamed to internal realtime market
+   * data bus so that models can act upon live data
+   * 
+   * @param source
+   * @param listener
+   * @return
+   */
+  @Qualifier(Destinations.BROKER_MARKETDATA_BUS)
   @Bean
   public EventBusToEventBusBridge<MarketData> buildBrokerFeedEventBridge(
-      @Qualifier(Destinations.BROKER_MARKETDATA_BUS) MBassador<MarketData> source, @Qualifier("realtime") MBassador<MarketData> listener) {
+      @Qualifier(Destinations.BROKER_MARKETDATA_BUS) MBassador<MarketData> source,
+      @Qualifier(Destinations.REALTIME_MARKETDATA_BUS) MBassador<MarketData> listener) {
     EventBusToEventBusBridge<MarketData> bridge = new EventBusToEventBusBridge<MarketData>(source, listener);
     return bridge;
   }
@@ -73,7 +70,8 @@ public class CommonContext {
    */
   @Qualifier(Destinations.BROKER_MARKETDATA_BUS)
   @Bean(destroyMethod = "shutdown")
-  public MBassador<MarketData> buildBrokerFeed(BusConfiguration handler) {
+  public MBassador<MarketData> buildBrokerFeed(IBusConfiguration handler) {
+    handler = handler.setProperty(IBusConfiguration.Properties.BusId, Destinations.BROKER_MARKETDATA_BUS);
     return new MBassador<MarketData>(handler);
   }
 
@@ -86,7 +84,8 @@ public class CommonContext {
    */
   @Qualifier(Destinations.HISTORICAL_DATA_QUERY_BUS)
   @Bean(destroyMethod = "shutdown")
-  public MBassador<DataFeedQuery> buildQueryEventBus(BusConfiguration handler) {
+  public MBassador<DataFeedQuery> buildQueryEventBus(IBusConfiguration handler) {
+    handler = handler.setProperty(IBusConfiguration.Properties.BusId, Destinations.HISTORICAL_DATA_QUERY_BUS);
     return new MBassador<DataFeedQuery>(handler);
   }
 
@@ -99,7 +98,8 @@ public class CommonContext {
    */
   @Qualifier(Destinations.COMMANDS_BUS)
   @Bean(destroyMethod = "shutdown")
-  public MBassador<Serializable> buildCommandsEventBus(BusConfiguration handler) {
+  public MBassador<Serializable> buildCommandsEventBus(IBusConfiguration handler) {
+    handler = handler.setProperty(IBusConfiguration.Properties.BusId, Destinations.COMMANDS_BUS);
     return new MBassador<Serializable>(handler);
   }
 
@@ -112,7 +112,8 @@ public class CommonContext {
    */
   @Qualifier(Destinations.NOTIFICATIONS_BUS)
   @Bean(destroyMethod = "shutdown")
-  public MBassador<Serializable> buildNotificaitonEventBus(BusConfiguration handler) {
+  public MBassador<Serializable> buildNotificaitonEventBus(IBusConfiguration handler) {
+    handler = handler.setProperty(IBusConfiguration.Properties.BusId, Destinations.NOTIFICATIONS_BUS);
     return new MBassador<Serializable>(handler);
   }
 
@@ -125,7 +126,8 @@ public class CommonContext {
    */
   @Qualifier(Destinations.MODEL_DATA_BUS)
   @Bean(destroyMethod = "shutdown")
-  public MBassador<Map<String, Object>> buildModelDataEventBus(BusConfiguration handler) {
+  public MBassador<Map<String, Object>> buildModelDataEventBus(IBusConfiguration handler) {
+    handler = handler.setProperty(IBusConfiguration.Properties.BusId, Destinations.MODEL_DATA_BUS);
     return new MBassador<Map<String, Object>>(handler);
   }
 
@@ -138,23 +140,10 @@ public class CommonContext {
    */
   @Qualifier(Destinations.RETRO_MODEL_DATA_BUS)
   @Bean(destroyMethod = "shutdown")
-  public MBassador<Map<String, Object>> buildRetroModelDataEventBus(BusConfiguration handler) {
+  public MBassador<Map<String, Object>> buildRetroModelDataEventBus(IBusConfiguration handler) {
+    handler = handler.setProperty(IBusConfiguration.Properties.BusId, Destinations.RETRO_MODEL_DATA_BUS);
     return new MBassador<Map<String, Object>>(handler);
   }
 
-  @Bean
-  public ConnectionFactory buildActiveMQConnectionFactory() throws Exception {
-    ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(transport);
-    return connectionFactory;
-  }
 
-  @Bean
-  public DefaultJmsListenerContainerFactory jmsListenerContainerFactory(ConnectionFactory cf) {
-    DefaultJmsListenerContainerFactory factory = new DefaultJmsListenerContainerFactory();
-    factory.setConnectionFactory(cf);
-    factory.setDestinationResolver(new ByDestinationNameJmsResolver());
-    factory.setConcurrency("1");
-    factory.setSessionAcknowledgeMode(Session.CLIENT_ACKNOWLEDGE);
-    return factory;
-  }
 }

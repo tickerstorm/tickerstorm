@@ -6,7 +6,7 @@ public interface Destinations {
   public static final String TOPIC_REALTIME_BROKER_MARKETDATA = "topic.marketdata.brokerfeed.realtime";
   public static final String TOPIC_COMMANDS = "topic.commands";
   public static final String TOPIC_NOTIFICATIONS = "topic.notifications";
-  public static final String QUEUE_QUERY = "queue.query";
+  public static final String QUEUE_HISTORICAL_DATA_QUERY = "queue.query";
   public static final String QUEUE_MODEL_DATA = "queue.modeldata";
   public static final String QUEUE_RETRO_MODEL_DATA = "queue.retromodeldata";
   
