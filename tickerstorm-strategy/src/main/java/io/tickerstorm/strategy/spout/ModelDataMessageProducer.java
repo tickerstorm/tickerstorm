@@ -15,7 +15,7 @@ import org.apache.storm.tuple.Tuple;
 
 import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.entity.MarketData;
-import io.tickerstorm.strategy.util.TupleUtil;
+import io.tickerstorm.strategy.bolt.TupleUtil;
 
 /**
  * Only propagates fields, field collections and market data tuple values

@@ -5,15 +5,12 @@ import javax.annotation.PostConstruct;
 import org.apache.storm.generated.StormTopology;
 import org.apache.storm.jms.bolt.JmsBolt;
 import org.apache.storm.jms.spout.JmsSpout;
-import org.apache.storm.topology.BoltDeclarer;
 import org.apache.storm.topology.TopologyBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Component;
 
 
 
-@Component
 public class RetroFlowTopologyFactory {
 
   @Qualifier("retroModelData")

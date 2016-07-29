@@ -1,4 +1,4 @@
-package io.tickerstorm.strategy.util;
+package io.tickerstorm.strategy.bolt;
 
 import static io.tickerstorm.common.entity.Field.Name.MARKETDATA;
 import static io.tickerstorm.common.entity.Field.Name.NOW;

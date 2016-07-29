@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Lists;
+import com.lmax.disruptor.EventProcessor;
 
 import io.tickerstorm.common.entity.BaseField;
 import io.tickerstorm.common.entity.Field;

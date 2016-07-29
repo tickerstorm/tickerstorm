@@ -26,7 +26,6 @@ import io.tickerstorm.common.entity.Command;
 import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.entity.Markers;
 import io.tickerstorm.common.entity.Notification;
-import io.tickerstorm.strategy.util.TupleUtil;
 
 @Component
 @SuppressWarnings("serial")

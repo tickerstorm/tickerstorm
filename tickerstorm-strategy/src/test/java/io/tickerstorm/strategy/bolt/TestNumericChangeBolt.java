@@ -27,7 +27,6 @@ import io.tickerstorm.common.entity.Candle;
 import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.test.TestDataFactory;
 import io.tickerstorm.strategy.util.CacheManager;
-import io.tickerstorm.strategy.util.TupleUtil;
 import net.sf.ehcache.Element;
 import scala.annotation.compileTimeOnly;
 

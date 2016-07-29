@@ -18,7 +18,7 @@ import io.tickerstorm.strategy.bolt.ClockBolt;
 import io.tickerstorm.strategy.bolt.FieldTypeSplittingBolt;
 import io.tickerstorm.strategy.bolt.LogginBolt;
 
-@Component
+
 public class ForwardFlowTopologyFactory {
 
   @Autowired
