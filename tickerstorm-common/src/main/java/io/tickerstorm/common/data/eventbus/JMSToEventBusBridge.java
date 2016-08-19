@@ -11,6 +11,7 @@ import org.springframework.messaging.handler.annotation.Payload;
 
 import io.tickerstorm.common.data.query.DataFeedQuery;
 import io.tickerstorm.common.data.query.HistoricalFeedQuery;
+import io.tickerstorm.common.data.query.ModelDataQuery;
 import io.tickerstorm.common.entity.MarketData;
 import net.engio.mbassy.bus.MBassador;
 
@@ -83,11 +84,11 @@ public class JMSToEventBusBridge {
       }
     }
   }
-
+  
   @JmsListener(destination = Destinations.QUEUE_HISTORICAL_DATA_QUERY)
-  public void onMessage(@Payload HistoricalFeedQuery query) {
+  public void onMessage(@Payload DataFeedQuery query) {
     if (queryBus != null) {
-      logger.trace("Received query " + query.toString());
+      logger.trace("Received feed query " + query.toString());
       queryBus.publishAsync(query);
     }
   }

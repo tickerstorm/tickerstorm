@@ -16,7 +16,7 @@ import io.tickerstorm.common.data.eventbus.ByDestinationNameJmsResolver;
 
 @EnableJms
 @Configuration
-@PropertySource({"classpath:default.properties"})
+@PropertySource({"classpath:/default.properties"})
 public class JmsEventBusContext {
 
 

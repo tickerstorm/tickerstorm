@@ -12,7 +12,7 @@ public class ModelDataQuery implements DataFeedQuery {
   
   public final String id = UUID.randomUUID().toString();
   public String stream;
-  public LocalDateTime from = LocalDateTime.MIN;
+  public LocalDateTime from = LocalDateTime.now().minusYears(1);
   public LocalDateTime until = LocalDateTime.now();
   public OrderBy sort = OrderBy.DESC;
   

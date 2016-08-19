@@ -23,7 +23,7 @@ public interface Field<T> extends Serializable, Comparable<Field<T>> {
 
     @Override
     public int compare(Field<?> o1, Field<?> o2) {
-      return Field.parseTimestamp(o2.getEventId()).compareTo(Field.parseTimestamp(o1.getEventId()));
+      return o2.getTimestamp().compareTo(o1.getTimestamp());
     }
 
   };
@@ -32,7 +32,7 @@ public interface Field<T> extends Serializable, Comparable<Field<T>> {
 
     @Override
     public int compare(Field<?> o1, Field<?> o2) {
-      return Field.parseTimestamp(o1.getEventId()).compareTo(Field.parseTimestamp(o2.getEventId()));
+      return o1.getTimestamp().compareTo(o2.getTimestamp());
     }
 
   };
@@ -167,6 +167,10 @@ public interface Field<T> extends Serializable, Comparable<Field<T>> {
     return MarketData.parseSource(parseEventId(value));
   }
 
+  static String parseSymbol(String value) {
+    return MarketData.parseSymbol(parseEventId(value));
+  }
+  
   static Class<?> parseType(String value) {
     String[] vals = value.split(":");
 
@@ -220,6 +224,10 @@ public interface Field<T> extends Serializable, Comparable<Field<T>> {
 
   default String getStream() {
     return MarketData.parseStream(getEventId());
+  }
+  
+  default String getSymbol(){
+    return MarketData.parseSymbol(getEventId());
   }
 
   public T getValue();
