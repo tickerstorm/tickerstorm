@@ -32,8 +32,7 @@ import net.engio.mbassy.listener.Handler;
 @Repository
 public class ModelDataFeed {
 
-  private static final java.time.format.DateTimeFormatter dateFormat =
-      java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZZ");
+  private static final java.time.format.DateTimeFormatter dateFormat = java.time.format.DateTimeFormatter.ISO_DATE_TIME;
 
   private static final java.time.format.DateTimeFormatter dateFormat2 = java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd");
 
@@ -87,7 +86,7 @@ public class ModelDataFeed {
     }
 
     Select select = QueryBuilder.select().from("modeldata");
-    select.where(QueryBuilder.eq("modelname", query.stream.toLowerCase())).and(QueryBuilder.in("date", dates.toArray(new String[] {})))
+    select.where(QueryBuilder.eq("stream", query.stream.toLowerCase())).and(QueryBuilder.in("date", dates.toArray(new String[] {})))
         .and(QueryBuilder.gte("timestamp", dateFormat.format(query.from)))
         .and(QueryBuilder.lte("timestamp", dateFormat.format(query.until))).orderBy(QueryBuilder.desc("timestamp"));
 

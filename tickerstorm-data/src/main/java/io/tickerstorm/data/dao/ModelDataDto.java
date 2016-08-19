@@ -23,9 +23,6 @@ import io.tickerstorm.common.entity.MarketData;
 @SuppressWarnings("serial")
 public class ModelDataDto implements Serializable {
 
-  private static final java.time.format.DateTimeFormatter dateFormat =
-      java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZZ");
-
   public static final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("uuuuMMdd");
 
   @org.springframework.data.cassandra.mapping.PrimaryKey

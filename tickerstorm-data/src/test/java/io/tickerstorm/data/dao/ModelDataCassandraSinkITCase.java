@@ -4,7 +4,6 @@ import static org.testng.Assert.assertEquals;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -16,17 +15,14 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import com.google.common.collect.Lists;
 
 import io.tickerstorm.common.entity.BaseField;
 import io.tickerstorm.common.entity.BaseMarker;
 import io.tickerstorm.common.entity.Candle;
 import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.entity.Markers;
-import io.tickerstorm.common.entity.MarketData;
 import io.tickerstorm.data.TestMarketDataServiceConfig;
 import net.engio.mbassy.bus.MBassador;
 
@@ -44,7 +40,7 @@ public class ModelDataCassandraSinkITCase extends AbstractTestNGSpringContextTes
   @Autowired
   private ModelDataDao dao;
 
-  @AfterMethod
+  @BeforeMethod
   public void cleanup() throws Exception {
     session.getSession().execute("TRUNCATE modeldata");
     Thread.sleep(2000);
@@ -58,10 +54,10 @@ public class ModelDataCassandraSinkITCase extends AbstractTestNGSpringContextTes
     c.setStream("Test model");
     BaseField<Integer> df = new BaseField<Integer>(c.getEventId(), "ave", 100);
     BaseField<BigDecimal> cf = new BaseField<BigDecimal>(c.getEventId(), "sma", BigDecimal.TEN);
-   
+
     tuple.put(Field.Name.MARKETDATA.field(), c);
-    tuple.put(Field.Name.AVE.field(), Lists.newArrayList(df));
-    tuple.put(Field.Name.SMA.field(), Lists.newArrayList(cf));
+    tuple.put(Field.Name.AVE.field(), df);
+    tuple.put(Field.Name.SMA.field(), cf);
     modelDataBus.publish(tuple);
 
     Thread.sleep(5000);
@@ -82,15 +78,10 @@ public class ModelDataCassandraSinkITCase extends AbstractTestNGSpringContextTes
     Assert.assertEquals(dto.fields.size(), 12);
 
     Map<String, Object> map = dto.fromRow();
-    MarketData data = (MarketData) map.get(Field.Name.MARKETDATA.field());
 
-    Assert.assertNotNull(data);
-    Assert.assertNotNull(data.getStream());
-    Assert.assertNotNull(map.get(Field.Name.AVE.field()));
-    Assert.assertNotNull(map.get(Field.Name.SMA.field()));
-    Assert.assertEquals(c, data);
-    Assert.assertEquals(((Collection) map.get(Field.Name.SMA.field())).iterator().next(), cf);
-    Assert.assertEquals(((Collection) map.get(Field.Name.AVE.field())).iterator().next(), df);
+    Assert.assertTrue(map.containsValue(c));
+    Assert.assertTrue(map.containsValue(df));
+    Assert.assertTrue(map.containsValue(cf));
 
   }
 

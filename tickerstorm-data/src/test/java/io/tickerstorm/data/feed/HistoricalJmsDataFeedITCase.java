@@ -40,8 +40,7 @@ import io.tickerstorm.data.TestMarketDataServiceConfig;
 
 @DirtiesContext
 @ContextConfiguration(classes = {TestMarketDataServiceConfig.class})
-public class HistoricalJmsDataFeedITCase extends AbstractTestNGSpringContextTests
-    implements MessageListener {
+public class HistoricalJmsDataFeedITCase extends AbstractTestNGSpringContextTests implements MessageListener {
 
   @Autowired
   private JmsTemplate jmsTemplate;
@@ -59,15 +58,15 @@ public class HistoricalJmsDataFeedITCase extends AbstractTestNGSpringContextTest
   @BeforeClass
   public void dataSetup() throws Exception {
     FileUtils.forceMkdir(new File("./data/Google"));
-    Files.copy(new File("./src/test/resources/data/Google/TOL.csv"),
-        new File("./data/Google/TOL.csv"));
+    Files.copy(new File("./src/test/resources/data/Google/TOL.csv"), new File("./data/Google/TOL.csv"));
+    session.getSession().execute("TRUNCATE marketdata");
     Thread.sleep(10000);
   }
 
   @AfterClass
   public void tearDown() throws Exception {
     FileUtils.deleteQuietly(new File("./data/Google/TOL.csv"));
-    session.getSession().execute("TRUNCATE marketdata");
+
   }
 
   @BeforeMethod

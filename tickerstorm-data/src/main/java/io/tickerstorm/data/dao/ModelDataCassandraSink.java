@@ -14,8 +14,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Repository;
 
-import com.datastax.driver.core.PreparedStatement;
-import com.datastax.driver.core.SimpleStatement;
 import com.google.common.collect.Maps;
 
 import io.tickerstorm.common.data.eventbus.Destinations;
@@ -40,8 +38,6 @@ public class ModelDataCassandraSink extends BaseCassandraSink<ModelDataDto> {
   @Autowired
   private MBassador<Serializable> notificationsBus;
 
-  private PreparedStatement insert;
-
   @Override
   protected int batchSize() {
     return 4;
@@ -54,9 +50,6 @@ public class ModelDataCassandraSink extends BaseCassandraSink<ModelDataDto> {
   public void init() {
     super.init();
     modelDataBus.subscribe(this);
-
-    insert =
-        session.getSession().prepare(new SimpleStatement("INSERT INTO modeldata (stream, date, timestamp, fields) VALUES (?, ?, ?, ?);"));
   }
 
   @PreDestroy
@@ -86,9 +79,9 @@ public class ModelDataCassandraSink extends BaseCassandraSink<ModelDataDto> {
 
         logger.debug(
             "Persisting " + data.size() + " records, " + count.addAndGet(data.size()) + " total saved and " + received.get() + " received");
-        
+
         dao.save(data);
-        
+
         Map<String, Integer> streamCounts = countEntries(data);
 
         for (Entry<String, Integer> e : streamCounts.entrySet()) {
@@ -104,14 +97,14 @@ public class ModelDataCassandraSink extends BaseCassandraSink<ModelDataDto> {
       logger.error(e.getMessage(), e);
     }
   }
-  
-  private Map<String, Integer> countEntries(List<ModelDataDto> data){
+
+  private Map<String, Integer> countEntries(List<ModelDataDto> data) {
     Map<String, Integer> streamCounts = Maps.newHashMap();
     for (ModelDataDto dto : data) {
       Integer count = streamCounts.putIfAbsent(dto.primarykey.stream, 1);
 
       if (count != null)
-        streamCounts.replace(dto.primarykey.stream, (count+1));
+        streamCounts.replace(dto.primarykey.stream, (count + 1));
     }
     return streamCounts;
   }
