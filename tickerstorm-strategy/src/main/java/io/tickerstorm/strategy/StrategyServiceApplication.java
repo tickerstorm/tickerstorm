@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.Map;
 import java.util.concurrent.Executors;
 
+import org.apache.logging.log4j.core.util.Throwables;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.SpringApplication;
@@ -15,6 +16,8 @@ import org.springframework.jms.annotation.EnableJms;
 import org.springframework.jms.core.JmsTemplate;
 
 import com.google.common.eventbus.AsyncEventBus;
+import com.google.common.eventbus.SubscriberExceptionContext;
+import com.google.common.eventbus.SubscriberExceptionHandler;
 
 import io.tickerstorm.common.EventBusContext;
 import io.tickerstorm.common.JmsEventBusContext;
@@ -66,98 +69,28 @@ public class StrategyServiceApplication {
   @Qualifier("eventBus")
   @Bean
   public AsyncEventBus buildEventProcessorBus() {
-    return new AsyncEventBus("event processor bus", Executors.newFixedThreadPool(2));
+    return new AsyncEventBus(Executors.newFixedThreadPool(2), new AsyncEventBusExceptionHandler());
   }
 
   @Qualifier("retroEventBus")
   @Bean
   public AsyncEventBus buildRetroEventProcessorBus() {
-    return new AsyncEventBus("retro processor bus", Executors.newFixedThreadPool(2));
+    return new AsyncEventBus(Executors.newFixedThreadPool(2), new AsyncEventBusExceptionHandler());
   }
-
-  // SPOUTS
-
-  // @Qualifier("realtime")
-  // @Bean(destroyMethod = "close")
-  // public JmsSpout buildJmsSpout(ConnectionFactory factory) throws Exception {
-  //
-  // JmsSpout spout = new JmsSpout();
-  // spout.setJmsProvider(new DestinationProvider(factory, Destinations.TOPIC_REALTIME_MARKETDATA));
-  // spout.setJmsTupleProducer(new MarketDataTupleProducer());
-  // spout.setJmsAcknowledgeMode(Session.CLIENT_ACKNOWLEDGE);
-  // spout.setDistributed(true);
-  // spout.setRecoveryPeriod(1000);
-  //
-  // return spout;
-  //
-  // }
-
-  // @Qualifier("retroModelData")
-  // @Bean(destroyMethod = "close")
-  // public JmsSpout buildJRetroModelJmsSpout(ConnectionFactory factory) throws Exception {
-  //
-  // JmsSpout spout = new JmsSpout();
-  // spout.setJmsProvider(new DestinationProvider(factory, Destinations.QUEUE_RETRO_MODEL_DATA));
-  // spout.setJmsTupleProducer(new MarketDataTupleProducer());
-  // spout.setJmsAcknowledgeMode(Session.CLIENT_ACKNOWLEDGE);
-  // spout.setDistributed(true);
-  // spout.setRecoveryPeriod(1000);
-  //
-  // return spout;
-  // }
-
-
-  // @Qualifier("commands")
-  // @Bean(destroyMethod = "close")
-  // public JmsSpout buildJmsCommandsSpout(ConnectionFactory factory) throws Exception {
-  //
-  // JmsSpout spout = new JmsSpout();
-  // spout.setJmsProvider(new DestinationProvider(factory, Destinations.TOPIC_COMMANDS));
-  // spout.setJmsTupleProducer(new CommandsTupleProducer());
-  // spout.setJmsAcknowledgeMode(Session.CLIENT_ACKNOWLEDGE);
-  // spout.setDistributed(true);
-  // spout.setRecoveryPeriod(1000);
-  //
-  // return spout;
-  //
-  // }
-
-
-  // BOLTS
-
-  // @Qualifier("notification")
-  // @Bean
-  // public JmsBolt buildNotificationJmsBolt(ConnectionFactory factory) throws Exception {
-  //
-  // JmsBolt bolt = new JmsBolt();
-  // bolt.setAutoAck(false);
-  // bolt.setJmsAcknowledgeMode(Session.CLIENT_ACKNOWLEDGE);
-  // bolt.setJmsMessageProducer(new NotificationMessageProducer());
-  // bolt.setJmsProvider(new DestinationProvider(factory, Destinations.TOPIC_NOTIFICATIONS));
-  // return bolt;
-  // }
-
-  // @Qualifier("modelData")
-  // @Bean
-  // public JmsBolt buildModelDataJmsBolt(ConnectionFactory factory) throws Exception {
-  //
-  // JmsBolt bolt = new JmsBolt();
-  // bolt.setAutoAck(false);
-  // bolt.setJmsAcknowledgeMode(Session.CLIENT_ACKNOWLEDGE);
-  // bolt.setJmsMessageProducer(new ModelDataMessageProducer());
-  // bolt.setJmsProvider(new DestinationProvider(factory, Destinations.QUEUE_MODEL_DATA));
-  // return bolt;
-  // }
 
   @Bean
   public Clock backtestClock() {
     return new BacktestClock();
   }
-  //
-  // @Bean
-  // public FieldTypeSplittingBolt buildFiledTypeSplittingBolt() {
-  // return new FieldTypeSplittingBolt();
-  // }
 
+  private class AsyncEventBusExceptionHandler implements SubscriberExceptionHandler {
 
+    @Override
+    public void handleException(Throwable exception, SubscriberExceptionContext context) {
+      logger.error("Event " + context.getEvent() + " threw an exception on listener " + context.getSubscriber() + " with exception "
+          + Throwables.getRootCause(exception));
+
+    }
+
+  }
 }

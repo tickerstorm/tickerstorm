@@ -30,16 +30,19 @@ public class CacheManager {
   /**
    * Build a common key for a field
    * 
+   * "field" + stream + symbol + field name [+ interval]
+   * 
    * @param f
    * @return
    */
   public static StringBuffer buildKey(Field<?> f) {
-    return new StringBuffer(MarketData.parseSource(f.getEventId())).append(MarketData.parseSymbol(f.getEventId()))
-        .append(Candle.parseInterval(f.getEventId()));
+    return new StringBuffer("field-").append(f.getStream()).append(f.getSymbol()).append(f.getName()).append(Candle.parseInterval(f.getEventId()));
   }
 
   /**
    * Build a common key for market data
+   * 
+   * stream + symbol + interval
    * 
    * @param f
    * @return

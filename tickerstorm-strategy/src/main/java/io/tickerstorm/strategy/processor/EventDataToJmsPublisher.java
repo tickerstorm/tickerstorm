@@ -37,6 +37,8 @@ public class EventDataToJmsPublisher extends BaseEventProcessor {
   @Subscribe
   public void onMarketData(MarketData md) {
 
+    logger.debug("Dispatching processed market data event " + md);
+    
     Map<String, Object> out = Maps.newHashMap();
     out.put(Field.Name.MARKETDATA.field(), md);
     modelDataBus.publish(out);
@@ -46,6 +48,8 @@ public class EventDataToJmsPublisher extends BaseEventProcessor {
   @Subscribe
   public void onField(Field<?> field) {
 
+    logger.debug("Dispatching processed field " + field);
+    
     Map<String, Object> out = Maps.newHashMap();
     out.put(field.getName(), field);
     modelDataBus.publish(out);
@@ -54,7 +58,8 @@ public class EventDataToJmsPublisher extends BaseEventProcessor {
 
   @Subscribe
   @Override
-  protected void onNotification(Notification notification) throws Exception {
+  public void onNotification(Notification notification) throws Exception {
+     
     super.onNotification(notification);
     notificationsBus.publish(notification);
   }

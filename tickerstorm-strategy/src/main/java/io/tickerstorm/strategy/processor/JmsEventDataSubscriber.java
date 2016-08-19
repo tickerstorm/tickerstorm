@@ -33,10 +33,6 @@ public class JmsEventDataSubscriber extends BaseEventProcessor {
   @Qualifier(Destinations.RETRO_MODEL_DATA_BUS)
   private MBassador<Map<String, Object>> retroModelDataBus;
 
-  @Qualifier("eventBus")
-  @Autowired
-  private AsyncEventBus eventBus;
-
   @Qualifier("retroEventBus")
   @Autowired
   private AsyncEventBus retroEventBus;
@@ -60,17 +56,17 @@ public class JmsEventDataSubscriber extends BaseEventProcessor {
   }
 
   @Handler
-  public void onMarketData(MarketData data) {
-    eventBus.post(data);
+  public void onJmsMarketData(MarketData data) {
+    publish(data);
   }
 
   @Handler
-  public void onCommand(Command comm) {
-    eventBus.post(comm);
+  public void onJmsCommand(Command comm) {
+    publish(comm);
   }
 
   @Handler
-  public void onRetroModelData(Map<String, Object> row) {
+  public void onJmsRetroModelData(Map<String, Object> row) {
     retroEventBus.post(row);
   }
 

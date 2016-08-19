@@ -2,7 +2,6 @@ package io.tickerstorm.strategy.processor;
 
 
 import java.math.BigDecimal;
-import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -12,12 +11,15 @@ import com.google.common.eventbus.Subscribe;
 
 import io.tickerstorm.common.entity.BaseField;
 import io.tickerstorm.common.entity.Field;
+import io.tickerstorm.strategy.util.FieldUtil;
 
 @Component
 public class NumericChangeProcessor extends BaseEventProcessor {
 
+  public static final String PERIODS_CONFIG_KEY = "proc.numericchange.periods";
+
   private Predicate<Field<?>> filter() {
-    return p -> BigDecimal.class.isAssignableFrom(p.getFieldType()) && Integer.class.isAssignableFrom(p.getFieldType())
+    return p -> (BigDecimal.class.isAssignableFrom(p.getFieldType()) || Integer.class.isAssignableFrom(p.getFieldType()))
         && !p.getName().contains(Field.Name.ABS_CHANGE.field()) && !p.getName().contains(Field.Name.PCT_CHANGE.field());
   }
 
@@ -27,33 +29,30 @@ public class NumericChangeProcessor extends BaseEventProcessor {
     if (!filter().test(f))
       return;
 
-    if (BigDecimal.class.isAssignableFrom(f.getFieldType()) || Integer.class.isAssignableFrom(f.getFieldType())) {
+    BigDecimal absDiff = BigDecimal.ZERO;
+    BigDecimal pctDiff = BigDecimal.ZERO;
 
-      List<Field<?>> previous = (List) cache(f);
-      Collections.sort(previous);
+    int p = Integer.valueOf(configuration(f.getStream()).getOrDefault(PERIODS_CONFIG_KEY, "2"));
 
-      int i = previous.indexOf(f);
-      Field<?> prior = null;
-      BigDecimal absDiff = BigDecimal.ZERO;
-      BigDecimal pctDiff = BigDecimal.ZERO;
-      int p = 2;
+    List<Field<?>> previous = cache(f, p);
+    Field<Number> prior = (Field<Number>) FieldUtil.fetch(previous, f, p);
 
-      if (i >= 0 && previous.size() >= (i + (p + 1))) {
+    if (!prior.equals(f)) {
 
-        prior = (Field<?>) previous.get(i + p);
+      BigDecimal priorVal = new BigDecimal(prior.getValue() + "");
+      BigDecimal fVal = new BigDecimal(f.getValue() + "");
 
-        absDiff = (new BigDecimal(f.getValue() + "").subtract(new BigDecimal(f.getValue() + "")));
-        pctDiff = absDiff.divide(new BigDecimal(prior.getValue() + ""), 4, BigDecimal.ROUND_HALF_UP);
-        publish(new BaseField<>(f, Field.Name.ABS_CHANGE.field(), absDiff));
-        publish(new BaseField<>(f, Field.Name.PCT_CHANGE.field(), pctDiff));
+      absDiff = fVal.subtract(priorVal);
 
-      } else {
-        publish(new BaseField(f, Field.Name.ABS_CHANGE.field(), BigDecimal.class));
-        publish(new BaseField(f, Field.Name.PCT_CHANGE.field(), BigDecimal.class));
-      }
+      if (!absDiff.equals(BigDecimal.ZERO) && !priorVal.equals(BigDecimal.ZERO))
+        pctDiff = absDiff.divide(priorVal, 4, BigDecimal.ROUND_HALF_UP);
 
+      publish(new BaseField<>(f, Field.Name.ABS_CHANGE.field() + "-p" + p, absDiff));
+      publish(new BaseField<>(f, Field.Name.PCT_CHANGE.field() + "-p" + p, pctDiff));
+    } else {
+      publish(new BaseField<>(f, Field.Name.ABS_CHANGE.field() + "-p" + p, BigDecimal.class));
+      publish(new BaseField<>(f, Field.Name.PCT_CHANGE.field() + "-p" + p, BigDecimal.class));
     }
   }
-
 
 }

@@ -2,11 +2,13 @@ package io.tickerstorm.strategy.processor;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -19,11 +21,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.Subscribe;
 
 import io.tickerstorm.common.entity.Command;
 import io.tickerstorm.common.entity.Field;
+import io.tickerstorm.common.entity.Markers;
 import io.tickerstorm.common.entity.MarketData;
 import io.tickerstorm.common.entity.Notification;
 import io.tickerstorm.strategy.util.CacheManager;
@@ -33,38 +38,19 @@ import net.sf.ehcache.Element;
 @Component
 public abstract class BaseEventProcessor {
 
-  private final static String CACHE = "md-cache";
-  
-  private final static Logger logger = LoggerFactory.getLogger(BaseEventProcessor.class);
+  protected final String CACHE = getClass().getSimpleName() + "-cache";
+
+  protected final Logger logger = LoggerFactory.getLogger(getClass());
 
   @Qualifier("eventBus")
   @Autowired
-  private AsyncEventBus eventBus;
+  protected AsyncEventBus eventBus;
 
-  @PostConstruct
-  protected void init() {
-    eventBus.register(this);
-  }
+  private Map<String, Map<String, String>> configs = new HashMap<>();
 
-  @PreDestroy
-  protected void destroy() {
-    eventBus.unregister(this);
-  }
+  @Autowired
+  private Clock clock;
 
-  protected void publish(Object o) {
-    eventBus.post(o);
-  }
-  
-  @Subscribe
-  protected void onCommand(Command command) throws Exception {
-    
-  }
-  
-  @Subscribe
-  protected void onNotification(Notification notification) throws Exception {
-    
-  }
-  
   protected Map<String, Set<Field<?>>> byType(MarketData md) throws Exception {
 
     Map<String, Set<Field<?>>> coll = new HashedMap();
@@ -73,6 +59,62 @@ public abstract class BaseEventProcessor {
     coll.put(Field.Name.CATEGORICAL_FIELDS.field(), filterForFields(md, String.class));
     coll.put(Field.Name.TEMPORAL_FIELDS.field(), filterForFields(md, Instant.class));
     return coll;
+  }
+
+  protected Map<String, String> configuration(String stream) {
+    if (configs.containsKey(stream))
+      return configs.get(stream);
+
+    return Maps.newHashMap();
+  }
+
+  protected void configure(String stream, Map<String, String> map) {
+    configs.put(stream, map);
+  }
+
+  protected List<Field<?>> cache(Field<?> f, int period) {
+
+    final String key = CacheManager.buildKey(f).toString() + "-p" + period;
+    List<Field<?>> previous = Lists.newArrayList(f);
+    Element e = CacheManager.getInstance(CACHE).putIfAbsent(new Element(key, previous));
+
+    if (e != null) {
+      try {
+        CacheManager.getInstance(CACHE).acquireWriteLockOnKey(key);
+
+        previous = (List<Field<?>>) e.getObjectValue();
+        previous.add(f);
+
+        CacheManager.getInstance(CACHE).replace(new Element(key, previous));
+
+      } finally {
+        CacheManager.getInstance(CACHE).releaseWriteLockOnKey(key);
+      }
+
+      Collections.sort(previous, Field.SORT_REVERSE_TIMESTAMP);
+    }
+
+    return previous;
+  }
+
+  protected List<Field<?>> fetch(Field<?> key, int period) {
+
+    Element e = CacheManager.getInstance(CACHE).get(CacheManager.buildKey(key).toString() + "-p" + period);
+
+    if (e == null)
+      return Lists.newArrayList();
+
+    List<Field<?>> previous = (List<Field<?>>) e.getObjectValue();
+
+    Collections.sort(previous, Field.SORT_REVERSE_TIMESTAMP);
+    return previous;
+  }
+
+
+
+  @PreDestroy
+  protected void destroy() {
+    eventBus.unregister(this);
   }
 
   protected Set<Field<?>> filterForFields(MarketData md, Class<?> clazz) {
@@ -90,55 +132,43 @@ public abstract class BaseEventProcessor {
 
   }
 
-  protected List<Field<?>> cache(Field<?> f) {
-
-    final String key = CacheManager.buildKey(f).toString();
-    CacheManager.getInstance(CACHE).putIfAbsent(new Element(key, new ArrayList<Field<?>>()));
-    List<Field<?>> previous = new ArrayList<>();
-
-    try {
-
-      CacheManager.getInstance(CACHE).acquireWriteLockOnKey(key);
-      previous = (List<Field<?>>) CacheManager.getInstance(CACHE).get(key).getObjectValue();
-      previous.add(f);
-      CacheManager.getInstance(CACHE).put(new Element(key, previous));
-
-    } finally {
-
-      CacheManager.getInstance(CACHE).releaseWriteLockOnKey(key);
-
-    }
-
-    return previous;
+  @PostConstruct
+  protected void init() {
+    eventBus.register(this);
   }
 
-  protected SynchronizedDescriptiveStatistics cache(String key, Field<?> f, int period) {
-    SynchronizedDescriptiveStatistics q = null;
-    try {
+  @Subscribe
+  public void onCommand(Command command) throws Exception {
 
-      CacheManager.getInstance("md-cache").acquireWriteLockOnKey(key);
-      CacheManager.getInstance("md-cache").putIfAbsent(new Element(key, new SynchronizedDescriptiveStatistics(period)));
+    logger.debug("Command received " + command);
 
-      q = (SynchronizedDescriptiveStatistics) CacheManager.getInstance("md-cache").get(key).getObjectValue();
+    Predicate<Command> sessionStart = (p -> command.markers.contains(Markers.SESSION_START.toString()));
+    Predicate<Command> sessionEnd = (p -> command.markers.contains(Markers.SESSION_END.toString()));
 
-      if (f.getFieldType().isAssignableFrom(BigDecimal.class))
-        q.addValue(((BigDecimal) f.getValue()).doubleValue());
+    if (sessionStart.test(command)) {
 
-      if (f.getFieldType().isAssignableFrom(Integer.class))
-        q.addValue(((Integer) f.getValue()).doubleValue());
-
-    } finally {
-      CacheManager.getInstance("md-cache").releaseWriteLockOnKey(key);
+      if (this.configs.containsKey(command.getStream()))
+        configuration(command.getStream()).putAll(command.config);
+      else
+        configure(command.getStream(), command.config);
     }
 
-    return q;
+    if (sessionEnd.test(command)) {
+      configs.remove(command.getStream());
+    }
 
   }
 
-  @Autowired
-  private Clock clock;
-  
-  protected Instant time(){
+  @Subscribe
+  public void onNotification(Notification notification) throws Exception {
+    logger.debug("Notification received " + notification);
+  }
+
+  protected void publish(Object o) {
+    eventBus.post(o);
+  }
+
+  protected Instant time() {
     return clock.now();
   }
 
