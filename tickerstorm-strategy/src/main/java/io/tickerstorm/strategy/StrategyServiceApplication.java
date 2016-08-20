@@ -43,7 +43,7 @@ public class StrategyServiceApplication {
 
   // SENDERS
   @Bean
-  public EventBusToJMSBridge buildModelDataJmsBridge(@Qualifier(Destinations.MODEL_DATA_BUS) MBassador<Map<String, Object>> eventbus,
+  public EventBusToJMSBridge buildModelDataJmsBridge(@Qualifier(Destinations.MODEL_DATA_BUS) AsyncEventBus eventbus,
       JmsTemplate template) {
     return new EventBusToJMSBridge(eventbus, Destinations.QUEUE_MODEL_DATA, template);
   }

@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Maps;
+import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.Subscribe;
 
 import io.tickerstorm.common.data.eventbus.Destinations;
@@ -28,7 +29,7 @@ public class EventDataToJmsPublisher extends BaseEventProcessor {
 
   @Qualifier(Destinations.MODEL_DATA_BUS)
   @Autowired
-  private MBassador<Map<String, Object>> modelDataBus;
+  private AsyncEventBus modelDataBus;
 
   @Qualifier(Destinations.NOTIFICATIONS_BUS)
   @Autowired
@@ -38,10 +39,10 @@ public class EventDataToJmsPublisher extends BaseEventProcessor {
   public void onMarketData(MarketData md) {
 
     logger.debug("Dispatching processed market data event " + md);
-    
+
     Map<String, Object> out = Maps.newHashMap();
     out.put(Field.Name.MARKETDATA.field(), md);
-    modelDataBus.publish(out);
+    modelDataBus.post(out);
 
   }
 
@@ -49,17 +50,17 @@ public class EventDataToJmsPublisher extends BaseEventProcessor {
   public void onField(Field<?> field) {
 
     logger.debug("Dispatching processed field " + field);
-    
+
     Map<String, Object> out = Maps.newHashMap();
     out.put(field.getName(), field);
-    modelDataBus.publish(out);
+    modelDataBus.post(out);
 
   }
 
   @Subscribe
   @Override
   public void onNotification(Notification notification) throws Exception {
-     
+
     super.onNotification(notification);
     notificationsBus.publish(notification);
   }

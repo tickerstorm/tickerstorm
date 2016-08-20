@@ -5,7 +5,6 @@ import static org.testng.Assert.assertTrue;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -103,7 +102,7 @@ public class ModelDataEndToEndITCase extends AbstractTestNGSpringContextTests {
     Candle c = new Candle("goog", "google", Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ONE, BigDecimal.ONE, "1m", 1000);
     c.setStream(s.stream);
     brokderFeed.publishAsync(c);
-    Thread.sleep(8000);
+    Thread.sleep(25000);
 
     Assert.assertTrue(triggeredMarket.get());
     Assert.assertTrue(triggeredModel.get());
@@ -180,8 +179,9 @@ public class ModelDataEndToEndITCase extends AbstractTestNGSpringContextTests {
 
         Set<String> fieldNames = new java.util.HashSet<>();
         for (ModelDataDto dto : modelDao.findAll()) {
-          Map<String, Object> values = dto.fromRow();
-          fieldNames.addAll(values.keySet());
+          dto.asFields().stream().forEach(f -> {
+            fieldNames.add(f.getName());
+          });
         }
 
         Assert.assertTrue(fieldNames.size() > 0);
