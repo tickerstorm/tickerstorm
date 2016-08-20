@@ -9,9 +9,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.jms.annotation.JmsListener;
 import org.springframework.messaging.handler.annotation.Payload;
 
+import com.google.common.eventbus.AsyncEventBus;
+
 import io.tickerstorm.common.data.query.DataFeedQuery;
-import io.tickerstorm.common.data.query.HistoricalFeedQuery;
-import io.tickerstorm.common.data.query.ModelDataQuery;
 import io.tickerstorm.common.entity.MarketData;
 import net.engio.mbassy.bus.MBassador;
 
@@ -27,15 +27,15 @@ public class JMSToEventBusBridge {
 
   private MBassador<Serializable> notificationBus;
 
-  private MBassador<Map<String, Object>> modelDataBus;
-  
+  private AsyncEventBus modelDataBus;
+
   private MBassador<Map<String, Object>> retroModelDataBus;
 
-  public MBassador<Map<String, Object>> getModelDataBus() {
+  public AsyncEventBus getModelDataBus() {
     return modelDataBus;
   }
 
-  public void setModelDataBus(MBassador<Map<String, Object>> modelDataBus) {
+  public void setModelDataBus(AsyncEventBus modelDataBus) {
     this.modelDataBus = modelDataBus;
   }
 
@@ -84,7 +84,7 @@ public class JMSToEventBusBridge {
       }
     }
   }
-  
+
   @JmsListener(destination = Destinations.QUEUE_HISTORICAL_DATA_QUERY)
   public void onMessage(@Payload DataFeedQuery query) {
     if (queryBus != null) {
@@ -105,10 +105,10 @@ public class JMSToEventBusBridge {
   public void onMessage(@Payload Map<String, Object> row) {
     if (modelDataBus != null) {
       logger.trace("Received model data " + row.toString());
-      modelDataBus.publishAsync(row);
+      modelDataBus.post(row);
     }
   }
-  
+
   @JmsListener(destination = Destinations.QUEUE_RETRO_MODEL_DATA)
   public void onRetroMessage(@Payload Map<String, Object> row) {
     if (retroModelDataBus != null) {

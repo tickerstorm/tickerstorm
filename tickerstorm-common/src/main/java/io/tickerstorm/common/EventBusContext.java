@@ -2,11 +2,15 @@ package io.tickerstorm.common;
 
 import java.io.Serializable;
 import java.util.Map;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+
+import com.google.common.eventbus.AsyncEventBus;
 
 import io.tickerstorm.common.data.eventbus.Destinations;
 import io.tickerstorm.common.data.eventbus.EventBusToEventBusBridge;
@@ -124,11 +128,17 @@ public class EventBusContext {
    * @param handler
    * @return
    */
+  // @Qualifier(Destinations.MODEL_DATA_BUS)
+  // @Bean(destroyMethod = "shutdown")
+  // public MBassador<Map<String, Object>> buildModelDataEventBus(IBusConfiguration handler) {
+  // handler = handler.setProperty(IBusConfiguration.Properties.BusId, Destinations.MODEL_DATA_BUS);
+  // return new MBassador<Map<String, Object>>(handler);
+  // }
+
   @Qualifier(Destinations.MODEL_DATA_BUS)
-  @Bean(destroyMethod = "shutdown")
-  public MBassador<Map<String, Object>> buildModelDataEventBus(IBusConfiguration handler) {
-    handler = handler.setProperty(IBusConfiguration.Properties.BusId, Destinations.MODEL_DATA_BUS);
-    return new MBassador<Map<String, Object>>(handler);
+  @Bean
+  public AsyncEventBus buildModelDataEventBus(@Qualifier("eventBus") Executor executor) {
+    return new AsyncEventBus(Destinations.MODEL_DATA_BUS, executor);
   }
 
   /**
@@ -143,6 +153,12 @@ public class EventBusContext {
   public MBassador<Map<String, Object>> buildRetroModelDataEventBus(IBusConfiguration handler) {
     handler = handler.setProperty(IBusConfiguration.Properties.BusId, Destinations.RETRO_MODEL_DATA_BUS);
     return new MBassador<Map<String, Object>>(handler);
+  }
+  
+  @Qualifier("eventBus")
+  @Bean
+  public Executor buildExecutorService() {
+    return Executors.newFixedThreadPool(4);
   }
 
 

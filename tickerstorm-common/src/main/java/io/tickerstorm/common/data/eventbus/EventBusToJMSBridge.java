@@ -13,6 +13,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.jms.core.MessageCreator;
 
+import com.google.common.eventbus.AsyncEventBus;
+import com.google.common.eventbus.Subscribe;
+
 import net.engio.mbassy.bus.MBassador;
 import net.engio.mbassy.listener.Handler;
 import net.engio.mbassy.listener.IMessageFilter;
@@ -33,11 +36,22 @@ public class EventBusToJMSBridge {
       template.setPubSubDomain(true);
   }
 
+  public EventBusToJMSBridge(AsyncEventBus eventBus, String destination, JmsTemplate template) {
+    this.asyncBus = eventBus;
+    this.destination = destination;
+    this.template = template;
+
+    if (destination.contains("topic"))
+      template.setPubSubDomain(true);
+  }
+
   public EventBusToJMSBridge(MBassador<?> eventBus, String destination, JmsTemplate template, IMessageFilter<Serializable> filter) {
     this(eventBus, destination, template);
     this.filter = filter;
   }
 
+
+  private AsyncEventBus asyncBus;
   private MBassador<?> bus;
   private JmsTemplate template;
   private String destination;
@@ -45,14 +59,23 @@ public class EventBusToJMSBridge {
 
   @PostConstruct
   public void init() {
-    bus.subscribe(this);
+    if (bus != null)
+      bus.subscribe(this);
+
+    if (asyncBus != null)
+      asyncBus.register(this);
   }
 
   @PreDestroy
   public void destroy() {
-    bus.unsubscribe(this);
+    if (asyncBus != null)
+      asyncBus.register(this);
+
+    if (bus != null)
+      bus.unsubscribe(this);
   }
 
+  @Subscribe
   @Handler
   public void onEvent(Serializable data) {
 
