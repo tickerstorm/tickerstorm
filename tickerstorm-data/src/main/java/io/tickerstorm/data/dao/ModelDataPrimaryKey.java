@@ -1,6 +1,7 @@
 package io.tickerstorm.data.dao;
 
 import java.io.Serializable;
+import java.math.BigInteger;
 import java.util.Date;
 
 import org.springframework.cassandra.core.Ordering;
@@ -16,12 +17,12 @@ public class ModelDataPrimaryKey implements Serializable {
   public String stream;
 
   @PrimaryKeyColumn(name = "date", ordinal = 1, type = PrimaryKeyType.PARTITIONED, ordering = Ordering.DESCENDING)
-  public Integer date;
+  public BigInteger date;
 
   @PrimaryKeyColumn(name = "timestamp", ordinal = 2, type = PrimaryKeyType.CLUSTERED, ordering = Ordering.DESCENDING)
   public Date timestamp;
 
-  public Integer getDate() {
+  public BigInteger getDate() {
     return date;
   }
 
@@ -70,7 +71,7 @@ public class ModelDataPrimaryKey implements Serializable {
     return timestamp;
   }
 
-  public void setDate(Integer date) {
+  public void setDate(BigInteger date) {
     this.date = date;
   }
 

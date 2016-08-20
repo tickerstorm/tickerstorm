@@ -1,9 +1,13 @@
 package io.tickerstorm.data.dao;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -14,11 +18,16 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Repository;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import com.google.common.eventbus.AsyncEventBus;
 
 import io.tickerstorm.common.data.eventbus.Destinations;
 import io.tickerstorm.common.entity.BaseMarker;
+import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.entity.Markers;
+import io.tickerstorm.common.entity.MarketData;
 import net.engio.mbassy.bus.MBassador;
 import net.engio.mbassy.listener.Listener;
 import net.engio.mbassy.listener.References;
@@ -32,7 +41,7 @@ public class ModelDataCassandraSink extends BaseCassandraSink<ModelDataDto> {
 
   @Qualifier(Destinations.MODEL_DATA_BUS)
   @Autowired
-  private MBassador<Map<String, Object>> modelDataBus;
+  private AsyncEventBus modelDataBus;
 
   @Qualifier(Destinations.NOTIFICATIONS_BUS)
   @Autowired
@@ -49,38 +58,52 @@ public class ModelDataCassandraSink extends BaseCassandraSink<ModelDataDto> {
   @PostConstruct
   public void init() {
     super.init();
-    modelDataBus.subscribe(this);
+    modelDataBus.register(this);
   }
 
   @PreDestroy
   public void destroy() {
     super.destroy();
-    modelDataBus.unsubscribe(this);
+    modelDataBus.unregister(this);
   }
 
   @Override
-  protected Serializable convert(Serializable data) {
+  protected Set<ModelDataDto> convert(Serializable data) {
 
-    Serializable s = null;
+    Set<ModelDataDto> dtos = new HashSet<>();
 
-    try {
-      s = ModelDataDto.convert((Map<String, Object>) data);
-    } catch (IllegalArgumentException e) {
-      // nothing
+    if (Map.class.isAssignableFrom(data.getClass())) {
+
+      Map<String, Field<?>> mps = (Map<String, Field<?>>) data;
+      return ModelDataDto.convert(mps.values());
+
+    } else if (Field.class.isAssignableFrom(data.getClass())) {
+
+      return Sets.newHashSet(ModelDataDto.convert((Field<?>) data));
+
+    } else if (MarketData.class.isAssignableFrom(data.getClass())) {
+
+      return ModelDataDto.convert((MarketData) data);
+
     }
 
-    return s;
+    return dtos;
   }
 
   @Override
-  protected void persist(List<ModelDataDto> data) {
+  protected void persist(Collection<ModelDataDto> data) {
     try {
       synchronized (data) {
 
         logger.debug(
             "Persisting " + data.size() + " records, " + count.addAndGet(data.size()) + " total saved and " + received.get() + " received");
 
-        dao.save(data);
+        List<List<?>> rows = new ArrayList<>();
+        data.stream().forEach(r -> {
+          rows.add(Lists.newArrayList(r.fields, r.primarykey.stream, r.primarykey.date, r.primarykey.timestamp));
+        });
+
+        session.ingest("UPDATE " + keyspace + ".modeldata SET fields = fields + ? WHERE stream = ? AND date = ? AND timestamp = ?;", rows);
 
         Map<String, Integer> streamCounts = countEntries(data);
 
@@ -98,7 +121,7 @@ public class ModelDataCassandraSink extends BaseCassandraSink<ModelDataDto> {
     }
   }
 
-  private Map<String, Integer> countEntries(List<ModelDataDto> data) {
+  private Map<String, Integer> countEntries(Collection<ModelDataDto> data) {
     Map<String, Integer> streamCounts = Maps.newHashMap();
     for (ModelDataDto dto : data) {
       Integer count = streamCounts.putIfAbsent(dto.primarykey.stream, 1);

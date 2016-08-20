@@ -2,6 +2,7 @@ package io.tickerstorm.data.dao;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Timer;
@@ -19,6 +20,7 @@ import org.springframework.data.cassandra.core.CassandraOperations;
 import com.datastax.driver.core.ExecutionInfo;
 import com.datastax.driver.core.ResultSetFuture;
 import com.google.common.collect.Lists;
+import com.google.common.eventbus.Subscribe;
 
 import net.engio.mbassy.listener.Handler;
 
@@ -48,7 +50,7 @@ public abstract class BaseCassandraSink<T> {
   }
 
   @Value("${cassandra.keyspace}")
-  private String keyspace;
+  protected String keyspace;
 
   @Autowired
   protected CassandraOperations session;
@@ -63,20 +65,22 @@ public abstract class BaseCassandraSink<T> {
     timer.scheduleAtFixedRate(new BatchSaveTask(), 0, 5000);
   }
 
+  @Subscribe
   @Handler
   public final void onData(Serializable data) {
 
     try {
 
-      synchronized (received) {
-        received.incrementAndGet();
-      }
+      Collection<T> d = convert(data);
 
-      T d = (T) convert(data);
+      synchronized (received) {
+        if (d != null && !d.isEmpty())
+          received.addAndGet(d.size());
+      }
 
       if (d != null && batchSize() > 1) {
 
-        batch.get().add(d);
+        batch.get().addAll((Collection<T>) d);
 
         if (batch.get().size() > batchSize()) {
           List<T> b = nextBatch();
@@ -95,12 +99,9 @@ public abstract class BaseCassandraSink<T> {
 
   }
 
-  protected abstract void persist(List<T> batch);
+  protected abstract void persist(Collection<T> batch);
 
-  protected Serializable convert(Serializable data) {
-    return data;
-  }
-
+  protected abstract Collection<T> convert(Serializable data);
 
   protected synchronized List<T> nextBatch() {
     List<T> data = batch.getAndSet(Collections.synchronizedList(new ArrayList<T>()));
@@ -113,7 +114,7 @@ public abstract class BaseCassandraSink<T> {
     public void onQueryComplete(ResultSetFuture rsf) {
       try {
         List<ExecutionInfo> infos = rsf.get().getAllExecutionInfo();
-                
+
       } catch (ExecutionException | InterruptedException e) {
         logger.error(e.getMessage(), e);
       }

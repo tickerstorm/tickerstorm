@@ -14,6 +14,8 @@ import org.springframework.data.cassandra.repository.config.EnableCassandraRepos
 import org.springframework.jms.annotation.EnableJms;
 import org.springframework.jms.core.JmsTemplate;
 
+import com.google.common.eventbus.AsyncEventBus;
+
 import io.tickerstorm.common.EventBusContext;
 import io.tickerstorm.common.JmsEventBusContext;
 import io.tickerstorm.common.data.eventbus.Destinations;
@@ -72,7 +74,7 @@ public class MarketDataApplication {
   // RECEIVERS
   @Bean
   public JMSToEventBusBridge buildQueryEventBridge(@Qualifier(Destinations.HISTORICAL_DATA_QUERY_BUS) MBassador<DataFeedQuery> queryBus,
-      @Qualifier(Destinations.MODEL_DATA_BUS) MBassador<Map<String, Object>> modelDataBus) {
+      @Qualifier(Destinations.MODEL_DATA_BUS) AsyncEventBus modelDataBus) {
     JMSToEventBusBridge bridge = new JMSToEventBusBridge();
     bridge.setQueryBus(queryBus);
     bridge.setModelDataBus(modelDataBus);

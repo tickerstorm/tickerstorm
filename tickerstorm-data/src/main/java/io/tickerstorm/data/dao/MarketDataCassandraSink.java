@@ -1,9 +1,11 @@
 package io.tickerstorm.data.dao;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -60,20 +62,22 @@ public class MarketDataCassandraSink extends BaseCassandraSink<MarketDataDto> {
   }
 
   @Override
-  protected Serializable convert(Serializable data) {
+  protected Set<MarketDataDto> convert(Serializable data) {
 
     if (MarketData.class.isAssignableFrom(data.getClass())) {
-      return MarketDataDto.convert((MarketData) data);
+      return com.google.common.collect.Sets.newHashSet(MarketDataDto.convert((MarketData) data));
     }
 
-    return data;
+    return null;
   }
 
-  protected void persist(List<MarketDataDto> data) {
+  protected void persist(Collection<MarketDataDto> data) {
     try {
       synchronized (data) {
+
         logger.debug(
             "Persisting " + data.size() + " records, " + count.addAndGet(data.size()) + " total saved and " + received.get() + " received");
+
         dao.save((List<MarketDataDto>) data);
 
         Map<String, Integer> streamCounts = countEntries(data);
@@ -91,7 +95,7 @@ public class MarketDataCassandraSink extends BaseCassandraSink<MarketDataDto> {
     }
   }
 
-  private Map<String, Integer> countEntries(List<MarketDataDto> data) {
+  private Map<String, Integer> countEntries(Collection<MarketDataDto> data) {
     Map<String, Integer> streamCounts = Maps.newHashMap();
     for (MarketDataDto dto : data) {
       Integer count = streamCounts.putIfAbsent(dto.primarykey.source, 1);
