@@ -60,7 +60,7 @@ public class MarketDataApplication {
 
   @Bean
   public EventBusToJMSBridge buildRetroModelDataJmsBridge(
-      @Qualifier(Destinations.RETRO_MODEL_DATA_BUS) MBassador<Map<String, Object>> eventbus, JmsTemplate template) {
+      @Qualifier(Destinations.RETRO_MODEL_DATA_BUS) AsyncEventBus eventbus, JmsTemplate template) {
     return new EventBusToJMSBridge(eventbus, Destinations.QUEUE_RETRO_MODEL_DATA, template);
   }
 

@@ -136,6 +136,11 @@
 				<artifactId>mbassador</artifactId>
 				<version>1.2.4.2</version>
 			</dependency>
+			<dependency>
+				<groupId>io.tickerstorm</groupId>
+				<artifactId>common</artifactId>
+				<version>${project.version}</version>
+			</dependency>
 		</dependencies>
 	</dependencyManagement>
 	<name>TickerStorm Parent POM</name>

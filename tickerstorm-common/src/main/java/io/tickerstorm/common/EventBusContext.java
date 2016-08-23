@@ -1,7 +1,6 @@
 package io.tickerstorm.common;
 
 import java.io.Serializable;
-import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -149,12 +148,11 @@ public class EventBusContext {
    * @return
    */
   @Qualifier(Destinations.RETRO_MODEL_DATA_BUS)
-  @Bean(destroyMethod = "shutdown")
-  public MBassador<Map<String, Object>> buildRetroModelDataEventBus(IBusConfiguration handler) {
-    handler = handler.setProperty(IBusConfiguration.Properties.BusId, Destinations.RETRO_MODEL_DATA_BUS);
-    return new MBassador<Map<String, Object>>(handler);
+  @Bean
+  public AsyncEventBus buildRetroModelDataEventBus(@Qualifier("eventBus") Executor executor) {
+    return new AsyncEventBus(Destinations.RETRO_MODEL_DATA_BUS, executor);
   }
-  
+
   @Qualifier("eventBus")
   @Bean
   public Executor buildExecutorService() {

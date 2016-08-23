@@ -20,7 +20,7 @@ public class NumericChangeProcessor extends BaseEventProcessor {
 
   private Predicate<Field<?>> filter() {
     return p -> (BigDecimal.class.isAssignableFrom(p.getFieldType()) || Integer.class.isAssignableFrom(p.getFieldType()))
-        && !p.getName().contains(Field.Name.ABS_CHANGE.field()) && !p.getName().contains(Field.Name.PCT_CHANGE.field());
+        && !p.getName().contains(Field.Name.ABS_CHANGE.field()) && !p.getName().contains(Field.Name.PCT_CHANGE.field()) && !p.isNull();
   }
 
   @Subscribe

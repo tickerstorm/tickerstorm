@@ -1,8 +1,10 @@
 package io.tickerstorm.data.service;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.sql.Date;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -36,7 +38,8 @@ public class ModelDataFeed {
 
   private static final java.time.format.DateTimeFormatter dateFormat = java.time.format.DateTimeFormatter.ISO_DATE_TIME;
 
-  private static final java.time.format.DateTimeFormatter dateFormat2 = java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd");
+  private static final java.time.format.DateTimeFormatter dateFormat2 =
+      java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd").withZone(ZoneId.of("UTC"));
 
   private static final Logger logger = LoggerFactory.getLogger(ModelDataFeed.class);
 
@@ -48,7 +51,7 @@ public class ModelDataFeed {
   @Autowired
   private MBassador<DataFeedQuery> queryBus;
 
-  @Qualifier(Destinations.MODEL_DATA_BUS)
+  @Qualifier(Destinations.RETRO_MODEL_DATA_BUS)
   @Autowired
   private AsyncEventBus modeldataBus;
 
@@ -72,25 +75,24 @@ public class ModelDataFeed {
   public void onQuery(ModelDataQuery query) {
 
     logger.debug("Model data feed query received");
-    LocalDateTime start = query.from.atOffset(ZoneOffset.UTC).toLocalDateTime();
-    LocalDateTime end = query.until.atOffset(ZoneOffset.UTC).toLocalDateTime();
-    LocalDateTime date = start;
+    Instant start = query.from;
+    Instant end = query.until;
+    Instant date = start;
 
     Set<Integer> dates = new java.util.HashSet<>();
-    dates.add(Integer.valueOf(dateFormat2.format(date)));
+    dates.add(Integer.valueOf(dateFormat2.format(query.from)));
 
     while (!date.equals(end)) {
 
       if (date.isBefore(end))
-        date = date.plusDays(1);
+        date = date.plus(1, ChronoUnit.DAYS);
 
       dates.add(Integer.valueOf(dateFormat2.format(date)));
     }
 
     Select select = QueryBuilder.select().from("modeldata");
     select.where(QueryBuilder.eq("stream", query.stream.toLowerCase())).and(QueryBuilder.in("date", dates.toArray(new Integer[] {})))
-        .and(QueryBuilder.gte("timestamp", dateFormat.format(query.from)))
-        .and(QueryBuilder.lte("timestamp", dateFormat.format(query.until)));
+        .and(QueryBuilder.gte("timestamp", Date.from(query.from))).and(QueryBuilder.lte("timestamp", Date.from(query.until)));
 
     logger.debug("Cassandra query: " + select.toString());
     long startTimer = System.currentTimeMillis();

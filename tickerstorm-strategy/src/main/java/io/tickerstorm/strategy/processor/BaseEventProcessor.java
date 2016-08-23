@@ -1,5 +1,6 @@
 package io.tickerstorm.strategy.processor;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Collections;
@@ -25,6 +26,7 @@ import com.google.common.collect.Maps;
 import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.Subscribe;
 
+import io.tickerstorm.common.data.eventbus.Destinations;
 import io.tickerstorm.common.entity.Command;
 import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.entity.Markers;
@@ -32,6 +34,7 @@ import io.tickerstorm.common.entity.MarketData;
 import io.tickerstorm.common.entity.Notification;
 import io.tickerstorm.strategy.util.CacheManager;
 import io.tickerstorm.strategy.util.Clock;
+import net.engio.mbassy.bus.MBassador;
 import net.sf.ehcache.Element;
 
 @Component
@@ -41,9 +44,13 @@ public abstract class BaseEventProcessor {
 
   protected final Logger logger = LoggerFactory.getLogger(getClass());
 
-  @Qualifier("eventBus")
+  @Qualifier("processorEventBus")
   @Autowired
   protected AsyncEventBus eventBus;
+
+  @Qualifier(Destinations.NOTIFICATIONS_BUS)
+  @Autowired
+  private MBassador<Serializable> notificationsBus;
 
   private Map<String, Map<String, String>> configs = new HashMap<>();
 
@@ -165,6 +172,10 @@ public abstract class BaseEventProcessor {
 
   protected void publish(Object o) {
     eventBus.post(o);
+  }
+
+  protected void notify(Notification not) {
+    notificationsBus.post(not);
   }
 
   protected Instant time() {

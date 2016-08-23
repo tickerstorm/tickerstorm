@@ -1,7 +1,7 @@
 package io.tickerstorm.strategy;
 
 import java.io.Serializable;
-import java.util.Map;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 import org.apache.logging.log4j.core.util.Throwables;
@@ -58,7 +58,7 @@ public class StrategyServiceApplication {
   @Bean
   public JMSToEventBusBridge buildQueryEventBridge(@Qualifier(Destinations.REALTIME_MARKETDATA_BUS) MBassador<MarketData> realtimeBus,
       @Qualifier(Destinations.COMMANDS_BUS) MBassador<Serializable> commandsBus,
-      @Qualifier(Destinations.RETRO_MODEL_DATA_BUS) MBassador<Map<String, Object>> retroModelDataBus) {
+      @Qualifier(Destinations.RETRO_MODEL_DATA_BUS) AsyncEventBus retroModelDataBus) {
     JMSToEventBusBridge bridge = new JMSToEventBusBridge();
     bridge.setRealtimeBus(realtimeBus);
     bridge.setCommandsBus(commandsBus);
@@ -66,16 +66,10 @@ public class StrategyServiceApplication {
     return bridge;
   }
 
-  @Qualifier("eventBus")
+  @Qualifier("processorEventBus")
   @Bean
-  public AsyncEventBus buildEventProcessorBus() {
-    return new AsyncEventBus(Executors.newFixedThreadPool(2), new AsyncEventBusExceptionHandler());
-  }
-
-  @Qualifier("retroEventBus")
-  @Bean
-  public AsyncEventBus buildRetroEventProcessorBus() {
-    return new AsyncEventBus(Executors.newFixedThreadPool(2), new AsyncEventBusExceptionHandler());
+  public AsyncEventBus buildEventProcessorBus(@Qualifier("eventBus") Executor executor) {
+    return new AsyncEventBus(executor, new AsyncEventBusExceptionHandler());
   }
 
   @Bean

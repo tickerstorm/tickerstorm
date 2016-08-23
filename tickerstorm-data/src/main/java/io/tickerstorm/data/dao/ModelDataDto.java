@@ -3,6 +3,7 @@ package io.tickerstorm.data.dao;
 import java.io.Serializable;
 import java.math.BigInteger;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Collection;
@@ -21,7 +22,7 @@ import io.tickerstorm.common.entity.MarketData;
 @SuppressWarnings("serial")
 public class ModelDataDto implements Serializable {
 
-  public static final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("uuuuMMdd");
+  public static final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("uuuuMMdd").withZone(ZoneId.of("UTC"));
 
   @org.springframework.data.cassandra.mapping.PrimaryKey
   public ModelDataPrimaryKey primarykey;
@@ -44,9 +45,8 @@ public class ModelDataDto implements Serializable {
     ModelDataDto dto = new ModelDataDto();
 
     ModelDataPrimaryKey key = new ModelDataPrimaryKey();
-    key.timestamp = Date.from(MarketData.parseTimestamp(field.getEventId()));
-    LocalDateTime dt = LocalDateTime.ofInstant(key.timestamp.toInstant(), ZoneOffset.UTC);
-    key.date = new BigInteger(dateFormatter.format(dt));
+    key.timestamp = Date.from(field.getTimestamp());
+    key.date = new BigInteger(dateFormatter.format(field.getTimestamp()));
     key.stream = field.getStream();
     dto.primarykey = key;
     dto.fields.add(field.serialize());
@@ -70,7 +70,7 @@ public class ModelDataDto implements Serializable {
     ModelDataDto dto = new ModelDataDto();
     ModelDataPrimaryKey key = new ModelDataPrimaryKey();
     key.timestamp = Date.from(md.getTimestamp());
-    LocalDateTime dt = LocalDateTime.ofInstant(key.timestamp.toInstant(), ZoneOffset.UTC);
+    LocalDateTime dt = LocalDateTime.ofInstant(md.getTimestamp(), ZoneOffset.UTC);
     key.date = new BigInteger(dateFormatter.format(dt));
     key.stream = md.getStream();
     dto.primarykey = key;

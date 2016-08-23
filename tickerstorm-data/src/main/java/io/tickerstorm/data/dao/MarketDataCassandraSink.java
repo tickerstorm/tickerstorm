@@ -72,6 +72,10 @@ public class MarketDataCassandraSink extends BaseCassandraSink<MarketDataDto> {
   }
 
   protected void persist(Collection<MarketDataDto> data) {
+
+    if (null == data || data.isEmpty())
+      return;
+
     try {
       synchronized (data) {
 

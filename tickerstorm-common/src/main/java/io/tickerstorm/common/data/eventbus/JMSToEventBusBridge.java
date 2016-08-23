@@ -12,6 +12,7 @@ import org.springframework.messaging.handler.annotation.Payload;
 import com.google.common.eventbus.AsyncEventBus;
 
 import io.tickerstorm.common.data.query.DataFeedQuery;
+import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.entity.MarketData;
 import net.engio.mbassy.bus.MBassador;
 
@@ -29,7 +30,7 @@ public class JMSToEventBusBridge {
 
   private AsyncEventBus modelDataBus;
 
-  private MBassador<Map<String, Object>> retroModelDataBus;
+  private AsyncEventBus retroModelDataBus;
 
   public AsyncEventBus getModelDataBus() {
     return modelDataBus;
@@ -102,26 +103,26 @@ public class JMSToEventBusBridge {
   }
 
   @JmsListener(destination = Destinations.QUEUE_MODEL_DATA)
-  public void onMessage(@Payload Map<String, Object> row) {
+  public void onMessage(@Payload Serializable field) {
     if (modelDataBus != null) {
-      logger.trace("Received model data " + row.toString());
-      modelDataBus.post(row);
+      logger.trace("Received model data " + field.toString());
+      modelDataBus.post(field);
     }
   }
 
   @JmsListener(destination = Destinations.QUEUE_RETRO_MODEL_DATA)
-  public void onRetroMessage(@Payload Map<String, Object> row) {
+  public void onRetroMessage(@Payload Serializable row) {
     if (retroModelDataBus != null) {
       logger.trace("Received retro model data " + row.toString());
-      retroModelDataBus.publishAsync(row);
+      retroModelDataBus.post(row);
     }
   }
 
-  public MBassador<Map<String, Object>> getRetroModelDataBus() {
+  public AsyncEventBus getRetroModelDataBus() {
     return retroModelDataBus;
   }
 
-  public void setRetroModelDataBus(MBassador<Map<String, Object>> retroModelDataBus) {
+  public void setRetroModelDataBus(AsyncEventBus retroModelDataBus) {
     this.retroModelDataBus = retroModelDataBus;
   }
 

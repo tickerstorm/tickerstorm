@@ -232,7 +232,7 @@ public interface Field<T> extends Serializable, Comparable<Field<T>> {
 
   public T getValue();
 
-  default boolean isEmpty() {
+  default boolean isNull() {
 
     if (getValue() == null)
       return true;

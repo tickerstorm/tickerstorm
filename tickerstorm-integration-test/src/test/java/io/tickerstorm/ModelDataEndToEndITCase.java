@@ -102,7 +102,7 @@ public class ModelDataEndToEndITCase extends AbstractTestNGSpringContextTests {
     Candle c = new Candle("goog", "google", Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ONE, BigDecimal.ONE, "1m", 1000);
     c.setStream(s.stream);
     brokderFeed.publishAsync(c);
-    Thread.sleep(25000);
+    Thread.sleep(8000);
 
     Assert.assertTrue(triggeredMarket.get());
     Assert.assertTrue(triggeredModel.get());

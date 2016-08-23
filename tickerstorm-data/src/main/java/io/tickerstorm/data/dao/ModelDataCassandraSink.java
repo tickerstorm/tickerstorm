@@ -12,6 +12,7 @@ import java.util.Set;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
+import org.apache.commons.lang3.ClassUtils;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -22,6 +23,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.eventbus.AsyncEventBus;
+import com.google.common.eventbus.Subscribe;
 
 import io.tickerstorm.common.data.eventbus.Destinations;
 import io.tickerstorm.common.entity.BaseMarker;
@@ -49,7 +51,7 @@ public class ModelDataCassandraSink extends BaseCassandraSink<ModelDataDto> {
 
   @Override
   protected int batchSize() {
-    return 4;
+    return 149;
   }
 
   @Autowired
@@ -72,19 +74,16 @@ public class ModelDataCassandraSink extends BaseCassandraSink<ModelDataDto> {
 
     Set<ModelDataDto> dtos = new HashSet<>();
 
-    if (Map.class.isAssignableFrom(data.getClass())) {
-
-      Map<String, Field<?>> mps = (Map<String, Field<?>>) data;
-      return ModelDataDto.convert(mps.values());
-
-    } else if (Field.class.isAssignableFrom(data.getClass())) {
-
-      return Sets.newHashSet(ModelDataDto.convert((Field<?>) data));
-
-    } else if (MarketData.class.isAssignableFrom(data.getClass())) {
+    if (ClassUtils.isAssignable(data.getClass(), MarketData.class)) {
 
       return ModelDataDto.convert((MarketData) data);
 
+    } else if (ClassUtils.isAssignable(data.getClass(), Field.class)) {
+
+      return Sets.newHashSet(ModelDataDto.convert((Field<?>) data));
+
+    } else {
+      // ignore
     }
 
     return dtos;
@@ -92,6 +91,10 @@ public class ModelDataCassandraSink extends BaseCassandraSink<ModelDataDto> {
 
   @Override
   protected void persist(Collection<ModelDataDto> data) {
+
+    if (null == data || data.isEmpty())
+      return;
+
     try {
       synchronized (data) {
 
