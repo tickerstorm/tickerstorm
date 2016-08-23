@@ -22,6 +22,7 @@ import io.tickerstorm.common.entity.BaseField;
 import io.tickerstorm.common.entity.Candle;
 import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.test.TestDataFactory;
+import io.tickerstorm.strategy.processor.flow.NumericChangeProcessor;
 import io.tickerstorm.strategy.util.FieldUtil;
 
 public class TestNumericChangeProcessor {

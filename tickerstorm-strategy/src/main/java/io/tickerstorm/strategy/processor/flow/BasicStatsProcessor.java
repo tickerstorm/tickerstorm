@@ -1,4 +1,4 @@
-package io.tickerstorm.strategy.processor;
+package io.tickerstorm.strategy.processor.flow;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -13,6 +13,7 @@ import com.google.common.eventbus.Subscribe;
 
 import io.tickerstorm.common.entity.BaseField;
 import io.tickerstorm.common.entity.Field;
+import io.tickerstorm.strategy.processor.BaseEventProcessor;
 import io.tickerstorm.strategy.util.CacheManager;
 import net.sf.ehcache.Element;
 

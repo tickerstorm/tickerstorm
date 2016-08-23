@@ -1,4 +1,4 @@
-package io.tickerstorm.strategy.processor;
+package io.tickerstorm.strategy.processor.eventbus;
 
 import java.io.Serializable;
 
@@ -10,6 +10,7 @@ import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.Subscribe;
 
 import io.tickerstorm.common.data.eventbus.Destinations;
+import io.tickerstorm.strategy.processor.BaseEventProcessor;
 
 /**
  * This implementation bridges the AsyncEvent bus used by the event processors and MBassador even

@@ -33,7 +33,7 @@ import io.tickerstorm.common.entity.SessionFactory;
 import io.tickerstorm.data.dao.MarketDataDao;
 import io.tickerstorm.data.dao.ModelDataDao;
 import io.tickerstorm.data.dao.ModelDataDto;
-import io.tickerstorm.strategy.processor.NumericChangeProcessor;
+import io.tickerstorm.strategy.processor.flow.NumericChangeProcessor;
 import net.engio.mbassy.bus.MBassador;
 import net.engio.mbassy.listener.Handler;
 

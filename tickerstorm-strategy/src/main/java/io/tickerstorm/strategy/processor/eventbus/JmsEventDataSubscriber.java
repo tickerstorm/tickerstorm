@@ -1,4 +1,4 @@
-package io.tickerstorm.strategy.processor;
+package io.tickerstorm.strategy.processor.eventbus;
 
 import java.io.Serializable;
 
@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import io.tickerstorm.common.data.eventbus.Destinations;
 import io.tickerstorm.common.entity.Command;
 import io.tickerstorm.common.entity.MarketData;
+import io.tickerstorm.strategy.processor.BaseEventProcessor;
 import net.engio.mbassy.bus.MBassador;
 import net.engio.mbassy.listener.Handler;
 

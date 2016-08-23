@@ -1,10 +1,11 @@
-package io.tickerstorm.strategy.processor;
+package io.tickerstorm.strategy.processor.flow;
 
 import org.springframework.stereotype.Component;
 
 import com.google.common.eventbus.Subscribe;
 
 import io.tickerstorm.common.entity.MarketData;
+import io.tickerstorm.strategy.processor.BaseEventProcessor;
 
 @Component
 public class MarketDataFieldPublisher extends BaseEventProcessor {
