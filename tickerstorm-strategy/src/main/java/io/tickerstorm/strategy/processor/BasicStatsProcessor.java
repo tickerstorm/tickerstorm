@@ -43,12 +43,7 @@ public class BasicStatsProcessor extends BaseEventProcessor {
           publish(new BaseField<BigDecimal>(f, Field.Name.MIN.field() + "-p" + p, new BigDecimal(ds.getMin())));
           publish(new BaseField<BigDecimal>(f, Field.Name.SMA.field() + "-p" + p, new BigDecimal(ds.getMean())));
           publish(new BaseField<BigDecimal>(f, Field.Name.STD.field() + "-p" + p, new BigDecimal(ds.getStandardDeviation())));
-        } else {
-          publish(new BaseField<BigDecimal>(f, Field.Name.MAX.field() + "-p" + p, BigDecimal.class));
-          publish(new BaseField<BigDecimal>(f, Field.Name.MIN.field() + "-p" + p, BigDecimal.class));
-          publish(new BaseField<BigDecimal>(f, Field.Name.SMA.field() + "-p" + p, BigDecimal.class));
-          publish(new BaseField<BigDecimal>(f, Field.Name.STD.field() + "-p" + p, BigDecimal.class));
-        }
+        } 
       }
     } catch (Exception e) {
       logger.error(e.getMessage(), e);

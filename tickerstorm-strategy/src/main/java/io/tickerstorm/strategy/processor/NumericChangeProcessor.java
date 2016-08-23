@@ -49,9 +49,6 @@ public class NumericChangeProcessor extends BaseEventProcessor {
 
       publish(new BaseField<>(f, Field.Name.ABS_CHANGE.field() + "-p" + p, absDiff));
       publish(new BaseField<>(f, Field.Name.PCT_CHANGE.field() + "-p" + p, pctDiff));
-    } else {
-      publish(new BaseField<>(f, Field.Name.ABS_CHANGE.field() + "-p" + p, BigDecimal.class));
-      publish(new BaseField<>(f, Field.Name.PCT_CHANGE.field() + "-p" + p, BigDecimal.class));
     }
   }
 
