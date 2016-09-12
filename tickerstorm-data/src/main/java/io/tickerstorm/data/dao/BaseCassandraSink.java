@@ -1,9 +1,7 @@
 package io.tickerstorm.data.dao;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -20,9 +18,7 @@ import org.springframework.data.cassandra.core.CassandraOperations;
 import com.datastax.driver.core.ExecutionInfo;
 import com.datastax.driver.core.ResultSetFuture;
 import com.google.common.collect.Lists;
-import com.google.common.eventbus.Subscribe;
-
-import net.engio.mbassy.listener.Handler;
+import com.google.common.collect.Sets;
 
 public abstract class BaseCassandraSink<T> {
 
@@ -40,7 +36,7 @@ public abstract class BaseCassandraSink<T> {
 
   protected static final org.slf4j.Logger logger = LoggerFactory.getLogger(BaseCassandraSink.class);
   private final Timer timer = new Timer();
-  protected final AtomicReference<List<T>> batch = new AtomicReference<List<T>>(Collections.synchronizedList(new ArrayList<T>()));
+  protected final AtomicReference<List<T>> batch = new AtomicReference<List<T>>(new ArrayList<T>());
   protected final AtomicLong count = new AtomicLong(0);
   protected final AtomicLong received = new AtomicLong(0);
   protected final ExceptionHandlerListener listener = new ExceptionHandlerListener();
@@ -65,46 +61,62 @@ public abstract class BaseCassandraSink<T> {
     timer.scheduleAtFixedRate(new BatchSaveTask(), 0, 5000);
   }
 
-  @Subscribe
-  @Handler
-  public final void onData(Serializable data) {
+  protected void batch(T d) {
 
-    try {
+    if (d == null)
+      return;
 
-      Collection<T> d = convert(data);
+    synchronized (received) {
+      received.addAndGet(1);
+    }
 
-      synchronized (received) {
-        if (d != null && !d.isEmpty())
-          received.addAndGet(d.size());
-      }
+    if (batchSize() > 1) {
 
-      if (d != null && batchSize() > 1) {
+      batch.get().add(d);
 
-        batch.get().addAll((Collection<T>) d);
-
-        if (batch.get().size() > batchSize()) {
-          List<T> b = nextBatch();
-          if (!b.isEmpty()) {
-            persist(b);
-          }
+      if (batch.get().size() > batchSize()) {
+        List<T> b = nextBatch();
+        if (!b.isEmpty()) {
+          persist(b);
         }
-
-      } else if (d != null && batchSize() == 1) {
-        persist(Lists.newArrayList(d));
       }
 
-    } catch (Exception e) {
-      logger.error(e.getMessage(), e);
+    } else if (batchSize() <= 1) {
+      persist(Sets.newHashSet(d));
+    }
+
+  }
+
+  protected void batch(Collection<T> d) {
+
+    if (d == null || d.isEmpty())
+      return;
+
+    synchronized (received) {
+      received.addAndGet(d.size());
+    }
+
+    if (batchSize() > 1) {
+
+      batch.get().addAll((Collection<T>) d);
+
+      if (batch.get().size() > batchSize()) {
+        List<T> b = nextBatch();
+        if (!b.isEmpty()) {
+          persist(b);
+        }
+      }
+
+    } else if (batchSize() <= 1) {
+      persist(d);
     }
 
   }
 
   protected abstract void persist(Collection<T> batch);
 
-  protected abstract Collection<T> convert(Serializable data);
-
   protected synchronized List<T> nextBatch() {
-    List<T> data = batch.getAndSet(Collections.synchronizedList(new ArrayList<T>()));
+    List<T> data = batch.getAndSet(new ArrayList<T>());
     return data;
   }
 

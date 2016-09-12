@@ -15,13 +15,8 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.protocol.HttpClientContext;
-import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.apache.http.impl.cookie.BasicClientCookie;
-import org.apache.http.protocol.BasicHttpContext;
-import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,22 +25,23 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import com.google.common.base.Throwables;
+import com.google.common.eventbus.EventBus;
 import com.google.common.io.Files;
 
 import io.tickerstorm.common.data.converter.DataConverter;
 import io.tickerstorm.common.data.converter.Mode;
+import io.tickerstorm.common.data.eventbus.Destinations;
 import io.tickerstorm.common.data.query.DataQuery;
 import io.tickerstorm.common.entity.MarketData;
-import net.engio.mbassy.bus.MBassador;
 
 @Service
 public class DataQueryClient {
 
   private static final Logger logger = LoggerFactory.getLogger(DataQueryClient.class);
 
-  @Qualifier("historical")
+  @Qualifier(Destinations.HISTORICL_MARKETDATA_BUS)
   @Autowired
-  public MBassador<MarketData> historical;
+  public EventBus historical;
 
   private CloseableHttpClient client;
 
@@ -80,7 +76,7 @@ public class DataQueryClient {
         get.addHeader(e.getKey(), e.getValue());
       }
     }
-    
+
     DataConverter converter = null;
     CloseableHttpResponse response = null;
     try {
@@ -117,7 +113,7 @@ public class DataQueryClient {
               if (md != null && md.length > 0) {
                 for (MarketData d : md) {
                   count++;
-                  historical.publish(d);
+                  historical.post(d);
                 }
               }
             }
@@ -130,7 +126,7 @@ public class DataQueryClient {
             if (md != null && md.length > 0) {
               for (MarketData d : md) {
                 count++;
-                historical.publish(d);
+                historical.post(d);
               }
             }
           }

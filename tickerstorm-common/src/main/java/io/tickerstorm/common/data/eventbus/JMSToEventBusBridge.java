@@ -1,96 +1,40 @@
 package io.tickerstorm.common.data.eventbus;
 
 import java.io.Serializable;
-import java.util.Collection;
-import java.util.Map;
+
+import javax.jms.ObjectMessage;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jms.annotation.JmsListener;
 import org.springframework.messaging.handler.annotation.Payload;
 
-import com.google.common.eventbus.AsyncEventBus;
+import com.google.common.eventbus.EventBus;
 
-import io.tickerstorm.common.data.query.DataFeedQuery;
 import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.entity.MarketData;
-import net.engio.mbassy.bus.MBassador;
 
 public class JMSToEventBusBridge {
 
   public static final Logger logger = LoggerFactory.getLogger(JMSToEventBusBridge.class);
 
-  private MBassador<DataFeedQuery> queryBus;
+  public EventBus queryBus;
 
-  private MBassador<MarketData> realtimeBus;
+  public EventBus realtimeBus;
 
-  private MBassador<Serializable> commandsBus;
+  public EventBus commandsBus;
 
-  private MBassador<Serializable> notificationBus;
+  public EventBus notificationBus;
 
-  private AsyncEventBus modelDataBus;
+  public EventBus modelDataBus;
 
-  private AsyncEventBus retroModelDataBus;
-
-  public AsyncEventBus getModelDataBus() {
-    return modelDataBus;
-  }
-
-  public void setModelDataBus(AsyncEventBus modelDataBus) {
-    this.modelDataBus = modelDataBus;
-  }
-
-  private boolean explodeCollections = false;
-
-  public boolean isExplodeCollections() {
-    return explodeCollections;
-  }
-
-  public void setExplodeCollections(boolean explodeCollections) {
-    this.explodeCollections = explodeCollections;
-  }
-
-  public MBassador<Serializable> getCommandsBus() {
-    return commandsBus;
-  }
-
-  public MBassador<Serializable> getNotificationBus() {
-    return notificationBus;
-  }
-
-  public MBassador<DataFeedQuery> getQueryBus() {
-    return queryBus;
-  }
-
-  public MBassador<MarketData> getRealtimeBus() {
-    return realtimeBus;
-  }
+  public EventBus retroModelDataBus;
 
   @JmsListener(destination = Destinations.TOPIC_COMMANDS)
-  public void onCommandMessage(@Payload Serializable md) {
+  public void onCommandMessage(ObjectMessage md) throws Exception {
     if (commandsBus != null) {
-
-      if (Collection.class.isAssignableFrom(md.getClass()) && explodeCollections) {
-
-        for (Serializable s : (Collection<Serializable>) md) {
-          logger.trace("Received command  " + md.toString());
-          commandsBus.publishAsync(s);
-        }
-
-      } else {
-
-        logger.trace("Received command " + md.toString());
-        commandsBus.publishAsync(md);
-
-      }
-    }
-  }
-
-  @JmsListener(destination = Destinations.QUEUE_HISTORICAL_DATA_QUERY)
-  public void onMessage(@Payload DataFeedQuery query) {
-    if (queryBus != null) {
-      logger.trace("Received feed query " + query.toString());
-      queryBus.publishAsync(query);
+      logger.trace("Received command " + md.toString());
+      commandsBus.post(md.getObject());
     }
   }
 
@@ -98,15 +42,15 @@ public class JMSToEventBusBridge {
   public void onMessage(@Payload MarketData md) {
     if (realtimeBus != null) {
       logger.trace("Received market data " + md.toString());
-      realtimeBus.publishAsync(md);
+      realtimeBus.post(md);
     }
   }
 
   @JmsListener(destination = Destinations.QUEUE_MODEL_DATA)
-  public void onMessage(@Payload Serializable field) {
+  public void onMessage(ObjectMessage md) throws Exception {       
     if (modelDataBus != null) {
-      logger.trace("Received model data " + field.toString());
-      modelDataBus.post(field);
+      logger.trace("Received model data " + md.getObject().toString());
+      modelDataBus.post(md.getObject());
     }
   }
 
@@ -118,47 +62,19 @@ public class JMSToEventBusBridge {
     }
   }
 
-  public AsyncEventBus getRetroModelDataBus() {
-    return retroModelDataBus;
-  }
-
-  public void setRetroModelDataBus(AsyncEventBus retroModelDataBus) {
+  public void setRetroModelDataBus(EventBus retroModelDataBus) {
     this.retroModelDataBus = retroModelDataBus;
   }
 
   @JmsListener(destination = Destinations.TOPIC_NOTIFICATIONS)
-  public void onNotificationMessage(@Payload Serializable md) {
+  public void onNotificationMessage(@Payload Object md) {
     if (notificationBus != null) {
 
-      if (Collection.class.isAssignableFrom(md.getClass()) && explodeCollections) {
+      logger.trace("Received notification " + md.toString());
+      notificationBus.post(md);
 
-        for (Serializable s : (Collection<Serializable>) md) {
-          logger.trace("Received notification " + md.toString());
-          notificationBus.publishAsync(s);
-        }
-
-      } else {
-
-        logger.trace("Received notification " + md.toString());
-        notificationBus.publishAsync(md);
-      }
     }
   }
 
-  public void setCommandsBus(MBassador<Serializable> commandsBus) {
-    this.commandsBus = commandsBus;
-  }
-
-  public void setNotificationBus(MBassador<Serializable> notificationBus) {
-    this.notificationBus = notificationBus;
-  }
-
-  public void setQueryBus(MBassador<DataFeedQuery> queryBus) {
-    this.queryBus = queryBus;
-  }
-
-  public void setRealtimeBus(MBassador<MarketData> realtimeBus) {
-    this.realtimeBus = realtimeBus;
-  }
 
 }

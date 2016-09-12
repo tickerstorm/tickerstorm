@@ -1,6 +1,7 @@
 package io.tickerstorm.data.dao;
 
 import java.io.Serializable;
+import java.math.BigInteger;
 import java.util.Date;
 
 import org.springframework.cassandra.core.Ordering;
@@ -16,13 +17,13 @@ public class MarketDataPrimaryKey implements Serializable {
   public String symbol;
 
   @PrimaryKeyColumn(name = "date", ordinal = 1, type = PrimaryKeyType.PARTITIONED, ordering = Ordering.ASCENDING)
-  public String date;
+  public BigInteger date;
 
   @PrimaryKeyColumn(name = "type", ordinal = 2, type = PrimaryKeyType.CLUSTERED)
   public String type;
 
   @PrimaryKeyColumn(name = "source", ordinal = 3, type = PrimaryKeyType.CLUSTERED, ordering = Ordering.ASCENDING)
-  public String source;
+  public String stream;
 
   @PrimaryKeyColumn(name = "interval", ordinal = 4, type = PrimaryKeyType.CLUSTERED, ordering = Ordering.ASCENDING)
   public String interval;
@@ -65,10 +66,10 @@ public class MarketDataPrimaryKey implements Serializable {
         return false;
     } else if (!min.equals(other.min))
       return false;
-    if (source == null) {
-      if (other.source != null)
+    if (stream == null) {
+      if (other.stream != null)
         return false;
-    } else if (!source.equals(other.source))
+    } else if (!stream.equals(other.stream))
       return false;
     if (symbol == null) {
       if (other.symbol != null)
@@ -96,11 +97,11 @@ public class MarketDataPrimaryKey implements Serializable {
     return timestamp;
   }
 
-  public String getDate() {
+  public BigInteger getDate() {
     return date;
   }
 
-  public void setDate(String date) {
+  public void setDate(BigInteger date) {
     this.date = date;
   }
 
@@ -108,8 +109,8 @@ public class MarketDataPrimaryKey implements Serializable {
     this.timestamp = timestamp;
   }
 
-  public String getSource() {
-    return source;
+  public String getStream() {
+    return stream;
   }
 
   public String getSymbol() {
@@ -128,7 +129,7 @@ public class MarketDataPrimaryKey implements Serializable {
     result = prime * result + ((hour == null) ? 0 : hour.hashCode());
     result = prime * result + ((interval == null) ? 0 : interval.hashCode());
     result = prime * result + ((min == null) ? 0 : min.hashCode());
-    result = prime * result + ((source == null) ? 0 : source.hashCode());
+    result = prime * result + ((stream == null) ? 0 : stream.hashCode());
     result = prime * result + ((symbol == null) ? 0 : symbol.hashCode());
     result = prime * result + ((timestamp == null) ? 0 : timestamp.hashCode());
     result = prime * result + ((type == null) ? 0 : type.hashCode());
@@ -139,8 +140,8 @@ public class MarketDataPrimaryKey implements Serializable {
     this.interval = interval;
   }
 
-  public void setSource(String source) {
-    this.source = source;
+  public void setStream(String source) {
+    this.stream = source;
   }
 
   public void setSymbol(String symbol) {

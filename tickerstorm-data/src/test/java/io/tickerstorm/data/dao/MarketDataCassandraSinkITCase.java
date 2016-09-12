@@ -14,13 +14,14 @@ import org.springframework.data.cassandra.core.CassandraOperations;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
-import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import com.google.common.eventbus.EventBus;
+
+import io.tickerstorm.common.data.eventbus.Destinations;
 import io.tickerstorm.common.entity.Candle;
-import io.tickerstorm.common.entity.MarketData;
 import io.tickerstorm.data.TestMarketDataServiceConfig;
-import net.engio.mbassy.bus.MBassador;
 
 @DirtiesContext
 @ContextConfiguration(classes = {TestMarketDataServiceConfig.class})
@@ -29,14 +30,14 @@ public class MarketDataCassandraSinkITCase extends AbstractTestNGSpringContextTe
   @Autowired
   private CassandraOperations session;
 
-  @Qualifier("historical")
+  @Qualifier(Destinations.HISTORICL_MARKETDATA_BUS)
   @Autowired
-  private MBassador<MarketData> historicalBus;
+  private EventBus historicalBus;
 
   @Autowired
   private MarketDataDao dao;
 
-  @AfterMethod
+  @BeforeMethod
   public void cleanup() {
     session.getSession().execute("TRUNCATE marketdata");
   }
@@ -45,7 +46,6 @@ public class MarketDataCassandraSinkITCase extends AbstractTestNGSpringContextTe
   public void storeCandle() throws Exception {
 
     Candle c = new Candle();
-    c.source = "test";
     c.high = BigDecimal.TEN;
     c.low = BigDecimal.ONE;
     c.interval = Candle.MIN_10_INTERVAL;
@@ -53,7 +53,8 @@ public class MarketDataCassandraSinkITCase extends AbstractTestNGSpringContextTe
     c.timestamp = Instant.now();
     c.volume = 10;
     c.symbol = "AAPL";
-    historicalBus.publish(c);
+    c.stream = "MarketDataCassandraSinkITCase";
+    historicalBus.post(c);
 
     Thread.sleep(5000);
 
@@ -70,20 +71,20 @@ public class MarketDataCassandraSinkITCase extends AbstractTestNGSpringContextTe
       assertEquals(dto.high, c.high);
       assertEquals(dto.open, c.open);
       assertEquals(dto.volume, new BigDecimal(c.volume));
-      assertEquals(dto.primarykey.source, c.source);
+      assertEquals(dto.primarykey.stream, c.stream.toLowerCase());
       assertEquals(dto.primarykey.interval, c.interval);
       assertEquals(dto.primarykey.timestamp, Date.from(c.timestamp));
       assertEquals(dto.primarykey.symbol, c.symbol.toLowerCase());
       assertNotNull(dto.primarykey.date);
 
-      Candle d = (Candle) dto.toMarketData("Default");
+      Candle d = (Candle) dto.toMarketData(c.stream);
 
       assertEquals(d.close, c.close);
       assertEquals(d.low, c.low);
       assertEquals(d.high, c.high);
       assertEquals(d.open, c.open);
       assertEquals(d.volume, c.volume);
-      assertEquals(d.source, c.source);
+      assertEquals(d.stream, c.stream.toLowerCase());
       assertEquals(d.interval, c.interval);
 
       assertTrue(d.timestamp.compareTo(c.timestamp) == 0);

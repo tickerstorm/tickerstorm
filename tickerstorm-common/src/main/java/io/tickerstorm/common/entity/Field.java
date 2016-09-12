@@ -19,20 +19,29 @@ import org.apache.commons.lang3.StringUtils;
  */
 public interface Field<T> extends Serializable, Comparable<Field<T>> {
 
-  public static final Comparator<Field<?>> SORT_BY_TIMESTAMP = new Comparator<Field<?>>() {
+  public static Comparator<Instant> SORT_BY_INSTANTS = new Comparator<Instant>() {
 
     @Override
-    public int compare(Field<?> o1, Field<?> o2) {
-      return o2.getTimestamp().compareTo(o1.getTimestamp());
+    public int compare(Instant o1, Instant o2) {
+      return o2.compareTo(o1);
     }
 
   };
 
-  public static Comparator<Field<?>> SORT_REVERSE_TIMESTAMP = new Comparator<Field<?>>() {
+  public static Comparator<Field<?>> SORT_REVERSE_FIELDS = new Comparator<Field<?>>() {
 
     @Override
     public int compare(Field<?> o1, Field<?> o2) {
       return o1.getTimestamp().compareTo(o2.getTimestamp());
+    }
+
+  };
+
+  public static Comparator<Instant> SORT_REVERSE_INSTANTS = new Comparator<Instant>() {
+
+    @Override
+    public int compare(Instant o1, Instant o2) {
+      return o1.compareTo(o2);
     }
 
   };
@@ -163,14 +172,10 @@ public interface Field<T> extends Serializable, Comparable<Field<T>> {
     return MarketData.parseStream(parseEventId(value));
   }
 
-  static String parseSource(String value) {
-    return MarketData.parseSource(parseEventId(value));
-  }
-
   static String parseSymbol(String value) {
     return MarketData.parseSymbol(parseEventId(value));
   }
-  
+
   static Class<?> parseType(String value) {
     String[] vals = value.split(":");
 
@@ -225,8 +230,8 @@ public interface Field<T> extends Serializable, Comparable<Field<T>> {
   default String getStream() {
     return MarketData.parseStream(getEventId());
   }
-  
-  default String getSymbol(){
+
+  default String getSymbol() {
     return MarketData.parseSymbol(getEventId());
   }
 

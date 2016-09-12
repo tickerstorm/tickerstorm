@@ -149,12 +149,12 @@ public class GoogleFileConverter extends BaseFileConverter implements FileConver
         mins = Integer.valueOf(args[0]);
       }
 
-      Candle c = new Candle(symbol, "Google", timestamp.plus(mins, ChronoUnit.MINUTES), new BigDecimal(args[4]), new BigDecimal(args[1]),
+      Candle c = new Candle(symbol, provider(), timestamp.plus(mins, ChronoUnit.MINUTES), new BigDecimal(args[4]), new BigDecimal(args[1]),
           new BigDecimal(args[2]), new BigDecimal(args[3]), Candle.MIN_1_INTERVAL,
           new BigDecimal(args[5]).multiply(new BigDecimal("1000")).intValue());
-
+      
       if (historical != null)// in case being invoked standalone (i.e. tests)
-        historical.publishAsync(c);
+        historical.post(c);
 
       md.add(c);
     }

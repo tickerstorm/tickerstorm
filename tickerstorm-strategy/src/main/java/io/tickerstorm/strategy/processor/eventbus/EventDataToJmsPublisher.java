@@ -1,15 +1,16 @@
 package io.tickerstorm.strategy.processor.eventbus;
 
-import java.io.Serializable;
+import java.util.Collection;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
-import com.google.common.eventbus.AsyncEventBus;
+import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
 import io.tickerstorm.common.data.eventbus.Destinations;
+import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.strategy.processor.BaseEventProcessor;
 
 /**
@@ -24,15 +25,18 @@ public class EventDataToJmsPublisher extends BaseEventProcessor {
 
   @Qualifier(Destinations.MODEL_DATA_BUS)
   @Autowired
-  private AsyncEventBus modelDataBus;
-
+  private EventBus modelDataBus;
 
   @Subscribe
-  public void onData(Serializable md) {
+  public void onData(Field<?> field) {
+    logger.trace("Dispatching data event " + field);
+    modelDataBus.post(field);
+  }
 
-    logger.debug("Dispatching data event " + md);
-    modelDataBus.post(md);
-
+  @Subscribe
+  public void onData(Collection<Field<?>> fs) {
+    logger.trace("Dispatching collection of fields " + fs);
+    modelDataBus.post(fs);
   }
 
 }

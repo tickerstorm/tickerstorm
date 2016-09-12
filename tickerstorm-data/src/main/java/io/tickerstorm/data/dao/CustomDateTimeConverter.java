@@ -4,17 +4,15 @@ import java.time.Instant;
 import java.util.Date;
 
 import org.apache.commons.lang3.StringUtils;
-import org.dozer.CustomConverter;
-import org.dozer.MappingException;
 import org.joda.time.DateTime;
 import org.joda.time.Days;
 import org.joda.time.Months;
 import org.joda.time.format.ISODateTimeFormat;
 
-public class CustomDateTimeConverter implements CustomConverter {
+public class CustomDateTimeConverter {
 
   public static Object convertDateTime(Object dest, Object source, Class<?> destClass, Class<?> sourceClass) {
-    
+
     if (source == null) {
       return null;
     }
@@ -118,11 +116,11 @@ public class CustomDateTimeConverter implements CustomConverter {
 
     }
 
-    throw new MappingException("Converter TestCustomConverter " + "used incorrectly. Arguments passed in were:" + dest + " and " + source);
+     throw new IllegalArgumentException("Converter TestCustomConverter " + "used incorrectly. Arguments passed in were:" + dest + " and " + source);
 
   }
-  
-  @Override
+
+
   public Object convert(Object dest, Object source, Class<?> destClass, Class<?> sourceClass) {
     return convertDateTime(dest, source, destClass, sourceClass);
   }

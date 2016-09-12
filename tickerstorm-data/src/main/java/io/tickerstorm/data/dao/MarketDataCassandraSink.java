@@ -1,11 +1,10 @@
 package io.tickerstorm.data.dao;
 
-import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -16,59 +15,50 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Repository;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
 
 import io.tickerstorm.common.data.eventbus.Destinations;
 import io.tickerstorm.common.entity.BaseMarker;
 import io.tickerstorm.common.entity.Markers;
 import io.tickerstorm.common.entity.MarketData;
-import net.engio.mbassy.bus.MBassador;
-import net.engio.mbassy.listener.Listener;
-import net.engio.mbassy.listener.References;
 
 @DependsOn(value = {"cassandraSetup"})
 @Repository
-@Listener(references = References.Strong)
 public class MarketDataCassandraSink extends BaseCassandraSink<MarketDataDto> {
 
   protected static final org.slf4j.Logger logger = LoggerFactory.getLogger(MarketDataCassandraSink.class);
 
-  @Autowired
-  private MarketDataDao dao;
-
   @Override
   protected int batchSize() {
-    return 149;
+    return 1999;
   }
 
-  @Qualifier("historical")
+  @Qualifier(Destinations.HISTORICL_MARKETDATA_BUS)
   @Autowired
-  private MBassador<MarketData> historicalBus;
+  private EventBus historicalBus;
 
   @Qualifier(Destinations.NOTIFICATIONS_BUS)
   @Autowired
-  private MBassador<Serializable> notificationsBus;
+  private EventBus notificationsBus;
 
   @PreDestroy
   public void destroy() {
     super.destroy();
-    historicalBus.unsubscribe(this);
+    historicalBus.unregister(this);
   }
 
   @PostConstruct
   public void init() {
     super.init();
-    historicalBus.subscribe(this);
+    historicalBus.register(this);
   }
 
-  @Override
-  protected Set<MarketDataDto> convert(Serializable data) {
-
-    if (MarketData.class.isAssignableFrom(data.getClass())) {
-      return com.google.common.collect.Sets.newHashSet(MarketDataDto.convert((MarketData) data));
-    }
-
-    return null;
+  @Subscribe
+  public void onData(MarketData md) {
+    batch(MarketDataDto.convert(md));
   }
 
   protected void persist(Collection<MarketDataDto> data) {
@@ -82,7 +72,18 @@ public class MarketDataCassandraSink extends BaseCassandraSink<MarketDataDto> {
         logger.debug(
             "Persisting " + data.size() + " records, " + count.addAndGet(data.size()) + " total saved and " + received.get() + " received");
 
-        dao.save((List<MarketDataDto>) data);
+        String insert = "INSERT INTO " + keyspace + ".marketdata "
+            + "(symbol, date, type, source, interval, timestamp, hour, min, ask, asksize, bid, bidsize, close, high, low, open, price, properties, quantity, volume) "
+            + "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);";
+
+        List<List<?>> rows = new ArrayList<>();
+        data.stream().forEach(r -> {
+          rows.add(Lists.newArrayList(r.primarykey.symbol, r.primarykey.date, r.primarykey.type, r.primarykey.stream, r.primarykey.interval,
+              r.primarykey.timestamp, r.primarykey.hour, r.primarykey.min, r.ask, r.askSize, r.bid, r.bidSize, r.close, r.high, r.low,
+              r.open, r.price, r.properties, r.quantity, r.volume));
+        });
+
+        session.ingest(insert, rows);
 
         Map<String, Integer> streamCounts = countEntries(data);
 
@@ -90,7 +91,7 @@ public class MarketDataCassandraSink extends BaseCassandraSink<MarketDataDto> {
           BaseMarker marker = new BaseMarker(e.getKey());
           marker.addMarker(Markers.MARKET_DATA_SAVED.toString());
           marker.expect = e.getValue();
-          notificationsBus.publishAsync(marker);
+          notificationsBus.post(marker);
         }
       }
 
@@ -102,10 +103,10 @@ public class MarketDataCassandraSink extends BaseCassandraSink<MarketDataDto> {
   private Map<String, Integer> countEntries(Collection<MarketDataDto> data) {
     Map<String, Integer> streamCounts = Maps.newHashMap();
     for (MarketDataDto dto : data) {
-      Integer count = streamCounts.putIfAbsent(dto.primarykey.source, 1);
+      Integer count = streamCounts.putIfAbsent(dto.primarykey.stream, 1);
 
       if (count != null)
-        streamCounts.replace(dto.primarykey.source, count++);
+        streamCounts.replace(dto.primarykey.stream, count++);
     }
     return streamCounts;
   }

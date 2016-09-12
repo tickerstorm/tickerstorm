@@ -22,8 +22,8 @@ public class Candle extends BaseMarketData {
 
   public static String parseInterval(String eventId) {
 
-    if (MarketData.parseEventId(eventId).length == 5) {
-      return MarketData.parseEventId(eventId)[4];
+    if (MarketData.parseEventId(eventId).length == 4) {
+      return MarketData.parseEventId(eventId)[3];
     }
 
     return null;

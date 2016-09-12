@@ -71,27 +71,23 @@ public interface MarketData extends Event, Stream, Serializable, Comparable<Mark
   public static String parseStream(String eventId) {
     return MarketData.parseEventId(eventId)[0];
   }
-  
-  public static String parseSource(String eventId) {
+
+  public static String parseSymbol(String eventId) {
     return MarketData.parseEventId(eventId)[1];
   }
 
-  public static String parseSymbol(String eventId) {
-    return MarketData.parseEventId(eventId)[2];
-  }
-
   public static Instant parseTimestamp(String eventId) {
-    String part = MarketData.parseEventId(eventId)[3];
+    String part = MarketData.parseEventId(eventId)[2];
     return Instant.ofEpochMilli(Long.valueOf(part));
   }
 
   /**
-   * Format: stream|source|symbol|timestamp
+   * Format: stream|symbol|timestamp
    * 
    * @return
    */
   default String getEventId() {
-    return new StringBuffer(getStream()).append("|").append(getSource()).append("|").append(getSymbol()).append("|")
+    return new StringBuffer(getStream()).append("|").append(getSymbol()).append("|")
         .append(getTimestamp().toEpochMilli()).toString();
   }
 
@@ -100,8 +96,6 @@ public interface MarketData extends Event, Stream, Serializable, Comparable<Mark
   default Map<String, Field<?>> getFieldsAsMap() {
     return Field.toMap(getFields());
   }
-
-  public String getSource();
 
   public String getStream();
 

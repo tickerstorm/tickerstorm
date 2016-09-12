@@ -20,7 +20,6 @@
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
-			<version>18.0</version>
 		</dependency>
 		<dependency>
 			<groupId>commons-beanutils</groupId>
@@ -79,10 +78,6 @@
 			<artifactId>spring-test</artifactId>
 			<scope>test</scope>
 		</dependency>
-		<dependency>
-			<groupId>net.engio</groupId>
-			<artifactId>mbassador</artifactId>
-		</dependency>
 	</dependencies>
 	<dependencyManagement>
 		<dependencies>
@@ -132,14 +127,14 @@
 				<version>5.11.2</version>
 			</dependency>
 			<dependency>
-				<groupId>net.engio</groupId>
-				<artifactId>mbassador</artifactId>
-				<version>1.2.4.2</version>
-			</dependency>
-			<dependency>
 				<groupId>io.tickerstorm</groupId>
 				<artifactId>common</artifactId>
 				<version>${project.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.google.guava</groupId>
+				<artifactId>guava</artifactId>
+				<version>19.0</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
@@ -147,7 +142,7 @@
 	<parent>
 		<groupId>com.appcrossings</groupId>
 		<artifactId>appcrossings-parent</artifactId>
-		<version>1.0.2</version>
+		<version>1.0.4</version>
 	</parent>
 	<properties>
 		<project.version>1.0.0-SNAPSHOT</project.version>

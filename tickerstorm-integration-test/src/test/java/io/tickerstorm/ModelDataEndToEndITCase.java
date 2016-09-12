@@ -2,7 +2,6 @@ package io.tickerstorm;
 
 import static org.testng.Assert.assertTrue;
 
-import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Set;
@@ -21,21 +20,20 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
+
 import io.tickerstorm.common.data.eventbus.Destinations;
-import io.tickerstorm.common.data.query.DataFeedQuery;
 import io.tickerstorm.common.data.query.ModelDataQuery;
 import io.tickerstorm.common.entity.BaseMarker;
 import io.tickerstorm.common.entity.Candle;
 import io.tickerstorm.common.entity.Markers;
-import io.tickerstorm.common.entity.MarketData;
 import io.tickerstorm.common.entity.Session;
 import io.tickerstorm.common.entity.SessionFactory;
 import io.tickerstorm.data.dao.MarketDataDao;
 import io.tickerstorm.data.dao.ModelDataDao;
 import io.tickerstorm.data.dao.ModelDataDto;
 import io.tickerstorm.strategy.processor.flow.NumericChangeProcessor;
-import net.engio.mbassy.bus.MBassador;
-import net.engio.mbassy.listener.Handler;
 
 @ContextConfiguration(classes = {IntegrationTestContext.class})
 @IntegrationTest
@@ -60,20 +58,20 @@ public class ModelDataEndToEndITCase extends AbstractTestNGSpringContextTests {
 
   @Qualifier(Destinations.BROKER_MARKETDATA_BUS)
   @Autowired
-  private MBassador<MarketData> brokderFeed;
+  private EventBus brokderFeed;
 
   @Qualifier(Destinations.NOTIFICATIONS_BUS)
   @Autowired
-  private MBassador<Serializable> notificationBus;
+  private EventBus notificationBus;
 
-  @Qualifier(Destinations.HISTORICAL_DATA_QUERY_BUS)
+  @Qualifier(Destinations.COMMANDS_BUS)
   @Autowired
-  private MBassador<DataFeedQuery> queryBus;
+  private EventBus queryBus;
 
   @BeforeMethod
   public void init() throws Exception {
 
-    notificationBus.subscribe(this);
+    notificationBus.register(this);
 
     // let everything start up.
     session.getSession().execute("TRUNCATE marketdata");
@@ -95,29 +93,28 @@ public class ModelDataEndToEndITCase extends AbstractTestNGSpringContextTests {
     VerifyModelDataStoredHandler handler1 = new VerifyModelDataStoredHandler(triggeredModel);
     VerifyMarketDataStoredHandler handler2 = new VerifyMarketDataStoredHandler(triggeredMarket);
 
-    notificationBus.subscribe(handler1);
-    notificationBus.subscribe(handler2);
+    notificationBus.register(handler1);
+    notificationBus.register(handler2);
 
 
     Candle c = new Candle("goog", "google", Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ONE, BigDecimal.ONE, "1m", 1000);
-    c.setStream(s.stream);
-    brokderFeed.publishAsync(c);
-    Thread.sleep(8000);
+    brokderFeed.post(c);
+    Thread.sleep(25000);
 
     Assert.assertTrue(triggeredMarket.get());
     Assert.assertTrue(triggeredModel.get());
 
     ModelDataQuery q = new ModelDataQuery(s.stream);
     VerifyRetroModelQueryEnded handler3 = new VerifyRetroModelQueryEnded(triggeredRetro, q);
-    notificationBus.subscribe(handler3);
-    queryBus.publish(q);
+    notificationBus.register(handler3);
+    queryBus.post(q);
 
     Thread.sleep(2000);
     Assert.assertTrue(triggeredRetro.get());
 
-    notificationBus.unsubscribe(handler1);
-    notificationBus.unsubscribe(handler2);
-    notificationBus.unsubscribe(handler3);
+    notificationBus.register(handler1);
+    notificationBus.register(handler2);
+    notificationBus.register(handler3);
   }
 
   private class VerifyMarketDataStoredHandler {
@@ -128,7 +125,7 @@ public class ModelDataEndToEndITCase extends AbstractTestNGSpringContextTests {
       this.result = result;
     }
 
-    @Handler
+    @Subscribe
     public void onData(BaseMarker marker) throws Exception {
       if ("google".equals(marker.stream) && marker.markers.contains(Markers.MARKET_DATA_SAVED.toString())) {
         Assert.assertEquals(new Integer(1), marker.expect);
@@ -147,7 +144,7 @@ public class ModelDataEndToEndITCase extends AbstractTestNGSpringContextTests {
       this.q = q;
     }
 
-    @Handler(condition = "msg.markers.contains('query_end')")
+    @Subscribe
     public void onData(BaseMarker marker) throws Exception {
 
       if (marker.id.equals(q.id) && marker.markers.contains(Markers.QUERY_END.toString())) {
@@ -165,7 +162,7 @@ public class ModelDataEndToEndITCase extends AbstractTestNGSpringContextTests {
       this.result = result;
     }
 
-    @Handler(condition = "msg.markers.contains('model_data_saved')")
+    @Subscribe
     public void onData(BaseMarker marker) throws Exception {
 
       if (s.stream.equals(marker.stream) && marker.markers.contains(Markers.MODEL_DATA_SAVED.toString())) {
@@ -178,11 +175,12 @@ public class ModelDataEndToEndITCase extends AbstractTestNGSpringContextTests {
         assertTrue(count > 0);
 
         Set<String> fieldNames = new java.util.HashSet<>();
-        for (ModelDataDto dto : modelDao.findAll()) {
-          dto.asFields().stream().forEach(f -> {
+
+        modelDao.findAll(s.stream).forEach(d -> {
+          d.asFields().stream().forEach(f -> {
             fieldNames.add(f.getName());
           });
-        }
+        });
 
         Assert.assertTrue(fieldNames.size() > 0);
 

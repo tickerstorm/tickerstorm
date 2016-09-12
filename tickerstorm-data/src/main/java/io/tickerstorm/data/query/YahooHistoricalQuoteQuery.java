@@ -1,6 +1,8 @@
 package io.tickerstorm.data.query;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.temporal.ChronoField;
 import java.util.Map;
 
@@ -33,8 +35,8 @@ public class YahooHistoricalQuoteQuery implements QueryBuilder, DataQuery {
   public static final String MONTH = "m";
 
   private String symbol;
-  private LocalDateTime from = LocalDateTime.now().minusDays(20);
-  private LocalDateTime until = LocalDateTime.now();
+  private LocalDateTime from = LocalDateTime.now(ZoneId.of("UTC")).minusDays(20);
+  private LocalDateTime until = LocalDateTime.now(ZoneId.of("UTC"));
   private String interval = EOD;
 
   public YahooHistoricalQuoteQuery eod() {

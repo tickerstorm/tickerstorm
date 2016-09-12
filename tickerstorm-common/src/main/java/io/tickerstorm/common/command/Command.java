@@ -1,4 +1,4 @@
-package io.tickerstorm.common.entity;
+package io.tickerstorm.common.command;
 
 import java.io.Serializable;
 import java.time.Instant;
@@ -11,6 +11,10 @@ import java.util.UUID;
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.Lists;
 
+import io.tickerstorm.common.entity.Event;
+import io.tickerstorm.common.entity.Marker;
+import io.tickerstorm.common.entity.Stream;
+
 @SuppressWarnings("serial")
 public class Command implements Marker, Event, Stream, Serializable {
 
@@ -18,7 +22,6 @@ public class Command implements Marker, Event, Stream, Serializable {
   public Set<String> markers = new HashSet<>();
   public Map<String, String> config = new HashMap<>();
   public Instant timestamp = Instant.now();
-  public String source;
   public static final String TYPE = "command";
   public String stream;
 
@@ -30,21 +33,21 @@ public class Command implements Marker, Event, Stream, Serializable {
     return id;
   }
 
-  public Command(String source) {
-    this.source = source;
+  public Command(String stream) {
+    this.stream = stream;
   }
 
   public void setStream(String stream) {
     this.stream = stream;
   }
 
-  public Command(String source, String... marker) {
-    this.source = source;
+  public Command(String stream, String... marker) {
+    this.stream = stream;
     this.markers.addAll(Lists.newArrayList(marker));
   }
 
-  public Command(String source, Instant timestamp) {
-    this.source = source;
+  public Command(String stream, Instant timestamp) {
+    this.stream = stream;
     this.timestamp = timestamp;
   }
 
@@ -63,18 +66,13 @@ public class Command implements Marker, Event, Stream, Serializable {
   }
 
   @Override
-  public String getSource() {
-    return source;
-  }
-
-  @Override
   public String getType() {
     return TYPE;
   }
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this).add("source", source).add("timestamp", timestamp).add("markers", markers).add("type", TYPE)
+    return MoreObjects.toStringHelper(this).add("stream", stream).add("timestamp", timestamp).add("markers", markers).add("type", TYPE)
         .toString();
   }
 

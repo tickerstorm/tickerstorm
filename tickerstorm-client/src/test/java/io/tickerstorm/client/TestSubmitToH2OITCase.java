@@ -14,9 +14,10 @@ import org.testng.annotations.Test;
 
 import com.google.common.io.Files;
 
+import io.tickerstorm.common.command.ExportModelDataToCSV;
 import io.tickerstorm.common.data.eventbus.Destinations;
-import io.tickerstorm.common.entity.Markers;
-import io.tickerstorm.common.entity.Notification;
+import io.tickerstorm.common.entity.Session;
+import io.tickerstorm.common.entity.SessionFactory;
 import net.engio.mbassy.bus.MBassador;
 
 @ContextConfiguration(classes = {TestBacktestRunnerClientContext.class})
@@ -26,19 +27,30 @@ public class TestSubmitToH2OITCase extends AbstractTestNGSpringContextTests {
   @Autowired
   private MBassador<Serializable> notifications;
 
+  @Qualifier(Destinations.COMMANDS_BUS)
+  @Autowired
+  private MBassador<Serializable> commandBus;
+
+  @Autowired
+  private SessionFactory factory;
+
   @Autowired
   private BacktestRunnerClient client;
 
   private static final String path = "/tmp/MarketDataFile-2015-10-17T04:19:43.322Z.csv";
 
+  private Session session;
+
   @BeforeMethod
   public void setup() throws Exception {
     FileUtils.forceMkdir(new File("/tmp/"));
+    session = factory.newSession();
   }
 
   @AfterMethod
   public void tearDown() throws Exception {
     FileUtils.deleteQuietly(new File(path));
+    session.end();
   }
 
   @Test
@@ -46,11 +58,10 @@ public class TestSubmitToH2OITCase extends AbstractTestNGSpringContextTests {
 
     Files.copy(new File("./src/test/resources/data/MarketDataFile-2015-10-17T04:19:43.322Z.csv"), new File(path));
 
-    Notification n = new Notification();
-    n.markers.add(Markers.SESSION_END.toString());
-    n.markers.add(Markers.CSV_CREATED.toString());
-    n.properties.put("output.file.csv.path", path);
-    notifications.publish(n);
+    ExportModelDataToCSV export = new ExportModelDataToCSV(session.stream);
+    export.markers.add(ExportModelDataToCSV.EXPORT_TO_CSV_MARKER);
+    export.config.put(ExportModelDataToCSV.FILE_LOCATION, path);
+    commandBus.publish(export);
 
   }
 

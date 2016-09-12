@@ -5,7 +5,6 @@ import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
 import java.io.File;
-import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -14,44 +13,37 @@ import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.cassandra.core.CassandraOperations;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
 import com.google.common.io.Files;
 
-import io.tickerstorm.common.data.query.DataFeedQuery;
+import io.tickerstorm.common.data.eventbus.Destinations;
 import io.tickerstorm.common.data.query.HistoricalFeedQuery;
 import io.tickerstorm.common.entity.BaseMarker;
 import io.tickerstorm.common.entity.Candle;
-import io.tickerstorm.common.entity.Marker;
 import io.tickerstorm.common.entity.Markers;
-import io.tickerstorm.common.entity.MarketData;
 import io.tickerstorm.data.TestMarketDataServiceConfig;
-import net.engio.mbassy.bus.MBassador;
-import net.engio.mbassy.listener.Handler;
-import net.engio.mbassy.listener.Listener;
-import net.engio.mbassy.listener.References;
 
-@DirtiesContext
 @ContextConfiguration(classes = {TestMarketDataServiceConfig.class})
 public class HistoricalDataFeedITCase extends AbstractTestNGSpringContextTests {
 
-  @Qualifier("realtime")
+  @Qualifier(Destinations.REALTIME_MARKETDATA_BUS)
   @Autowired
-  private MBassador<MarketData> realtimeBus;
+  private EventBus realtimeBus;
 
-  @Qualifier("notification")
+  @Qualifier(Destinations.NOTIFICATIONS_BUS)
   @Autowired
-  private MBassador<Serializable> notificationsBus;
+  private EventBus notificationsBus;
 
-  @Qualifier("query")
+  @Qualifier(Destinations.COMMANDS_BUS)
   @Autowired
-  private MBassador<DataFeedQuery> queryBus;
+  private EventBus queryBus;
 
   BaseMarker start;
   BaseMarker end;
@@ -64,22 +56,15 @@ public class HistoricalDataFeedITCase extends AbstractTestNGSpringContextTests {
 
   @BeforeClass
   public void dataSetup() throws Exception {
+    HistoricalDataFeedVerifier verifier = new HistoricalDataFeedVerifier();
+    realtimeBus.register(verifier);
+    notificationsBus.register(verifier);
+
+    session.getSession().execute("TRUNCATE marketdata");
     FileUtils.forceMkdir(new File("./data/Google"));
     Files.copy(new File("./src/test/resources/data/Google/TOL.csv"), new File("./data/Google/TOL.csv"));
-    Thread.sleep(5000);
-  }
-
-  @AfterClass
-  public void tearDown() throws Exception {
+    Thread.sleep(10000);
     FileUtils.deleteQuietly(new File("./data/Google/TOL.csv"));
-    session.getSession().execute("TRUNCATE marketdata");
-  }
-
-  @BeforeMethod
-  public void setup() {
-    HistoricalDataFeedVerifier verifier = new HistoricalDataFeedVerifier();
-    realtimeBus.subscribe(verifier);
-    notificationsBus.subscribe(verifier);
   }
 
   @Test
@@ -87,15 +72,14 @@ public class HistoricalDataFeedITCase extends AbstractTestNGSpringContextTests {
 
     assertEquals(count.get(), 0L);
 
-    HistoricalFeedQuery query = new HistoricalFeedQuery("TOL");
+    HistoricalFeedQuery query = new HistoricalFeedQuery("google", new String[] {"TOL"});
     query.from = LocalDateTime.of(2015, 6, 10, 0, 0);
     query.until = LocalDateTime.of(2015, 6, 11, 0, 0);
-    query.source = "google";
     query.periods.add(Candle.MIN_1_INTERVAL);
     query.zone = ZoneOffset.ofHours(-7);
-    queryBus.publish(query);
+    queryBus.post(query);
 
-    Thread.sleep(3000);
+    Thread.sleep(10000);
 
     assertEquals(count.get(), expCount);
 
@@ -109,47 +93,41 @@ public class HistoricalDataFeedITCase extends AbstractTestNGSpringContextTests {
   }
 
 
-  @Listener(references = References.Strong)
+
   public class HistoricalDataFeedVerifier {
 
-    @Handler
-    public void onNotification(Serializable md) {
+    @Subscribe
+    public void onNotification(BaseMarker md) {
 
-      if (Marker.class.isAssignableFrom(md.getClass())) {
+      if (md.getMarkers().contains(Markers.QUERY_START.toString()))
+        start = (BaseMarker) md;
 
-        if (((BaseMarker) md).getMarkers().contains(Markers.QUERY_START.toString()))
-          start = (BaseMarker) md;
+      if (md.getMarkers().contains(Markers.QUERY_END.toString()))
+        end = (BaseMarker) md;
 
-        if (((BaseMarker) md).getMarkers().contains(Markers.QUERY_END.toString()))
-          end = (BaseMarker) md;
-
-      }
     }
 
-    @Handler
-    public void onMarketData(MarketData md) {
+    @Subscribe
+    public void onMarketData(Candle c) {
 
-      assertNotNull(md.getSymbol());
-      assertEquals(md.getSource(), "google");
-      assertNotNull(md.getTimestamp());
+      assertNotNull(c.getSymbol());
+      assertEquals(c.getStream(), "google");
+      assertNotNull(c.getTimestamp());
 
-      if (Candle.class.isAssignableFrom(md.getClass())) {
-
-        Candle c = (Candle) md;
-        assertNotNull(c.close);
-        assertTrue(c.close.longValue() > 0);
-        assertNotNull(c.open);
-        assertTrue(c.open.longValue() > 0);
-        assertNotNull(c.low);
-        assertTrue(c.low.longValue() > 0);
-        assertNotNull(c.high);
-        assertTrue(c.high.longValue() > 0);
-        assertNotNull(c.volume);
-        assertTrue(c.volume.longValue() > 0);
-        assertEquals(c.interval, Candle.MIN_1_INTERVAL);
-        count.incrementAndGet();
-      }
+      assertNotNull(c.close);
+      assertTrue(c.close.longValue() > 0);
+      assertNotNull(c.open);
+      assertTrue(c.open.longValue() > 0);
+      assertNotNull(c.low);
+      assertTrue(c.low.longValue() > 0);
+      assertNotNull(c.high);
+      assertTrue(c.high.longValue() > 0);
+      assertNotNull(c.volume);
+      assertTrue(c.volume.longValue() > 0);
+      assertEquals(c.interval, Candle.MIN_1_INTERVAL);
+      count.incrementAndGet();
     }
+
 
   }
 

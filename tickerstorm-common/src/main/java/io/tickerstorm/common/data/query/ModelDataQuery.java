@@ -7,6 +7,8 @@ import java.util.UUID;
 @SuppressWarnings("serial")
 public class ModelDataQuery implements DataFeedQuery {
 
+
+
   public enum OrderBy {
     ASC, DESC;
   }
@@ -25,5 +27,7 @@ public class ModelDataQuery implements DataFeedQuery {
   public String id() {
     return id;
   }
+
+
 
 }

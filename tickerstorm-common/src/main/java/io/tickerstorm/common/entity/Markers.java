@@ -21,16 +21,6 @@ public enum Markers {
    * First market data of this query
    */
   QUERY_START("query_start"),
-
-  /**
-   * Backtest session end
-   */
-  SESSION_END("session_end"),
-
-  /**
-   * Backtests session start
-   */
-  SESSION_START("session_start"),
   /**
    * Backtest session end
    */

@@ -59,8 +59,9 @@ public class DukascopyFileConverter extends BaseFileConverter {
           Candle c = new Candle(currency, provider(), LocalDateTime.parse(cols[0], formatter).toInstant(ZoneOffset.UTC),
               new BigDecimal(cols[1]), new BigDecimal(cols[4]), new BigDecimal(cols[2]), new BigDecimal(cols[3]), getInterval(path),
               new BigDecimal(cols[5]).multiply(new BigDecimal("1000000")).intValue());
-
-          historical.publishAsync(c);
+          c.stream = provider();
+          
+          historical.post(c);
           data.add(c);
 
         }

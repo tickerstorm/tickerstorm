@@ -2,20 +2,25 @@ package io.tickerstorm.strategy.processor.flow;
 
 
 import java.math.BigDecimal;
-import java.util.List;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.Predicate;
 
 import org.springframework.stereotype.Component;
 
 import com.google.common.eventbus.Subscribe;
 
+import io.tickerstorm.common.cache.CacheManager;
+import io.tickerstorm.common.collections.SynchronizedIndexedTreeMap;
 import io.tickerstorm.common.entity.BaseField;
 import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.strategy.processor.BaseEventProcessor;
-import io.tickerstorm.strategy.util.FieldUtil;
 
 @Component
 public class NumericChangeProcessor extends BaseEventProcessor {
+
+  public final static String METRIC_TIME_TAKEN = "metric.numericchange.time";
 
   public static final String PERIODS_CONFIG_KEY = "proc.numericchange.periods";
 
@@ -25,32 +30,53 @@ public class NumericChangeProcessor extends BaseEventProcessor {
   }
 
   @Subscribe
-  public void handle(Field<?> f) throws Exception {
+  public void handle(Collection<Field<?>> fss) {
 
-    if (!filter().test(f))
-      return;
+    long start = System.currentTimeMillis();
 
-    BigDecimal absDiff = BigDecimal.ZERO;
-    BigDecimal pctDiff = BigDecimal.ZERO;
+    Set<Field<?>> fs = new HashSet<>();
+    fss.stream().filter(filter()).forEach(f -> {
 
-    int p = Integer.valueOf(configuration(f.getStream()).getOrDefault(PERIODS_CONFIG_KEY, "2"));
+      int p = Integer.valueOf((String) getConfig(f.getStream()).getOrDefault(PERIODS_CONFIG_KEY, "2"));
 
-    List<Field<?>> previous = cache(f, p);
-    Field<Number> prior = (Field<Number>) FieldUtil.fetch(previous, f, p);
+      BigDecimal absDiff = BigDecimal.ZERO;
+      BigDecimal pctDiff = BigDecimal.ZERO;
 
-    if (!prior.equals(f)) {
+      long start2 = System.currentTimeMillis();
+      CacheManager.put(f, p);
+      SynchronizedIndexedTreeMap<Field<?>> cache = CacheManager.getFieldCache(f);
+      Field<Number> prior = (Field) cache.get(f.getTimestamp(), p);
+      logger.debug("Caching took :" + (System.currentTimeMillis() - start2) + "ms");
 
-      BigDecimal priorVal = new BigDecimal(prior.getValue() + "");
-      BigDecimal fVal = new BigDecimal(f.getValue() + "");
+      if (prior != null && !prior.equals(f)) {
 
-      absDiff = fVal.subtract(priorVal);
+        long start3 = System.currentTimeMillis();
+        BigDecimal priorVal = new BigDecimal(prior.getValue() + "").setScale(4, BigDecimal.ROUND_HALF_UP);
+        BigDecimal fVal = new BigDecimal(f.getValue() + "").setScale(4, BigDecimal.ROUND_HALF_UP);
 
-      if (!absDiff.equals(BigDecimal.ZERO) && !priorVal.equals(BigDecimal.ZERO))
-        pctDiff = absDiff.divide(priorVal, 4, BigDecimal.ROUND_HALF_UP);
+        absDiff = fVal.subtract(priorVal).setScale(4, BigDecimal.ROUND_HALF_UP);
 
-      publish(new BaseField<>(f, Field.Name.ABS_CHANGE.field() + "-p" + p, absDiff));
-      publish(new BaseField<>(f, Field.Name.PCT_CHANGE.field() + "-p" + p, pctDiff));
+        if (absDiff.compareTo(BigDecimal.ZERO) != 0 && priorVal.compareTo(BigDecimal.ZERO) != 0) {
+          pctDiff = absDiff.divide(priorVal, 4, BigDecimal.ROUND_HALF_UP);
+          fs.add(new BaseField<>(f, Field.Name.PCT_CHANGE.field() + "-p" + p, pctDiff.setScale(4, BigDecimal.ROUND_HALF_UP)));
+        } else {
+          fs.add(new BaseField<>(f, Field.Name.PCT_CHANGE.field() + "-p" + p, BigDecimal.ZERO.setScale(4, BigDecimal.ROUND_HALF_UP)));
+        }
+
+        fs.add(new BaseField<>(f, Field.Name.ABS_CHANGE.field() + "-p" + p, absDiff.setScale(4, BigDecimal.ROUND_HALF_UP)));
+        logger.debug("Computation took :" + (System.currentTimeMillis() - start3) + "ms");
+      }
+    });
+
+    logger.debug("Numberic Change Processor took :" + (System.currentTimeMillis() - start) + "ms");
+
+    if (!fs.isEmpty()) {
+      publish(fs);
+      logger.debug("Computed " + fs.size() + " values");
     }
+
+    gauge.submit(METRIC_TIME_TAKEN, (System.currentTimeMillis() - start));
+
   }
 
 }

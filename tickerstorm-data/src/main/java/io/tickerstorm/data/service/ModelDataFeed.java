@@ -1,12 +1,7 @@
 package io.tickerstorm.data.service;
 
-import java.io.Serializable;
-import java.sql.Date;
-import java.time.Instant;
 import java.time.ZoneId;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.annotation.PostConstruct;
@@ -20,18 +15,15 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.cassandra.core.CassandraOperations;
 import org.springframework.stereotype.Repository;
 
-import com.datastax.driver.core.querybuilder.QueryBuilder;
-import com.datastax.driver.core.querybuilder.Select;
-import com.google.common.eventbus.AsyncEventBus;
+import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
 
 import io.tickerstorm.common.data.eventbus.Destinations;
-import io.tickerstorm.common.data.query.DataFeedQuery;
 import io.tickerstorm.common.data.query.ModelDataQuery;
 import io.tickerstorm.common.entity.BaseMarker;
 import io.tickerstorm.common.entity.Markers;
+import io.tickerstorm.data.dao.ModelDataDao;
 import io.tickerstorm.data.dao.ModelDataDto;
-import net.engio.mbassy.bus.MBassador;
-import net.engio.mbassy.listener.Handler;
 
 @Repository
 public class ModelDataFeed {
@@ -45,59 +37,41 @@ public class ModelDataFeed {
 
   @Qualifier(Destinations.NOTIFICATIONS_BUS)
   @Autowired
-  private MBassador<Serializable> notificationBus;
+  private EventBus notificationBus;
 
-  @Qualifier(Destinations.HISTORICAL_DATA_QUERY_BUS)
+  @Qualifier(Destinations.COMMANDS_BUS)
   @Autowired
-  private MBassador<DataFeedQuery> queryBus;
+  private EventBus queryBus;
 
   @Qualifier(Destinations.RETRO_MODEL_DATA_BUS)
   @Autowired
-  private AsyncEventBus modeldataBus;
+  private EventBus modeldataBus;
 
   @Autowired
   private CassandraOperations cassandra;
+
+  @Autowired
+  private ModelDataDao dao;
 
   @Value("${cassandra.keyspace}")
   private String keyspace;
 
   @PostConstruct
   public void setup() {
-    queryBus.subscribe(this);
+    queryBus.register(this);
   }
 
   @PreDestroy
   public void destroy() {
-    queryBus.unsubscribe(this);
+    queryBus.unregister(this);
   }
 
-  @Handler
+  @Subscribe
   public void onQuery(ModelDataQuery query) {
 
     logger.debug("Model data feed query received");
-    Instant start = query.from;
-    Instant end = query.until;
-    Instant date = start;
 
-    Set<Integer> dates = new java.util.HashSet<>();
-    dates.add(Integer.valueOf(dateFormat2.format(query.from)));
-
-    while (!date.equals(end)) {
-
-      if (date.isBefore(end))
-        date = date.plus(1, ChronoUnit.DAYS);
-
-      dates.add(Integer.valueOf(dateFormat2.format(date)));
-    }
-
-    Select select = QueryBuilder.select().from("modeldata");
-    select.where(QueryBuilder.eq("stream", query.stream.toLowerCase())).and(QueryBuilder.in("date", dates.toArray(new Integer[] {})))
-        .and(QueryBuilder.gte("timestamp", Date.from(query.from))).and(QueryBuilder.lte("timestamp", Date.from(query.until)));
-
-    logger.debug("Cassandra query: " + select.toString());
-    long startTimer = System.currentTimeMillis();
-    List<ModelDataDto> dtos = cassandra.select(select, ModelDataDto.class);
-    logger.info("Query took " + (System.currentTimeMillis() - startTimer) + "ms to fetch " + dtos.size() + " results.");
+    List<ModelDataDto> dtos = dao.findByStreamAndTimestampIsBetween(query.stream, query.from, query.until);
 
     final AtomicInteger count = new AtomicInteger();
 
@@ -105,12 +79,12 @@ public class ModelDataFeed {
       count.addAndGet(d.fields.size());
     });
 
-    startTimer = System.currentTimeMillis();
+    long startTimer = System.currentTimeMillis();
 
     BaseMarker marker = new BaseMarker(query.id, query.stream);
     marker.addMarker(Markers.QUERY_START.toString());
     marker.expect = count.get();
-    notificationBus.publish(marker);
+    notificationBus.post(marker);
 
     dtos.stream().forEach(d -> {
       d.asFields().stream().forEach(f -> {
@@ -121,7 +95,7 @@ public class ModelDataFeed {
     marker = new BaseMarker(query.id, query.stream);
     marker.addMarker(Markers.QUERY_END.toString());
     marker.expect = 0;
-    notificationBus.publish(marker);
+    notificationBus.post(marker);
 
 
     logger.info("Dispatch model data feed took " + (System.currentTimeMillis() - startTimer) + "ms");

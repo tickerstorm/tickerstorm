@@ -21,10 +21,8 @@ import org.springframework.data.cassandra.core.CassandraOperations;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.jms.core.MessageCreator;
 import org.springframework.jms.listener.DefaultMessageListenerContainer;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -38,7 +36,6 @@ import io.tickerstorm.common.entity.Candle;
 import io.tickerstorm.common.entity.MarketData;
 import io.tickerstorm.data.TestMarketDataServiceConfig;
 
-@DirtiesContext
 @ContextConfiguration(classes = {TestMarketDataServiceConfig.class})
 public class HistoricalJmsDataFeedITCase extends AbstractTestNGSpringContextTests implements MessageListener {
 
@@ -57,16 +54,11 @@ public class HistoricalJmsDataFeedITCase extends AbstractTestNGSpringContextTest
 
   @BeforeClass
   public void dataSetup() throws Exception {
+    session.getSession().execute("TRUNCATE marketdata");
     FileUtils.forceMkdir(new File("./data/Google"));
     Files.copy(new File("./src/test/resources/data/Google/TOL.csv"), new File("./data/Google/TOL.csv"));
-    session.getSession().execute("TRUNCATE marketdata");
-    Thread.sleep(10000);
-  }
-
-  @AfterClass
-  public void tearDown() throws Exception {
+    Thread.sleep(3000);
     FileUtils.deleteQuietly(new File("./data/Google/TOL.csv"));
-
   }
 
   @BeforeMethod
@@ -81,14 +73,13 @@ public class HistoricalJmsDataFeedITCase extends AbstractTestNGSpringContextTest
 
     long st = System.currentTimeMillis();
 
-    HistoricalFeedQuery query = new HistoricalFeedQuery("TOL");
+    HistoricalFeedQuery query = new HistoricalFeedQuery("google", new String[] {"TOL"});
     query.from = LocalDateTime.of(2015, 6, 10, 0, 0);
     query.until = LocalDateTime.of(2015, 6, 11, 0, 0);
-    query.source = "google";
     query.periods.add(Candle.MIN_1_INTERVAL);
     query.zone = ZoneOffset.ofHours(-7);
 
-    jmsTemplate.send(Destinations.QUEUE_HISTORICAL_DATA_QUERY, new MessageCreator() {
+    jmsTemplate.send(Destinations.TOPIC_COMMANDS, new MessageCreator() {
 
       @Override
       public Message createMessage(Session session) throws JMSException {
@@ -98,7 +89,7 @@ public class HistoricalJmsDataFeedITCase extends AbstractTestNGSpringContextTest
       }
     });
 
-    Thread.sleep(10000);
+    Thread.sleep(1000);
     assertEquals(count.get(), expCount);
     assertTrue(verified);
 
@@ -114,7 +105,7 @@ public class HistoricalJmsDataFeedITCase extends AbstractTestNGSpringContextTest
       MarketData md = (MarketData) ((ObjectMessage) m).getObject();
 
       assertNotNull(md.getSymbol());
-      assertEquals(md.getSource(), "google");
+      assertEquals(md.getStream(), "google");
       assertNotNull(md.getTimestamp());
 
       if (Candle.class.isAssignableFrom(md.getClass())) {
@@ -132,7 +123,9 @@ public class HistoricalJmsDataFeedITCase extends AbstractTestNGSpringContextTest
         assertTrue(c.volume.longValue() > 0);
         assertEquals(c.interval, Candle.MIN_1_INTERVAL);
         verified = true;
-        count.incrementAndGet();
+        synchronized (count) {
+          count.incrementAndGet();
+        }
       }
 
     } catch (Exception e) {

@@ -13,13 +13,11 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import com.google.common.eventbus.Subscribe;
 import com.google.common.io.Files;
 
 import io.tickerstorm.common.entity.Candle;
 import io.tickerstorm.common.entity.MarketData;
-import net.engio.mbassy.listener.Handler;
-import net.engio.mbassy.listener.Listener;
-import net.engio.mbassy.listener.References;
 
 public class DukascopyHistoricalForexQueryITCase extends BaseDataQueryITCase {
 
@@ -50,14 +48,13 @@ public class DukascopyHistoricalForexQueryITCase extends BaseDataQueryITCase {
 
   }
 
-  @Listener(references = References.Strong)
   private class DownloadGloabForextVerification {
 
-    @Handler
+    @Subscribe
     public void onEvent(MarketData md) {
 
       assertNotNull(md.getSymbol());
-      assertEquals(md.getSource(), "Dukascopy");
+      assertEquals(md.getStream(), "Dukascopy");
       assertNotNull(md.getTimestamp());
 
       Candle c = (Candle) md;

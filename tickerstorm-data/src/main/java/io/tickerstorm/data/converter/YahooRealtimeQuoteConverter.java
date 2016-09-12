@@ -25,11 +25,8 @@ public class YahooRealtimeQuoteConverter implements DataConverter {
   public Quote[] convert(String line, DataQuery dq) {
     String[] data = line.split(",");
 
-    Quote c = new Quote();
-    c.symbol = dq.getSymbol();
-    c.source = "yahoo";
-    c.timestamp = Instant.now();
-
+    Quote c = new Quote(dq.getSymbol(), provider(), Instant.now());
+    
     if (!data[0].equalsIgnoreCase("N/A"))
       c.ask = new BigDecimal(data[0]);
     else if (!data[1].equalsIgnoreCase("N/A"))
@@ -47,6 +44,7 @@ public class YahooRealtimeQuoteConverter implements DataConverter {
       return null;
 
     c.bidSize = new Integer(data[5]);
+    c.stream = provider();
 
     return new Quote[] {c};
   }

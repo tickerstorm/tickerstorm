@@ -1,7 +1,5 @@
 package io.tickerstorm.data.feed;
 
-import java.io.Serializable;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.cassandra.core.CassandraOperations;
@@ -11,31 +9,29 @@ import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import com.google.common.eventbus.AsyncEventBus;
+import com.google.common.eventbus.EventBus;
 
 import io.tickerstorm.common.data.eventbus.Destinations;
-import io.tickerstorm.common.data.query.DataFeedQuery;
 import io.tickerstorm.data.TestMarketDataServiceConfig;
-import net.engio.mbassy.bus.MBassador;
 
 @DirtiesContext
 @ContextConfiguration(classes = {TestMarketDataServiceConfig.class})
 public class ModelDataFeedITCase extends AbstractTestNGSpringContextTests {
 
-  @Qualifier("notification")
+  @Qualifier(Destinations.NOTIFICATIONS_BUS)
   @Autowired
-  private MBassador<Serializable> notificationsBus;
+  private EventBus notificationsBus;
 
-  @Qualifier("query")
+  @Qualifier(Destinations.HISTORICL_MARKETDATA_BUS)
   @Autowired
-  private MBassador<DataFeedQuery> queryBus;
+  private EventBus queryBus;
 
   @Autowired
   private CassandraOperations session;
 
   @Qualifier(Destinations.MODEL_DATA_BUS)
   @Autowired
-  private AsyncEventBus modeldataBus;
+  private EventBus modeldataBus;
 
   @BeforeMethod
   public void dataSetup() throws Exception {

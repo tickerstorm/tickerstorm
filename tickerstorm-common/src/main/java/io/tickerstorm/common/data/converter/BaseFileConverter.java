@@ -9,14 +9,15 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 
-import io.tickerstorm.common.entity.MarketData;
-import net.engio.mbassy.bus.MBassador;
+import com.google.common.eventbus.EventBus;
+
+import io.tickerstorm.common.data.eventbus.Destinations;
 
 public abstract class BaseFileConverter implements FileAlterationListener, FileConverter {
 
-  @Qualifier("historical")
+  @Qualifier(Destinations.HISTORICL_MARKETDATA_BUS)
   @Autowired
-  protected MBassador<MarketData> historical;
+  protected EventBus historical;
 
   private final static Logger logger = LoggerFactory.getLogger(BaseFileConverter.class);
 

@@ -7,7 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
-import com.google.common.eventbus.AsyncEventBus;
+import com.google.common.eventbus.EventBus;
 
 import io.tickerstorm.common.data.eventbus.Destinations;
 import io.tickerstorm.strategy.processor.BaseProcessor;
@@ -15,11 +15,13 @@ import io.tickerstorm.strategy.processor.BaseProcessor;
 @Component
 public abstract class BaseRetroProcessor extends BaseProcessor {
 
-  protected final String CACHE = getClass().getSimpleName() + "-retro-cache";
-
   @Qualifier(Destinations.RETRO_MODEL_DATA_BUS)
   @Autowired
-  protected AsyncEventBus retroEventBus;
+  protected EventBus retroEventBus;
+  
+  @Qualifier(Destinations.MODEL_DATA_BUS)
+  @Autowired
+  protected EventBus modelDataBus;
 
   @PreDestroy
   protected void destroy() {
@@ -32,12 +34,8 @@ public abstract class BaseRetroProcessor extends BaseProcessor {
   }
 
   protected void publish(Object o) {
-    retroEventBus.post(o);
-  }
-
-  @Override
-  protected String getCacheKey() {
-    return CACHE;
+    retroEventBus.post(o);//propagate to other backflow processors
+    modelDataBus.post(o);//persist back to Cassandra
   }
 
 }

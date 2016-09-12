@@ -7,21 +7,16 @@ import static org.testng.Assert.assertTrue;
 import java.io.File;
 
 import org.apache.commons.io.FileUtils;
-import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.ContextConfiguration;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import com.google.common.eventbus.Subscribe;
 import com.google.common.io.Files;
 
 import io.tickerstorm.common.entity.Candle;
 import io.tickerstorm.common.entity.MarketData;
-import io.tickerstorm.data.TestMarketDataServiceConfig;
-import net.engio.mbassy.listener.Handler;
-import net.engio.mbassy.listener.Listener;
-import net.engio.mbassy.listener.References;
 
 public class GoogleDataQueryITCase extends BaseDataQueryITCase {
 
@@ -69,20 +64,18 @@ public class GoogleDataQueryITCase extends BaseDataQueryITCase {
     assertEquals(count.get(), 5792, "Failed message broker count");
     assertEquals(daoCount, new Long(5792), "Failed dao count");
 
-    while (bus.hasPendingMessages()) {
-      Thread.sleep(1000);
-    }
+    Thread.sleep(5000);
 
   }
 
-  @Listener(references = References.Strong)
+
   private class GoogleDataVerifier {
 
-    @Handler
+    @Subscribe
     public void onEvent(MarketData md) {
 
       assertNotNull(md.getSymbol());
-      assertEquals(md.getSource(), "Google");
+      assertEquals(md.getStream(), "Google");
       assertNotNull(md.getTimestamp());
 
       Candle c = (Candle) md;

@@ -1,11 +1,15 @@
 package io.tickerstorm.common.test;
 
+import java.io.File;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.Random;
 
+import org.apache.commons.io.FileUtils;
+
 import com.beust.jcommander.internal.Lists;
+import com.google.common.io.Files;
 
 import io.tickerstorm.common.entity.Candle;
 
@@ -31,6 +35,15 @@ public class TestDataFactory {
 
     return cs;
 
+  }
+  
+  public static void storeGoogleData() throws Exception {
+    
+    FileUtils.forceMkdir(new File("./data/Google"));
+    Files.copy(new File("./src/test/resources/data/Google/TOL.csv"), new File("./data/Google/TOL.csv"));
+    Thread.sleep(5000);
+    FileUtils.deleteQuietly(new File("./data/Google/TOL.csv"));
+    
   }
 
   public static BigDecimal randomRange(BigDecimal min, BigDecimal max) {

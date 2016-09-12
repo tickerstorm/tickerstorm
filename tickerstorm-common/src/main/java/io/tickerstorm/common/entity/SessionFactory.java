@@ -1,20 +1,19 @@
 package io.tickerstorm.common.entity;
 
-import java.io.Serializable;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
+import com.google.common.eventbus.EventBus;
+
 import io.tickerstorm.common.data.eventbus.Destinations;
-import net.engio.mbassy.bus.MBassador;
 
 @Component
 public class SessionFactory {
 
   @Qualifier(Destinations.COMMANDS_BUS)
   @Autowired
-  private MBassador<Serializable> commandsBus;
+  private EventBus commandsBus;
 
   private SessionFactory() {}
 
@@ -22,8 +21,8 @@ public class SessionFactory {
     return new Session(commandsBus);
   }
 
-  public Session newSession(String id) {
-    return new Session(id, commandsBus);
+  public Session newSession(String stream) {
+    return new Session(stream, commandsBus);
   }
 
 }

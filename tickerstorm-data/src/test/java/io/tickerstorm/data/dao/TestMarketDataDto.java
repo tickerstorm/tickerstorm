@@ -23,7 +23,7 @@ public class TestMarketDataDto {
     c.open = BigDecimal.TEN;
     c.low = BigDecimal.TEN;
     c.high = BigDecimal.TEN;
-    c.source = "test";
+    c.stream = "test";
     c.symbol = "AAPL";
     c.interval = Candle.EOD;
     c.timestamp = Instant.now();
@@ -36,20 +36,20 @@ public class TestMarketDataDto {
     assertEquals(dto.high, c.high);
     assertEquals(dto.open, c.open);
     assertEquals(dto.volume, BigDecimal.valueOf(c.volume));
-    assertEquals(dto.primarykey.source, c.source);
+    assertEquals(dto.primarykey.stream, c.stream);
     assertEquals(dto.primarykey.interval, c.interval.toLowerCase());
     assertEquals(dto.primarykey.timestamp, Date.from(c.timestamp));
     assertEquals(dto.primarykey.symbol, c.symbol.toLowerCase());
     assertNotNull(dto.primarykey.date);
 
-    Candle d = (Candle) dto.toMarketData("Default");
+    Candle d = (Candle) dto.toMarketData(c.stream);
 
     assertEquals(d.close, c.close);
     assertEquals(d.low, c.low);
     assertEquals(d.high, c.high);
     assertEquals(d.open, c.open);
     assertEquals(d.volume, c.volume);
-    assertEquals(d.source, c.source.toLowerCase());
+    assertEquals(d.stream, c.stream.toLowerCase());
     assertEquals(d.interval, c.interval.toLowerCase());
 
     // assertEquals(d.timestamp, c.timestamp); not working
@@ -58,20 +58,16 @@ public class TestMarketDataDto {
     assertEquals(d.symbol, c.symbol.toLowerCase());
 
   }
-  
+
   /**
    * Not currently supported
    */
-  @Test(enabled=false)
+  @Test(enabled = false)
   public void convertQuote() {
 
-    Quote c = new Quote();
+    Quote c = new Quote("AAPL", "test", Instant.now());
     c.ask = BigDecimal.TEN;
     c.bid = BigDecimal.TEN;
-    c.source = "test";
-    c.symbol = "AAPL";
-
-    c.timestamp = Instant.now();
     c.askSize = 0;
     c.bidSize = 0;
 
@@ -81,7 +77,7 @@ public class TestMarketDataDto {
     assertEquals(dto.bid, c.bid);
     assertEquals(dto.askSize, BigDecimal.valueOf(c.askSize));
     assertEquals(dto.bidSize, BigDecimal.valueOf(c.bidSize));
-    assertEquals(dto.primarykey.source, c.source.toLowerCase());
+    assertEquals(dto.primarykey.stream, c.stream.toLowerCase());
     assertEquals(dto.primarykey.timestamp, Date.from(c.timestamp));
     assertEquals(dto.primarykey.symbol, c.symbol.toLowerCase());
     assertNotNull(dto.primarykey.date);
@@ -92,7 +88,7 @@ public class TestMarketDataDto {
     assertEquals(d.bid, c.bid);
     assertEquals(d.askSize, c.askSize);
     assertEquals(d.bidSize, c.bidSize);
-    assertEquals(d.source, c.source.toLowerCase());
+    assertEquals(d.stream, c.stream.toLowerCase());
 
     // assertEquals(d.timestamp, c.timestamp); not working
     assertNotNull(d.timestamp);
@@ -104,22 +100,17 @@ public class TestMarketDataDto {
   /**
    * Not currently supported
    */
-  @Test(enabled=false)
+  @Test(enabled = false)
   public void convertTick() {
 
-    Tick c = new Tick();
+    Tick c = new Tick("AAPL", "test", Instant.now());
     c.price = BigDecimal.TEN;
     c.quantity = BigDecimal.TEN;
-    c.source = "test";
-    c.symbol = "AAPL";
-
-    c.timestamp = Instant.now();
-
-    MarketDataDto dto = MarketDataDto.convert(c);
+        MarketDataDto dto = MarketDataDto.convert(c);
 
     assertEquals(dto.price, c.price);
     assertEquals(dto.quantity, c.quantity);
-    assertEquals(dto.primarykey.source, c.source);
+    assertEquals(dto.primarykey.stream, c.stream);
     assertEquals(dto.primarykey.timestamp, Date.from(c.timestamp));
     assertEquals(dto.primarykey.symbol, c.symbol.toLowerCase());
     assertNotNull(dto.primarykey.date);
@@ -128,7 +119,7 @@ public class TestMarketDataDto {
 
     assertEquals(d.price, c.price);
     assertEquals(d.quantity, c.quantity);
-    assertEquals(d.source, c.source.toLowerCase());
+    assertEquals(d.stream, c.stream.toLowerCase());
 
     // assertEquals(d.timestamp, c.timestamp); not working
     assertNotNull(d.timestamp);

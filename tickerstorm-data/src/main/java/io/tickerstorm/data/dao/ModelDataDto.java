@@ -47,7 +47,7 @@ public class ModelDataDto implements Serializable {
     ModelDataPrimaryKey key = new ModelDataPrimaryKey();
     key.timestamp = Date.from(field.getTimestamp());
     key.date = new BigInteger(dateFormatter.format(field.getTimestamp()));
-    key.stream = field.getStream();
+    key.stream = field.getStream().toLowerCase();
     dto.primarykey = key;
     dto.fields.add(field.serialize());
 
@@ -65,20 +65,20 @@ public class ModelDataDto implements Serializable {
     return dtos;
   }
 
-  public static Set<ModelDataDto> convert(MarketData md) {
+  public static ModelDataDto convert(MarketData md) {
 
     ModelDataDto dto = new ModelDataDto();
     ModelDataPrimaryKey key = new ModelDataPrimaryKey();
     key.timestamp = Date.from(md.getTimestamp());
     LocalDateTime dt = LocalDateTime.ofInstant(md.getTimestamp(), ZoneOffset.UTC);
     key.date = new BigInteger(dateFormatter.format(dt));
-    key.stream = md.getStream();
+    key.stream = md.getStream().toLowerCase();
     dto.primarykey = key;
     md.getFields().forEach(f -> {
       dto.fields.add(f.serialize());
     });
 
-    return Sets.newHashSet(dto);
+    return dto;
   }
 
 }

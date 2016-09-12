@@ -1,6 +1,7 @@
 package io.tickerstorm.common.entity;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -9,8 +10,16 @@ public class Quote extends BaseMarketData {
 
   public static final String TYPE = "quote";
 
-  public Quote() {
-
+  public Quote(String symbol, String stream, Instant timestamp, BigDecimal ask, Integer askSize, BigDecimal bid, Integer bidSize) {
+    super(symbol, stream, timestamp);
+    this.ask = ask;
+    this.askSize = askSize;
+    this.bid = bid;
+    this.bidSize = bidSize;
+  }
+  
+  public Quote(String symbol, String stream, Instant timestamp) {
+    super(symbol, stream, timestamp);
   }
 
   public Quote(Set<Field<?>> fields) {

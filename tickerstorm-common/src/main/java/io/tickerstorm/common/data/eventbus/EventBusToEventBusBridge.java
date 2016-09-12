@@ -3,48 +3,44 @@ package io.tickerstorm.common.data.eventbus;
 import javax.annotation.PreDestroy;
 
 import com.google.common.collect.Lists;
+import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
 
-import net.engio.mbassy.bus.MBassador;
-import net.engio.mbassy.listener.Handler;
-import net.engio.mbassy.listener.Listener;
-
-@Listener
 public class EventBusToEventBusBridge<T> {
 
-  private MBassador<T> source;
-  private MBassador<T>[] listeners;
+  private EventBus source;
+  private EventBus[] listeners;
 
-  public EventBusToEventBusBridge(MBassador<T> source, MBassador<T>[] listeners) {
+  public EventBusToEventBusBridge(EventBus source, EventBus[] listeners) {
     this.source = source;
-    this.source.subscribe(this);
+    this.source.register(this);
     this.listeners = listeners;
   }
 
-  public EventBusToEventBusBridge(MBassador<T> source, MBassador<T> listener) {
+  public EventBusToEventBusBridge(EventBus source, EventBus listener) {
     this.source = source;
-    this.source.subscribe(this);
-    this.listeners = new MBassador[]{listener};
+    this.source.register(this);
+    this.listeners = new EventBus[] {listener};
   }
 
-  public void addListener(MBassador<T> bus) {
+  public void addListener(EventBus bus) {
     synchronized (this.listeners) {
-      this.listeners = Lists.asList(bus, this.listeners).toArray(new MBassador[] {});
+      this.listeners = Lists.asList(bus, this.listeners).toArray(new EventBus[] {});
     }
   }
 
-  @Handler
+  @Subscribe
   public void onMessage(T o) {
     synchronized (this.listeners) {
-      for (MBassador<T> l : listeners) {
-        l.publish(o);
+      for (EventBus l : listeners) {
+        l.post(o);
       }
     }
   }
 
   @PreDestroy
   public void destroy() {
-    this.source.unsubscribe(this);
-    this.listeners = null;
+    this.source.unregister(this);
   }
 
 }

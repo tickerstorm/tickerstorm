@@ -2,37 +2,42 @@ package io.tickerstorm.strategy.processor;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.mockito.internal.util.collections.Sets;
+import org.springframework.boot.actuate.metrics.GaugeService;
 import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.eventbus.AsyncEventBus;
+import com.google.common.eventbus.EventBus;
 
+import io.tickerstorm.common.cache.CacheManager;
 import io.tickerstorm.common.entity.BaseField;
 import io.tickerstorm.common.entity.Candle;
 import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.test.TestDataFactory;
 import io.tickerstorm.strategy.processor.flow.NumericChangeProcessor;
-import io.tickerstorm.strategy.util.FieldUtil;
 
 public class TestNumericChangeProcessor {
 
   private NumericChangeProcessor bolt;
 
   @Mock
-  private AsyncEventBus eventBus;
+  private EventBus eventBus;
 
-  private final String stream = "TestNumericChangeBolt";
+  @Mock
+  private GaugeService service;
+
+  private final String stream = "TestNumericChangeBolt".toLowerCase();
 
   @BeforeMethod
   public void init() throws Exception {
@@ -41,39 +46,33 @@ public class TestNumericChangeProcessor {
     bolt = Mockito.spy(bolt);
     Mockito.doNothing().when(eventBus).post(Mockito.any(Field.class));
     bolt.eventBus = eventBus;
-    bolt.configure(stream, Maps.newHashMap());
-    bolt.configuration(stream).put(NumericChangeProcessor.PERIODS_CONFIG_KEY, "2");
+    bolt.getConfig(stream).put(NumericChangeProcessor.PERIODS_CONFIG_KEY, "2");
+
+    bolt.gauge = service;
+    Mockito.doNothing().when(service).submit(Mockito.anyString(), Mockito.anyDouble());
+
+    Candle md = new Candle("TOL", stream, Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.TEN,
+        Candle.MIN_1_INTERVAL, Integer.MAX_VALUE);
+    CacheManager.put(new BaseField<>(md.getEventId(), "warm cache", BigDecimal.class), 2);
+    CacheManager.getInstance(stream).removeAll();
+  }
+
+  @AfterMethod
+  public void clean() {
+    Mockito.reset(bolt);
+    CacheManager.getInstance(stream).removeAll();
   }
 
   @Test
   public void testComputeFirstDiscreteChange() throws Exception {
 
-    Candle md = new Candle("TOL", "Google", Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.TEN,
+    Candle md = new Candle("TOL", stream, Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.TEN,
         Candle.MIN_1_INTERVAL, Integer.MAX_VALUE);
-    md.stream = stream;
 
-    for (Field<?> f : md.getFields()) {
-      bolt.handle(f);
-    }
+    bolt.handle(md.getFields());
 
     ArgumentCaptor<Field> emit = ArgumentCaptor.forClass(Field.class);
-    Mockito.verify(bolt, Mockito.atLeast(1)).publish(emit.capture());
-
-    List<Field> args = emit.getAllValues();
-
-    Assert.assertNotNull(args);
-    Assert.assertEquals(args.size(), 10);
-
-    Field<BigDecimal> abs = (Field<BigDecimal>) args.get(0);
-    Field<BigDecimal> pct = (Field<BigDecimal>) args.get(1);
-
-    BaseField<BigDecimal> f1 =
-        new BaseField<BigDecimal>(md.getEventId(), "volume|" + Field.Name.ABS_CHANGE.field() + "-p2", BigDecimal.class);
-    BaseField<BigDecimal> f2 =
-        new BaseField<BigDecimal>(md.getEventId(), "volume|" + Field.Name.PCT_CHANGE.field() + "-p2", BigDecimal.class);
-
-    Assert.assertTrue(args.contains(f1));
-    Assert.assertTrue(args.contains(f2));
+    Mockito.verify(bolt, Mockito.atMost(0)).publish(emit.capture());
 
   }
 
@@ -81,37 +80,36 @@ public class TestNumericChangeProcessor {
   public void testComputeSecondDiscreteChange() throws Exception {
 
 
-    Candle md = new Candle("TOL", "Google", Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.TEN,
+    Candle md = new Candle("TOL", stream, Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.TEN,
         Candle.MIN_1_INTERVAL, Integer.MAX_VALUE);
-    md.stream = stream;
 
-    for (Field<?> f : md.getFields()) {
-      bolt.handle(f);
-    }
 
-    md = new Candle("TOL", "Google", Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.TEN, Candle.MIN_1_INTERVAL,
+    bolt.handle(md.getFields());
+
+
+    md = new Candle("TOL", stream, Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.TEN, Candle.MIN_1_INTERVAL,
         12335253);
-    md.stream = stream;
 
-    for (Field<?> f : md.getFields()) {
-      bolt.handle(f);
-    }
 
-    md = new Candle("TOL", "Google", Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.TEN, Candle.MIN_1_INTERVAL,
+    bolt.handle(md.getFields());
+
+
+    md = new Candle("TOL", stream, Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.TEN, Candle.MIN_1_INTERVAL,
         11145345);
-    md.stream = stream;
 
-    for (Field<?> f : md.getFields()) {
-      bolt.handle(f);
-    }
 
-    ArgumentCaptor<Field> emit = ArgumentCaptor.forClass(Field.class);
-    Mockito.verify(bolt, Mockito.atLeast(3)).publish(emit.capture());
+    bolt.handle(md.getFields());
 
-    List<Field> args = emit.getAllValues();
+    ArgumentCaptor<Collection> emit = ArgumentCaptor.forClass(Collection.class);
+    Mockito.verify(bolt).publish(emit.capture());
+
+    Set<Field<Number>> args = new HashSet<>();
+    emit.getAllValues().stream().forEach(c -> {
+      args.addAll(c);
+    });
 
     BaseField<BigDecimal> f1 = new BaseField<BigDecimal>(md.getEventId(), "volume|" + Field.Name.ABS_CHANGE.field() + "-p2",
-        BigDecimal.valueOf(11145345 - Integer.MAX_VALUE));
+        BigDecimal.valueOf(11145345 - Integer.MAX_VALUE).setScale(4, BigDecimal.ROUND_HALF_UP));
 
     BaseField<BigDecimal> f2 = new BaseField<BigDecimal>(md.getEventId(), "volume|" + Field.Name.PCT_CHANGE.field() + "-p2",
         BigDecimal.valueOf(11145345 - Integer.MAX_VALUE).divide(BigDecimal.valueOf(Integer.MAX_VALUE), 4, BigDecimal.ROUND_HALF_UP));
@@ -131,29 +129,27 @@ public class TestNumericChangeProcessor {
     // Prime cache with prior tuple's fields
     List<Candle> cs = TestDataFactory.buildCandles(10, "GOOG", stream, new BigDecimal(10.19));
 
-    List<Field<?>> fs = Lists.newArrayList();
-    cs.stream().forEach(fn -> fs.addAll(fn.getFields()));
-    fs.stream().filter(fn -> fn.getFieldType().isAssignableFrom(BigDecimal.class)).forEach(f -> bolt.cache(f, 2));
+    cs.stream().forEach(c -> {
+      c.getFields().stream().filter(f -> f.getFieldType().isAssignableFrom(BigDecimal.class)).forEach(f -> {
+        CacheManager.put(f, 2);
+      });
+    });
 
-    // Execute bolt
+
     cs = TestDataFactory.buildCandles(1, "GOOG", stream, BigDecimal.ONE);
 
-    Set<Field<?>> os = Sets.newSet();
-    cs.stream().forEach(fn -> os.addAll(fn.getFields()));
-    Set<Field<BigDecimal>> bs = FieldUtil.findFieldsByType(os, BigDecimal.class);
+    Set<Field<?>> os =
+        cs.get(0).getFields().stream().filter(f -> f.getFieldType().isAssignableFrom(BigDecimal.class)).collect(Collectors.toSet());
 
-
-    for (Field<?> f : bs) {
-      bolt.handle(f);
-    }
+    // Execute bolt
+    bolt.handle(os);
 
     // Validate results
-    ArgumentCaptor<Field> emit = ArgumentCaptor.forClass(Field.class);
+    ArgumentCaptor<Collection> emit = ArgumentCaptor.forClass(Collection.class);
     Mockito.verify(bolt, Mockito.atLeast(1)).publish(emit.capture());
 
-    List<Field> args = emit.getAllValues();
-    Assert.assertEquals(args.size(), 8);
-    Assert.assertNotNull(args.get(0));
+    List<Collection> args = emit.getAllValues();
+    Assert.assertEquals(args.get(0).size(), 8);
 
   }
 

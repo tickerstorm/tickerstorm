@@ -11,11 +11,12 @@ import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 
-import io.tickerstorm.common.entity.MarketData;
+import com.google.common.eventbus.EventBus;
+
+import io.tickerstorm.common.data.eventbus.Destinations;
 import io.tickerstorm.data.TestMarketDataServiceConfig;
 import io.tickerstorm.data.converter.DataQueryClient;
 import io.tickerstorm.data.dao.MarketDataDao;
-import net.engio.mbassy.bus.MBassador;
 
 @DirtiesContext
 @ContextConfiguration(classes = {TestMarketDataServiceConfig.class})
@@ -24,9 +25,9 @@ public class BaseDataQueryITCase extends AbstractTestNGSpringContextTests {
   @Autowired
   protected DataQueryClient client;
 
-  @Qualifier("historical")
+  @Qualifier(Destinations.HISTORICL_MARKETDATA_BUS)
   @Autowired
-  protected MBassador<MarketData> bus;
+  protected EventBus bus;
 
   @Autowired
   protected MarketDataDao dao;
@@ -41,12 +42,12 @@ public class BaseDataQueryITCase extends AbstractTestNGSpringContextTests {
   @BeforeMethod
   public void setup() throws Exception {
     session.getSession().execute("TRUNCATE marketdata");
-    bus.subscribe(verifier);
+    bus.register(verifier);
   }
 
   @AfterMethod(alwaysRun = true)
   public void tearDown() throws Exception {
-    bus.unsubscribe(verifier);
+    bus.unregister(verifier);
     session.getSession().execute("TRUNCATE marketdata");
     session.getSession().execute("TRUNCATE modeldata");
     count.set(0);

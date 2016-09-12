@@ -32,6 +32,7 @@ public class YahooRealtimeQuoteQuery implements QueryBuilder, DataQuery {
 
   public String build() {
 
+    //With fields specified
     String url = HOST + symbol + "&f=a0aa5bb2b6x";
 
     logger.info(url);

@@ -19,7 +19,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import com.google.common.collect.Sets;
-import com.google.common.eventbus.AsyncEventBus;
+import com.google.common.eventbus.EventBus;
 
 import io.tickerstorm.common.data.eventbus.Destinations;
 import io.tickerstorm.common.entity.BaseField;
@@ -38,15 +38,14 @@ public class ModelDataCassandraSinkITCase extends AbstractTestNGSpringContextTes
 
   @Qualifier(Destinations.MODEL_DATA_BUS)
   @Autowired
-  private AsyncEventBus modelDataBus;
+  private EventBus modelDataBus;
 
   @Autowired
   private ModelDataDao dao;
 
   private final Instant instant = Instant.now();
   private final String symbol = "goog";
-  private final String source = "google";
-  private final String stream = "ModelDataCassandraSinkITCase";
+  private final String stream = "ModelDataCassandraSinkITCase".toLowerCase();
   private Candle c;
 
   @org.testng.annotations.BeforeClass
@@ -54,39 +53,35 @@ public class ModelDataCassandraSinkITCase extends AbstractTestNGSpringContextTes
     session.getSession().execute("TRUNCATE modeldata");
     Thread.sleep(2000);
 
-    c = new Candle(symbol, source, this.instant, BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ONE, BigDecimal.ONE, "1m", 1000);
-    c.setStream(stream);
+    c = new Candle(symbol, stream, this.instant, BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ONE, BigDecimal.ONE, "1m", 1000);
+    
   }
 
-  @Test(priority = 1)
+  @Test
   public void testStoreModelData() throws Exception {
 
-    Set<Field<?>> tuple = new HashSet<>();
     BaseField<Integer> df = new BaseField<Integer>(c.getEventId(), "ave", 100);
     BaseField<BigDecimal> cf = new BaseField<BigDecimal>(c.getEventId(), "sma", BigDecimal.TEN);
 
-    tuple.add(df);
-    tuple.add(cf);
-
     modelDataBus.post(c);
-    modelDataBus.post(tuple);
+    modelDataBus.post(df);
+    modelDataBus.post(cf);
 
-    Thread.sleep(5000);
+    Thread.sleep(3000);
 
     long count = dao.count();
 
     assertEquals(count, 1);
 
-    Iterable<ModelDataDto> result = dao.findAll();
 
     Set<ModelDataDto> dtos = new HashSet<>();
-    for (ModelDataDto dto : result) {
-      dtos.add(dto);
-    }
+    dao.findAll(c.stream).forEach(d -> {
+      dtos.add(d);
+    });
 
     assertEquals(dtos.size(), 1);
 
-    tuple.clear();
+    Set<Field<?>> tuple = new HashSet<>();
     tuple.addAll(c.getFields());
     tuple.add(df);
     tuple.add(cf);
@@ -103,12 +98,12 @@ public class ModelDataCassandraSinkITCase extends AbstractTestNGSpringContextTes
       Assert.assertNotNull(d.primarykey.date);
       Assert.assertNotNull(d.primarykey.timestamp);
       Assert.assertEquals(d.primarykey.timestamp, Date.from(c.timestamp));
-      Assert.assertEquals(d.primarykey.stream, c.stream);
+      Assert.assertEquals(d.primarykey.stream, c.stream.toLowerCase());
 
     });
   }
 
-  @Test(priority = 2)
+  @Test(dependsOnMethods = {"testStoreModelData"})
   public void testStoreSecondSetOfFieldsModelData() throws Exception {
 
     BaseField<Integer> df = new BaseField<Integer>(c.getEventId(), Field.Name.AVE.field() + "-p1", 102);
@@ -131,11 +126,10 @@ public class ModelDataCassandraSinkITCase extends AbstractTestNGSpringContextTes
 
     Set<Field<?>> tuple = new HashSet<>();
     Set<ModelDataDto> dtos = new HashSet<>();
-    Iterable<ModelDataDto> result = dao.findAll();
 
-    for (ModelDataDto dto : result) {
-      dtos.add(dto);
-    }
+    dao.findAll(c.stream).forEach(d -> {
+      dtos.add(d);
+    });
 
     tuple.addAll(Sets.newHashSet(df, max, min, std, sma));
     tuple.addAll(c.getFields());
@@ -154,13 +148,13 @@ public class ModelDataCassandraSinkITCase extends AbstractTestNGSpringContextTes
       Assert.assertNotNull(d.primarykey.date);
       Assert.assertNotNull(d.primarykey.timestamp);
       Assert.assertEquals(d.primarykey.timestamp, Date.from(c.timestamp));
-      Assert.assertEquals(d.primarykey.stream, c.stream);
+      Assert.assertEquals(d.primarykey.stream, c.stream.toLowerCase());
 
     });
 
   }
 
-  @Test(priority = 3)
+  @Test
   public void testStoreMarker() throws Exception {
 
     session.getSession().execute("TRUNCATE modeldata");
@@ -173,7 +167,7 @@ public class ModelDataCassandraSinkITCase extends AbstractTestNGSpringContextTes
     modelDataBus.post(marker);
     modelDataBus.post("test model");
 
-    Thread.sleep(5000);
+    Thread.sleep(2000);
 
     long count = dao.count();
 

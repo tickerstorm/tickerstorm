@@ -30,7 +30,7 @@ public class DataLoadScheduler {
   @PostConstruct
   public void start() {
 
-    HistoricalFeedQuery query = new HistoricalFeedQuery("ITB", "DHI", "LEN", "PHM", "TOL", "NVR", "HD", "LOW", "TPH", "RYL", "MTH");
+    HistoricalFeedQuery query = new HistoricalFeedQuery("Stooq", new String[]{"ITB", "DHI", "LEN", "PHM", "TOL", "NVR", "HD", "LOW", "TPH", "RYL", "MTH"});
 
     timer = new Timer(true);
     // timer.scheduleAtFixedRate(new StooqTask(query), Date.from(Instant.now().plusSeconds(5)),

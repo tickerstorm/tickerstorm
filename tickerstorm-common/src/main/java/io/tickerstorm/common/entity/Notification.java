@@ -44,10 +44,6 @@ public class Notification implements Event, Marker, Stream, Serializable {
     return properties;
   }
 
-  public String getSource() {
-    return source;
-  }
-
   public Instant getTimestamp() {
     return timestamp;
   }

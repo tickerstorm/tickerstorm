@@ -1,9 +1,11 @@
-package io.tickerstorm.strategy.util;
+package io.tickerstorm.common.cache;
 
+import io.tickerstorm.common.collections.SynchronizedIndexedTreeMap;
 import io.tickerstorm.common.entity.Candle;
 import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.entity.MarketData;
 import net.sf.ehcache.Cache;
+import net.sf.ehcache.Element;
 import net.sf.ehcache.config.CacheConfiguration;
 import net.sf.ehcache.config.MemoryUnit;
 import net.sf.ehcache.config.PersistenceConfiguration;
@@ -27,6 +29,27 @@ public class CacheManager {
     return cacheManager.getCache(cache);
   }
 
+  public static synchronized void destroyInstance(String cache) {
+    cacheManager.removeCache(cache);
+  }
+
+  public static SynchronizedIndexedTreeMap<Field<?>> getFieldCache(Field<?> f) {
+    return (SynchronizedIndexedTreeMap) CacheManager.getInstance(f.getStream()).get(CacheManager.buildKey(f).toString()).getObjectValue();
+  }
+
+  public static void put(Field<?> f, int maxSize) {
+
+    final String key = CacheManager.buildKey(f).toString();
+    Element e = CacheManager.getInstance(f.getStream()).putIfAbsent(new Element(key, new SynchronizedIndexedTreeMap<Field<?>>(Field.SORT_BY_INSTANTS, maxSize)));
+
+    if (e == null) {
+      e = CacheManager.getInstance(f.getStream()).get(key);
+    }
+
+    ((SynchronizedIndexedTreeMap<Field<?>>) e.getObjectValue()).put(f.getTimestamp(), f);
+
+  }
+
   /**
    * Build a common key for a field
    * 
@@ -36,7 +59,8 @@ public class CacheManager {
    * @return
    */
   public static StringBuffer buildKey(Field<?> f) {
-    return new StringBuffer("field-").append(f.getStream()).append(f.getSymbol()).append(f.getName()).append(Candle.parseInterval(f.getEventId()));
+    return new StringBuffer("field-").append(f.getStream()).append(f.getSymbol()).append(f.getName())
+        .append(Candle.parseInterval(f.getEventId()));
   }
 
   /**

@@ -7,11 +7,10 @@ import static org.testng.Assert.assertTrue;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import com.google.common.eventbus.Subscribe;
+
 import io.tickerstorm.common.entity.Candle;
 import io.tickerstorm.common.entity.MarketData;
-import net.engio.mbassy.listener.Handler;
-import net.engio.mbassy.listener.Listener;
-import net.engio.mbassy.listener.References;
 
 public class YahooChartsDataQueryITCase extends BaseDataQueryITCase {
 
@@ -34,14 +33,13 @@ public class YahooChartsDataQueryITCase extends BaseDataQueryITCase {
     assertTrue(count.get() > 0);
   }
 
-  @Listener(references = References.Strong)
   private class BasicSymbolQueryVerification {
 
-    @Handler
+    @Subscribe
     public void onEvent(MarketData md) {
 
       assertEquals(md.getSymbol(), "AAPL");
-      assertEquals(md.getSource(), "yahoo");
+      assertEquals(md.getStream(), "Yahoo");
       assertNotNull(md.getTimestamp());
 
       Candle c = (Candle) md;

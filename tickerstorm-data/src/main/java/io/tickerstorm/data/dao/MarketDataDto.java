@@ -2,6 +2,7 @@ package io.tickerstorm.data.dao;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -9,11 +10,9 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.dozer.DozerBeanMapper;
 import org.springframework.data.cassandra.mapping.Table;
 
 import com.google.common.base.Throwables;
-import com.google.common.collect.Lists;
 
 import io.tickerstorm.common.entity.Candle;
 import io.tickerstorm.common.entity.MarketData;
@@ -25,11 +24,6 @@ import io.tickerstorm.common.entity.Tick;
 public class MarketDataDto implements Serializable {
 
   public static final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("uuuuMMdd");
-  public static final DozerBeanMapper mapper = new DozerBeanMapper();
-
-  static {
-    mapper.setMappingFiles(Lists.newArrayList("dozer.xml"));
-  }
 
   public static MarketDataDto convert(MarketData data) {
 
@@ -40,21 +34,23 @@ public class MarketDataDto implements Serializable {
       MarketDataPrimaryKey key = new MarketDataPrimaryKey();
       try {
 
-        mapper.map(data, dto);
+        Candle c = (Candle) data;
+        dto.close = c.close;
+        dto.open = c.open;
+        dto.volume = BigDecimal.valueOf(c.volume);
+        dto.high = c.high;
+        dto.low = c.low;
 
         LocalDateTime dt = LocalDateTime.ofInstant(data.getTimestamp(), ZoneOffset.UTC);
 
         key.symbol = data.getSymbol().toLowerCase();
-        key.source = data.getSource().toLowerCase();
-        key.date = dateFormatter.format(dt);
+        key.stream = data.getStream().toLowerCase();
+        key.date = new BigInteger(dateFormatter.format(dt));
         key.hour = dt.getHour();
         key.min = dt.getMinute();
         key.timestamp = Date.from(data.getTimestamp());
         key.type = data.getType();
-
-        if (Candle.TYPE.equals(data.getType()))
-          key.interval = ((Candle) data).getInterval().toLowerCase();
-
+        key.interval = c.getInterval().toLowerCase();
         dto.primarykey = key;
 
       } catch (Exception e) {
@@ -203,14 +199,19 @@ public class MarketDataDto implements Serializable {
 
     try {
       if (Candle.TYPE.equals(primarykey.type)) {
-        c = mapper.map(this, Candle.class);
-        ((Candle) c).setStream(stream);
+
+        c = new Candle(this.primarykey.symbol, this.primarykey.stream, this.primarykey.timestamp.toInstant(), this.open, this.close,
+            this.high, this.low, this.primarykey.interval, this.volume.intValue());
+
       } else if (Quote.TYPE.equals(primarykey.type)) {
-        c = mapper.map(this, Quote.class);
-        ((Quote) c).setStream(stream);
+
+        c = new Quote(this.primarykey.symbol, this.primarykey.stream, this.primarykey.timestamp.toInstant(), this.ask,
+            this.askSize.intValue(), this.bid, this.bidSize.intValue());
+
       } else if (Tick.TYPE.equals(primarykey.type)) {
-        c = mapper.map(this, Tick.class);
-        ((Tick) c).setStream(stream);
+
+        c = new Tick(this.primarykey.symbol, this.primarykey.stream, this.primarykey.timestamp.toInstant(), this.price, this.quantity);
+
       }
 
     } catch (Exception e) {

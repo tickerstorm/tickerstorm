@@ -1,14 +1,21 @@
 package io.tickerstorm.common.entity;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
 
 @SuppressWarnings("serial")
 public class Tick extends BaseMarketData {
 
-  public Tick() {
-    // TODO Auto-generated constructor stub
+  public Tick(String symbol, String stream, Instant timestamp, BigDecimal price, BigDecimal quantity) {
+    super(symbol, stream, timestamp);
+    this.price = price;
+    this.quantity = quantity;
+  }
+  
+  public Tick(String symbol, String stream, Instant timestamp) {
+    super(symbol, stream, timestamp);
   }
 
   public static final String TYPE = "tick";

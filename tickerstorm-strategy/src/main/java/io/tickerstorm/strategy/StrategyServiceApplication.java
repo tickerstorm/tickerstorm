@@ -1,9 +1,5 @@
 package io.tickerstorm.strategy;
 
-import java.io.Serializable;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
-
 import org.apache.logging.log4j.core.util.Throwables;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -15,7 +11,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.jms.annotation.EnableJms;
 import org.springframework.jms.core.JmsTemplate;
 
-import com.google.common.eventbus.AsyncEventBus;
+import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.SubscriberExceptionContext;
 import com.google.common.eventbus.SubscriberExceptionHandler;
 
@@ -24,10 +20,6 @@ import io.tickerstorm.common.JmsEventBusContext;
 import io.tickerstorm.common.data.eventbus.Destinations;
 import io.tickerstorm.common.data.eventbus.EventBusToJMSBridge;
 import io.tickerstorm.common.data.eventbus.JMSToEventBusBridge;
-import io.tickerstorm.common.entity.MarketData;
-import io.tickerstorm.strategy.util.BacktestClock;
-import io.tickerstorm.strategy.util.Clock;
-import net.engio.mbassy.bus.MBassador;
 
 @EnableJms
 @SpringBootApplication
@@ -43,38 +35,32 @@ public class StrategyServiceApplication {
 
   // SENDERS
   @Bean
-  public EventBusToJMSBridge buildModelDataJmsBridge(@Qualifier(Destinations.MODEL_DATA_BUS) AsyncEventBus eventbus,
-      JmsTemplate template) {
+  public EventBusToJMSBridge buildModelDataJmsBridge(@Qualifier(Destinations.MODEL_DATA_BUS) EventBus eventbus, JmsTemplate template) {
     return new EventBusToJMSBridge(eventbus, Destinations.QUEUE_MODEL_DATA, template);
   }
 
   @Bean
-  public EventBusToJMSBridge buildNotificationsJmsBridge(@Qualifier(Destinations.NOTIFICATIONS_BUS) MBassador<Serializable> eventbus,
+  public EventBusToJMSBridge buildNotificationsJmsBridge(@Qualifier(Destinations.NOTIFICATIONS_BUS) EventBus eventbus,
       JmsTemplate template) {
     return new EventBusToJMSBridge(eventbus, Destinations.TOPIC_NOTIFICATIONS, template);
   }
 
   // RECEIVERS
   @Bean
-  public JMSToEventBusBridge buildQueryEventBridge(@Qualifier(Destinations.REALTIME_MARKETDATA_BUS) MBassador<MarketData> realtimeBus,
-      @Qualifier(Destinations.COMMANDS_BUS) MBassador<Serializable> commandsBus,
-      @Qualifier(Destinations.RETRO_MODEL_DATA_BUS) AsyncEventBus retroModelDataBus) {
+  public JMSToEventBusBridge buildQueryEventBridge(@Qualifier(Destinations.REALTIME_MARKETDATA_BUS) EventBus realtimeBus,
+      @Qualifier(Destinations.COMMANDS_BUS) EventBus commandsBus,
+      @Qualifier(Destinations.RETRO_MODEL_DATA_BUS) EventBus retroModelDataBus) {
     JMSToEventBusBridge bridge = new JMSToEventBusBridge();
-    bridge.setRealtimeBus(realtimeBus);
-    bridge.setCommandsBus(commandsBus);
-    bridge.setRetroModelDataBus(retroModelDataBus);
+    bridge.realtimeBus = realtimeBus;
+    bridge.commandsBus = commandsBus;
+    bridge.retroModelDataBus = retroModelDataBus;
     return bridge;
   }
 
   @Qualifier("processorEventBus")
   @Bean
-  public AsyncEventBus buildEventProcessorBus(@Qualifier("eventBus") Executor executor) {
-    return new AsyncEventBus(executor, new AsyncEventBusExceptionHandler());
-  }
-
-  @Bean
-  public Clock backtestClock() {
-    return new BacktestClock();
+  public EventBus buildEventProcessorBus() {
+    return new EventBus(new AsyncEventBusExceptionHandler());
   }
 
   private class AsyncEventBusExceptionHandler implements SubscriberExceptionHandler {

@@ -36,7 +36,7 @@ public class CassandraSetup {
     session.execute("USE " + keyspace);
 
     CreateTableSpecification tableSpec = CreateTableSpecification.createTable("marketdata").partitionKeyColumn("symbol", DataType.text())
-        .partitionKeyColumn("date", DataType.text()).clusteredKeyColumn("type", DataType.text(), Ordering.ASCENDING)
+        .partitionKeyColumn("date", DataType.varint()).clusteredKeyColumn("type", DataType.text(), Ordering.ASCENDING)
         .clusteredKeyColumn("source", DataType.text(), Ordering.ASCENDING)
         .clusteredKeyColumn("interval", DataType.text(), Ordering.ASCENDING)
         .clusteredKeyColumn("timestamp", DataType.timestamp(), Ordering.ASCENDING)

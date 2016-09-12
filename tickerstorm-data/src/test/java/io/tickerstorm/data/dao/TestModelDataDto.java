@@ -28,11 +28,11 @@ public class TestModelDataDto {
   public void testSerializeDeserializeModelData() {
 
     Set<Field<?>> fields = c.getFields();
-    assertEquals(fields.size(), 10);
+    assertEquals(fields.size(), 9);
 
     Set<ModelDataDto> dtos = ModelDataDto.convert(fields);
     assertNotNull(dtos);
-    assertEquals(dtos.size(), 10);
+    assertEquals(dtos.size(), 9);
 
     assertTrue(dtos.stream().allMatch(d -> {
 

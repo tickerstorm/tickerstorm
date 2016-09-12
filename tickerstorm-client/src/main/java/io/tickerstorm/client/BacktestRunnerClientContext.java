@@ -18,7 +18,7 @@ import org.springframework.jms.core.JmsTemplate;
 
 import com.appx.h2o.H2ORestClient;
 
-import io.tickerstorm.common.CommonContext;
+import io.tickerstorm.common.EventBusContext;
 import io.tickerstorm.common.data.eventbus.ByDestinationNameJmsResolver;
 import io.tickerstorm.common.data.eventbus.Destinations;
 import io.tickerstorm.common.data.eventbus.EventBusToJMSBridge;
@@ -31,7 +31,7 @@ import net.engio.mbassy.bus.MBassador;
 @SpringBootApplication
 @ComponentScan(basePackages = {"io.tickerstorm.client"})
 @PropertySource({"classpath:default.properties"})
-@Import({CommonContext.class})
+@Import({EventBusContext.class})
 public class BacktestRunnerClientContext {
 
   public static final Logger logger = org.slf4j.LoggerFactory.getLogger(BacktestRunnerClientContext.class);
@@ -42,12 +42,14 @@ public class BacktestRunnerClientContext {
 
   // SENDERS
   @Bean
-  public EventBusToJMSBridge buildQueryJmsBridge(@Qualifier(Destinations.HISTORICAL_DATA_QUERY_BUS) MBassador<DataFeedQuery> eventbus, JmsTemplate template) {
-    return new EventBusToJMSBridge(eventbus, Destinations.QUEUE_QUERY, template);
+  public EventBusToJMSBridge buildQueryJmsBridge(@Qualifier(Destinations.HISTORICAL_DATA_QUERY_BUS) MBassador<DataFeedQuery> eventbus,
+      JmsTemplate template) {
+    return new EventBusToJMSBridge(eventbus, Destinations.QUEUE_HISTORICAL_DATA_QUERY, template);
   }
 
   @Bean
-  public EventBusToJMSBridge buildCommandsJmsBridge(@Qualifier(Destinations.COMMANDS_BUS) MBassador<Serializable> eventbus, JmsTemplate template) {
+  public EventBusToJMSBridge buildCommandsJmsBridge(@Qualifier(Destinations.COMMANDS_BUS) MBassador<Serializable> eventbus,
+      JmsTemplate template) {
     return new EventBusToJMSBridge(eventbus, Destinations.TOPIC_COMMANDS, template);
   }
 

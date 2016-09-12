@@ -14,7 +14,6 @@ import com.google.common.base.MoreObjects;
 @SuppressWarnings("serial")
 public abstract class BaseMarketData implements MarketData, Serializable {
 
-  public String source;
   public Instant timestamp;
   public String symbol;
   public String stream;
@@ -28,7 +27,6 @@ public abstract class BaseMarketData implements MarketData, Serializable {
       fields.put(f.getName(), f);
     }
 
-    this.source = (String) fields.get(Field.Name.SOURCE.field()).getValue();
     this.timestamp = (Instant) fields.get(Field.Name.TIMESTAMP.field()).getValue();
     this.symbol = (String) fields.get(Field.Name.SYMBOL.field()).getValue();
     this.stream = (String) fields.get(Field.Name.STREAM.field()).getValue();
@@ -36,16 +34,9 @@ public abstract class BaseMarketData implements MarketData, Serializable {
 
   protected BaseMarketData() {}
 
-  public BaseMarketData(String symbol, String source, Instant timestamp) {
-    this.source = source;
+  public BaseMarketData(String symbol, String stream, Instant timestamp) {
     this.timestamp = timestamp;
     this.symbol = symbol;
-  }
-
-  public BaseMarketData(String symbol, String source, String stream, Instant timestamp) {
-    this.symbol = symbol;
-    this.timestamp = timestamp;
-    this.source = source;
     this.stream = stream;
   }
 
@@ -63,7 +54,6 @@ public abstract class BaseMarketData implements MarketData, Serializable {
     Set<Field<?>> fields = new HashSet<Field<?>>();
     fields.add(new BaseField<String>(getEventId(), Field.Name.SYMBOL.field(), symbol));
     fields.add(new BaseField<Instant>(getEventId(), Field.Name.TIMESTAMP.field(), timestamp));
-    fields.add(new BaseField<String>(getEventId(), Field.Name.SOURCE.field(), source));
 
     if (!StringUtils.isEmpty(stream))
       fields.add(new BaseField<String>(getEventId(), Field.Name.STREAM.field(), stream));
@@ -72,10 +62,6 @@ public abstract class BaseMarketData implements MarketData, Serializable {
 
     return fields;
 
-  }
-
-  public String getSource() {
-    return source;
   }
 
   public String getStream() {
@@ -91,11 +77,6 @@ public abstract class BaseMarketData implements MarketData, Serializable {
     return timestamp;
   }
 
-  public void setSource(String source) {
-    this.source = source;
-  }
-
-
   public void setStream(String stream) {
     this.stream = stream;
   }
@@ -104,7 +85,6 @@ public abstract class BaseMarketData implements MarketData, Serializable {
   public int hashCode() {
     final int prime = 31;
     int result = 1;
-    result = prime * result + ((source == null) ? 0 : source.hashCode());
     result = prime * result + ((stream == null) ? 0 : stream.hashCode());
     result = prime * result + ((symbol == null) ? 0 : symbol.hashCode());
     result = prime * result + ((timestamp == null) ? 0 : timestamp.hashCode());
@@ -120,11 +100,6 @@ public abstract class BaseMarketData implements MarketData, Serializable {
     if (getClass() != obj.getClass())
       return false;
     BaseMarketData other = (BaseMarketData) obj;
-    if (source == null) {
-      if (other.source != null)
-        return false;
-    } else if (!source.equals(other.source))
-      return false;
     if (stream == null) {
       if (other.stream != null)
         return false;
@@ -153,8 +128,7 @@ public abstract class BaseMarketData implements MarketData, Serializable {
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this).add("symbol", symbol).add("source", source).add("timestamp", timestamp).add("stream", stream)
-        .toString();
+    return MoreObjects.toStringHelper(this).add("symbol", symbol).add("timestamp", timestamp).add("stream", stream).toString();
   }
 
 

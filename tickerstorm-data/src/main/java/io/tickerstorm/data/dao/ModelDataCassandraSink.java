@@ -1,10 +1,6 @@
 package io.tickerstorm.data.dao;
 
-import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -12,50 +8,47 @@ import java.util.Set;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
-import org.apache.commons.lang3.ClassUtils;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Repository;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.google.common.eventbus.AsyncEventBus;
+import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
+import io.tickerstorm.common.cache.CacheManager;
 import io.tickerstorm.common.data.eventbus.Destinations;
 import io.tickerstorm.common.entity.BaseMarker;
 import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.entity.Markers;
 import io.tickerstorm.common.entity.MarketData;
-import net.engio.mbassy.bus.MBassador;
-import net.engio.mbassy.listener.Listener;
-import net.engio.mbassy.listener.References;
+import io.tickerstorm.data.service.ModelDataExporter;
+import net.sf.ehcache.Element;
 
 @DependsOn(value = {"cassandraSetup"})
 @Repository
-@Listener(references = References.Strong)
 public class ModelDataCassandraSink extends BaseCassandraSink<ModelDataDto> {
 
   protected static final org.slf4j.Logger logger = LoggerFactory.getLogger(ModelDataCassandraSink.class);
 
   @Qualifier(Destinations.MODEL_DATA_BUS)
   @Autowired
-  private AsyncEventBus modelDataBus;
+  private EventBus modelDataBus;
 
   @Qualifier(Destinations.NOTIFICATIONS_BUS)
   @Autowired
-  private MBassador<Serializable> notificationsBus;
-
-  @Override
-  protected int batchSize() {
-    return 149;
-  }
+  private EventBus notificationsBus;
 
   @Autowired
   private ModelDataDao dao;
+
+  @Override
+  protected int batchSize() {
+    return 1999;
+  }
 
   @PostConstruct
   public void init() {
@@ -69,24 +62,47 @@ public class ModelDataCassandraSink extends BaseCassandraSink<ModelDataDto> {
     modelDataBus.unregister(this);
   }
 
-  @Override
-  protected Set<ModelDataDto> convert(Serializable data) {
+  @Subscribe
+  public void onData(MarketData md) {
 
-    Set<ModelDataDto> dtos = new HashSet<>();
+    md.getFields().stream().forEach(f -> {
+      cacheFieldName(f);
+    });
 
-    if (ClassUtils.isAssignable(data.getClass(), MarketData.class)) {
+    batch(ModelDataDto.convert(md));
 
-      return ModelDataDto.convert((MarketData) data);
+  }
 
-    } else if (ClassUtils.isAssignable(data.getClass(), Field.class)) {
+  @Subscribe
+  public void onData(Collection<Field<?>> fs) {
 
-      return Sets.newHashSet(ModelDataDto.convert((Field<?>) data));
+    fs.stream().forEach(f -> {
+      cacheFieldName(f);
+    });
+    batch(ModelDataDto.convert(fs));
+  }
 
+  @Subscribe
+  public void onData(Field<?> f) {
+
+    cacheFieldName(f);
+    batch(ModelDataDto.convert(f));
+
+  }
+
+  private void cacheFieldName(Field<?> f) {
+
+    Element e = CacheManager.getInstance(ModelDataExporter.CACHE_KEY).get(f.getStream() + ModelDataExporter.CACHE_KEY_SUFFIX);
+
+    if (e != null) {
+      ((Set) e.getObjectValue()).add(f.getName());
+      CacheManager.getInstance(ModelDataExporter.CACHE_KEY).replace(e,
+          new Element(f.getStream() + ModelDataExporter.CACHE_KEY_SUFFIX, e.getObjectValue()));
     } else {
-      // ignore
+      CacheManager.getInstance(ModelDataExporter.CACHE_KEY)
+          .putIfAbsent(new Element(f.getStream() + ModelDataExporter.CACHE_KEY_SUFFIX, Sets.newHashSet(f.getName())));
     }
 
-    return dtos;
   }
 
   @Override
@@ -96,26 +112,18 @@ public class ModelDataCassandraSink extends BaseCassandraSink<ModelDataDto> {
       return;
 
     try {
-      synchronized (data) {
 
-        logger.debug(
-            "Persisting " + data.size() + " records, " + count.addAndGet(data.size()) + " total saved and " + received.get() + " received");
+      dao.ingest(data);
 
-        List<List<?>> rows = new ArrayList<>();
-        data.stream().forEach(r -> {
-          rows.add(Lists.newArrayList(r.fields, r.primarykey.stream, r.primarykey.date, r.primarykey.timestamp));
-        });
+      for (Entry<String, Integer> e : countEntries(data).entrySet()) {
 
-        session.ingest("UPDATE " + keyspace + ".modeldata SET fields = fields + ? WHERE stream = ? AND date = ? AND timestamp = ?;", rows);
+        logger.debug("Persisting " + e.getValue() + " records, " + count.addAndGet(data.size()) + " total saved and " + received.get()
+            + " received");
 
-        Map<String, Integer> streamCounts = countEntries(data);
-
-        for (Entry<String, Integer> e : streamCounts.entrySet()) {
-          BaseMarker marker = new BaseMarker(e.getKey());
-          marker.addMarker(Markers.MODEL_DATA_SAVED.toString());
-          marker.expect = e.getValue();
-          notificationsBus.publishAsync(marker);
-        }
+        BaseMarker marker = new BaseMarker(e.getKey());
+        marker.addMarker(Markers.MODEL_DATA_SAVED.toString());
+        marker.expect = e.getValue();
+        notificationsBus.post(marker);
 
       }
 

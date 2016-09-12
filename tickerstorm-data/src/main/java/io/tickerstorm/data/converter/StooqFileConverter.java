@@ -79,28 +79,15 @@ public class StooqFileConverter extends BaseFileConverter {
                 c = new Candle(symbol, provider(), LocalDateTime.parse(cols[0] + " " + cols[1], formatter).toInstant(ZoneOffset.UTC),
                     new BigDecimal(cols[2]), new BigDecimal(cols[5]), new BigDecimal(cols[3]), new BigDecimal(cols[4]), interval(path),
                     new Integer(cols[6]));
-
-                // c.timestamp = LocalDateTime.parse(cols[0] + " " + cols[1], formatter)
-                // .toInstant(ZoneOffset.UTC);
-                // c.open = new BigDecimal(cols[2]);
-                // c.high = new BigDecimal(cols[3]);
-                // c.low = new BigDecimal(cols[4]);
-                // c.close = new BigDecimal(cols[5]);
-                // c.volume = new Integer(cols[6]);
+                c.stream = provider();
 
               } catch (Exception ex) {
 
                 c = new Candle(symbol, provider(), LocalDateTime.from(dayFormatter.parse(cols[0])).toInstant(ZoneOffset.of("GMT")),
                     new BigDecimal(cols[1]), new BigDecimal(cols[4]), new BigDecimal(cols[2]), new BigDecimal(cols[3]), interval(path),
                     new Integer(cols[5]));
+                c.stream = provider();
 
-                // c.timestamp =
-                // LocalDateTime.from(dayFormatter.parse(cols[0])).toInstant(ZoneOffset.of("GMT"));
-                // c.open = new BigDecimal(cols[1]);
-                // c.high = new BigDecimal(cols[2]);
-                // c.low = new BigDecimal(cols[3]);
-                // c.close = new BigDecimal(cols[4]);
-                // c.volume = new Integer(cols[5]);
               }
 
               if (BigInteger.ZERO.equals(c.volume)) {
@@ -115,7 +102,7 @@ public class StooqFileConverter extends BaseFileConverter {
               continue;
             }
 
-            historical.publishAsync(c);
+            historical.post(c);
             data.add(c);
           }
         }
