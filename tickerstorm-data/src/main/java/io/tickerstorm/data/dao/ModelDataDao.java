@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.slf4j.Logger;
@@ -18,6 +19,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.cassandra.core.CassandraOperations;
 import org.springframework.stereotype.Repository;
 
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Row;
+import com.datastax.driver.core.querybuilder.Delete;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
 import com.google.common.collect.Lists;
@@ -89,6 +93,23 @@ public class ModelDataDao {
     }
 
     return dates;
+  }
+
+  public void deleteByStream(String stream) {
+
+    Select select = QueryBuilder.select("stream", "date").from("modeldata");
+    select.where(QueryBuilder.eq("stream", stream));
+    ResultSet result = cassandra.getSession().execute(select.toString());
+    List<Row> rows = result.all();
+
+    List<BigInteger> dates = rows.stream().map(r -> {
+      return r.getVarint("date");
+    }).distinct().collect(Collectors.toList());
+
+    Delete delete = QueryBuilder.delete().from("modeldata");
+    delete.where(QueryBuilder.eq("stream", stream)).and(QueryBuilder.in("date", dates));
+    cassandra.execute(delete);
+
   }
 
   public Stream<ModelDataDto> streamByStreamAndDateIn(String stream, Set<BigInteger> dates) {

@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cassandra.core.Ordering;
+import org.springframework.cassandra.core.keyspace.CreateIndexSpecification;
 import org.springframework.cassandra.core.keyspace.CreateKeyspaceSpecification;
 import org.springframework.cassandra.core.keyspace.CreateTableSpecification;
 import org.springframework.data.cassandra.core.CassandraOperations;
@@ -47,12 +48,20 @@ public class CassandraSetup {
         .column("properties", DataType.map(DataType.text(), DataType.text())).column("volume", DataType.decimal())
         .column("quantity", DataType.decimal()).ifNotExists();
 
+    CreateIndexSpecification indexSpec =
+        CreateIndexSpecification.createIndex("marketdata_source_index").columnName("source").tableName("marketdata").ifNotExists();
+
     CreateTableSpecification modelSpec = CreateTableSpecification.createTable("modeldata").partitionKeyColumn("stream", DataType.text())
         .partitionKeyColumn("date", DataType.varint()).clusteredKeyColumn("timestamp", DataType.timestamp(), Ordering.DESCENDING)
         .column("fields", DataType.set(DataType.text())).ifNotExists();
 
+    CreateIndexSpecification indexSpec2 =
+        CreateIndexSpecification.createIndex("model_stream_index").columnName("stream").tableName("modeldata").ifNotExists();
+
     set = session.execute(tableSpec);
+    set = session.execute(indexSpec);
     set = session.execute(modelSpec);
+    set = session.execute(indexSpec2);
   }
 
 }

@@ -7,6 +7,7 @@ import static org.testng.Assert.assertTrue;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Date;
+import java.util.stream.Stream;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -14,13 +15,16 @@ import org.springframework.data.cassandra.core.CassandraOperations;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
+import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
 
 import io.tickerstorm.common.data.eventbus.Destinations;
 import io.tickerstorm.common.entity.Candle;
+import io.tickerstorm.common.entity.MarketData;
 import io.tickerstorm.data.TestMarketDataServiceConfig;
 
 @DirtiesContext
@@ -30,16 +34,24 @@ public class MarketDataCassandraSinkITCase extends AbstractTestNGSpringContextTe
   @Autowired
   private CassandraOperations session;
 
-  @Qualifier(Destinations.HISTORICL_MARKETDATA_BUS)
+  @Qualifier(Destinations.BROKER_MARKETDATA_BUS)
   @Autowired
   private EventBus historicalBus;
+
+  @Qualifier(Destinations.REALTIME_MARKETDATA_BUS)
+  @Autowired
+  private EventBus realtimeBus;
 
   @Autowired
   private MarketDataDao dao;
 
+  private RealtimeBusListener listener;
+
   @BeforeMethod
   public void cleanup() {
-    session.getSession().execute("TRUNCATE marketdata");
+    listener = new RealtimeBusListener();
+    realtimeBus.register(listener);
+    dao.deleteByStream("MarketDataCassandraSinkITCase");
   }
 
   @Test
@@ -61,10 +73,11 @@ public class MarketDataCassandraSinkITCase extends AbstractTestNGSpringContextTe
     long count = dao.count();
 
     assertEquals(count, 1);
+    Assert.assertEquals(listener.count, 1);
 
-    Iterable<MarketDataDto> result = dao.findAll();
+    Stream<MarketDataDto> result = dao.findAll(c.stream);
 
-    for (MarketDataDto dto : result) {
+    result.forEach(dto -> {
 
       assertEquals(dto.close, c.close);
       assertEquals(dto.low, c.low);
@@ -92,6 +105,17 @@ public class MarketDataCassandraSinkITCase extends AbstractTestNGSpringContextTe
       assertNotNull(c.timestamp);
       assertEquals(d.symbol, c.symbol.toLowerCase());
 
+    });
+
+  }
+
+  public class RealtimeBusListener {
+
+    public int count = 0;
+
+    @Subscribe
+    public void onMarketData(MarketData md) {
+      count++;
     }
 
   }
