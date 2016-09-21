@@ -1,4 +1,4 @@
-package io.tickerstorm.data.service;
+package io.tickerstorm.data;
 
 import java.io.File;
 import java.time.Instant;
@@ -15,7 +15,6 @@ import org.testng.annotations.Test;
 
 import com.google.common.eventbus.EventBus;
 
-import io.tickerstorm.IntegrationTestContext;
 import io.tickerstorm.common.command.ExportModelDataToCSV;
 import io.tickerstorm.common.data.eventbus.Destinations;
 import io.tickerstorm.common.data.eventbus.EventBusToEventBusBridge;
@@ -23,7 +22,7 @@ import io.tickerstorm.common.entity.MarketData;
 import io.tickerstorm.common.entity.SessionFactory;
 import io.tickerstorm.common.test.TestDataFactory;
 
-@ContextConfiguration(classes = {IntegrationTestContext.class, ModelDataExporterITCase.Config.class})
+@ContextConfiguration(classes = {MarketDataApplication.class, ModelDataExporterITCase.Config.class})
 public class ModelDataExporterITCase extends AbstractTestNGSpringContextTests {
 
   @Autowired
@@ -63,7 +62,7 @@ public class ModelDataExporterITCase extends AbstractTestNGSpringContextTests {
   }
 
   @Configuration
-  public static class Config {
+  public class Config {
 
     @Bean
     public EventBusToEventBusBridge<MarketData> buildBridge(@Qualifier(Destinations.HISTORICL_MARKETDATA_BUS) EventBus source,
@@ -73,6 +72,4 @@ public class ModelDataExporterITCase extends AbstractTestNGSpringContextTests {
 
     }
   }
-
-
 }
