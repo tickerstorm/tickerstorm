@@ -8,15 +8,84 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import com.google.common.base.MoreObjects;
-
 @SuppressWarnings("serial")
 public class Notification implements Event, Marker, Stream, Serializable {
 
   public static final String TYPE = "notification";
-  public String id = UUID.randomUUID().toString();
-  public Set<String> markers = new HashSet<>();
+  public Integer expect = null;
   public String stream;
+  public Instant eventTime = Instant.now();
+  public Map<String, String> properties = new HashMap<>();
+  public Set<String> markers = new HashSet<>();
+
+  public final String id;
+
+  public Map<String, String> getProperties() {
+    return properties;
+  }
+
+  protected void setProperties(Map<String, String> properties) {
+    this.properties = properties;
+  }
+
+  public Notification(String id, String stream) {
+    this.id = id;
+    this.stream = stream;
+  }
+
+  public Notification(String stream) {
+    this.id = UUID.randomUUID().toString();
+    this.stream = stream;
+  }
+
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + ((eventTime == null) ? 0 : eventTime.hashCode());
+    result = prime * result + ((expect == null) ? 0 : expect.hashCode());
+    result = prime * result + ((id == null) ? 0 : id.hashCode());
+    result = prime * result + ((markers == null) ? 0 : markers.hashCode());
+    result = prime * result + ((stream == null) ? 0 : stream.hashCode());
+    return result;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj)
+      return true;
+    if (obj == null)
+      return false;
+    if (getClass() != obj.getClass())
+      return false;
+    Notification other = (Notification) obj;
+    if (eventTime == null) {
+      if (other.eventTime != null)
+        return false;
+    } else if (!eventTime.equals(other.eventTime))
+      return false;
+    if (expect == null) {
+      if (other.expect != null)
+        return false;
+    } else if (!expect.equals(other.expect))
+      return false;
+    if (id == null) {
+      if (other.id != null)
+        return false;
+    } else if (!id.equals(other.id))
+      return false;
+    if (markers == null) {
+      if (other.markers != null)
+        return false;
+    } else if (!markers.equals(other.markers))
+      return false;
+    if (stream == null) {
+      if (other.stream != null)
+        return false;
+    } else if (!stream.equals(other.stream))
+      return false;
+    return true;
+  }
 
   public String getStream() {
     return stream;
@@ -26,46 +95,21 @@ public class Notification implements Event, Marker, Stream, Serializable {
     this.stream = stream;
   }
 
-  public Map<String, String> properties = new HashMap<>();
-
-  public Instant timestamp = Instant.now();
-  public String source;
-
-  public void addMarker(String marker) {
-    markers.add(marker);
-  }
-
   @Override
   public Set<String> getMarkers() {
     return markers;
   }
 
-  public Map<String, String> getProperties() {
-    return properties;
-  }
-
-  public Instant getTimestamp() {
-    return timestamp;
+  public void addMarker(String marker) {
+    markers.add(marker);
   }
 
   public String getType() {
     return TYPE;
   }
 
-  public void setSource(String source) {
-    this.source = source;
-  }
-
-  public void setTimestamp(Instant timestamp) {
-    this.timestamp = timestamp;
-  }
-
   @Override
-  public String toString() {
-    return MoreObjects.toStringHelper(this).add("source", source).add("timestamp", timestamp).add("markers", markers).add("type", TYPE)
-        .toString();
+  public Instant getTimestamp() {
+    return eventTime;
   }
-
-
-
 }
