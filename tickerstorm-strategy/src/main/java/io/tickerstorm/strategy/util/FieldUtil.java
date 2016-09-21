@@ -5,19 +5,22 @@ import static io.tickerstorm.common.entity.Field.Name.NOW;
 import static io.tickerstorm.common.entity.Field.Name.STREAM;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.Sets;
 
 import io.tickerstorm.common.entity.Field;
+import io.tickerstorm.common.entity.MarketData;
 
 public class FieldUtil {
 
@@ -30,6 +33,31 @@ public class FieldUtil {
     Set<Field<T>> filtered =
         fs.stream().parallel().filter(fn -> fn.getFieldType().isAssignableFrom(clazz)).map(fn -> (Field<T>) fn).collect(Collectors.toSet());
     return new HashSet<Field<T>>(filtered);
+
+  }
+
+  public static Map<String, Set<Field<?>>> byType(MarketData md) throws Exception {
+
+    Map<String, Set<Field<?>>> coll = new HashMap<>();
+    coll.put(Field.Name.CONTINOUS_FIELDS.field(), filterForFields(md, BigDecimal.class));
+    coll.put(Field.Name.DISCRETE_FIELDS.field(), filterForFields(md, Integer.class));
+    coll.put(Field.Name.CATEGORICAL_FIELDS.field(), filterForFields(md, String.class));
+    coll.put(Field.Name.TEMPORAL_FIELDS.field(), filterForFields(md, Instant.class));
+    return coll;
+  }
+
+  public static Set<Field<?>> filterForFields(MarketData md, Class<?> clazz) {
+
+    HashSet<Field<?>> insts = new HashSet<>();
+
+    for (Field<?> f : md.getFields()) {
+
+      if (f.getFieldType().isAssignableFrom(clazz)) {
+        insts.add((Field<?>) f);
+      }
+    }
+
+    return insts;
 
   }
 
@@ -55,9 +83,9 @@ public class FieldUtil {
     return columns;
 
   }
-  
+
   public static Field<?> fetch(List<Field<?>> previous, Field<?> from, int periods) {
-   
+
     Field<?> prior = from;
 
     if (previous != null && !previous.isEmpty() && previous.size() > periods) {
