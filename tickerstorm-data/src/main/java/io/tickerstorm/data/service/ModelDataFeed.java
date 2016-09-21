@@ -20,7 +20,7 @@ import com.google.common.eventbus.Subscribe;
 
 import io.tickerstorm.common.data.eventbus.Destinations;
 import io.tickerstorm.common.data.query.ModelDataQuery;
-import io.tickerstorm.common.entity.BaseMarker;
+import io.tickerstorm.common.entity.Notification;
 import io.tickerstorm.common.entity.Markers;
 import io.tickerstorm.data.dao.ModelDataDao;
 import io.tickerstorm.data.dao.ModelDataDto;
@@ -81,7 +81,7 @@ public class ModelDataFeed {
 
     long startTimer = System.currentTimeMillis();
 
-    BaseMarker marker = new BaseMarker(query.id, query.stream);
+    Notification marker = new Notification(query.id, query.stream);
     marker.addMarker(Markers.QUERY_START.toString());
     marker.expect = count.get();
     notificationBus.post(marker);
@@ -92,7 +92,7 @@ public class ModelDataFeed {
       });
     });
 
-    marker = new BaseMarker(query.id, query.stream);
+    marker = new Notification(query.id, query.stream);
     marker.addMarker(Markers.QUERY_END.toString());
     marker.expect = 0;
     notificationBus.post(marker);

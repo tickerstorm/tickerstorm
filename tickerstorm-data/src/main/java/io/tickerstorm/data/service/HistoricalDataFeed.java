@@ -26,7 +26,7 @@ import com.google.common.eventbus.Subscribe;
 
 import io.tickerstorm.common.data.eventbus.Destinations;
 import io.tickerstorm.common.data.query.HistoricalFeedQuery;
-import io.tickerstorm.common.entity.BaseMarker;
+import io.tickerstorm.common.entity.Notification;
 import io.tickerstorm.common.entity.Candle;
 import io.tickerstorm.common.entity.Markers;
 import io.tickerstorm.data.dao.MarketDataDto;
@@ -95,7 +95,7 @@ public class HistoricalDataFeed {
       List<MarketDataDto> dtos = cassandra.select(select, MarketDataDto.class);
       logger.info("Query took " + (System.currentTimeMillis() - startTimer) + "ms to fetch " + dtos.size() + " results.");
 
-      BaseMarker marker = new BaseMarker(query.id, query.getStream());
+      Notification marker = new Notification(query.id, query.getStream());
       marker.addMarker(Markers.QUERY_START.toString());
       marker.expect = dtos.size();
       notificationBus.post(marker);
@@ -107,7 +107,7 @@ public class HistoricalDataFeed {
         realtimeBus.post(m);
       });
 
-      marker = new BaseMarker(query.id, query.getStream());
+      marker = new Notification(query.id, query.getStream());
       marker.addMarker(Markers.QUERY_END.toString());
       marker.expect = 0;
       notificationBus.post(marker);

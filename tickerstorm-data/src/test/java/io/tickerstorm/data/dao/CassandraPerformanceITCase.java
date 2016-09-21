@@ -24,18 +24,15 @@ import com.google.common.eventbus.Subscribe;
 
 import io.tickerstorm.common.data.eventbus.Destinations;
 import io.tickerstorm.common.entity.BaseField;
-import io.tickerstorm.common.entity.BaseMarker;
 import io.tickerstorm.common.entity.Candle;
 import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.entity.Markers;
+import io.tickerstorm.common.entity.Notification;
 import io.tickerstorm.data.TestMarketDataServiceConfig;
 
 @DirtiesContext
 @ContextConfiguration(classes = {TestMarketDataServiceConfig.class})
 public class CassandraPerformanceITCase extends AbstractTestNGSpringContextTests {
-
-  @Autowired
-  private CassandraOperations session;
 
   @Qualifier(Destinations.NOTIFICATIONS_BUS)
   @Autowired
@@ -54,7 +51,7 @@ public class CassandraPerformanceITCase extends AbstractTestNGSpringContextTests
 
   @BeforeMethod
   public void clean() throws Exception {
-    session.getSession().execute("TRUNCATE modeldata");
+    dao.deleteByStream(stream);
     Thread.sleep(2000);
   }
 
@@ -121,9 +118,9 @@ public class CassandraPerformanceITCase extends AbstractTestNGSpringContextTests
     @Subscribe
     public void onNotification(Serializable s) {
 
-      if (s instanceof BaseMarker) {
+      if (s instanceof Notification) {
 
-        BaseMarker n = (BaseMarker) s;
+        Notification n = (Notification) s;
 
         synchronized (count) {
           if (n.markers.contains(Markers.MODEL_DATA_SAVED.toString())) {

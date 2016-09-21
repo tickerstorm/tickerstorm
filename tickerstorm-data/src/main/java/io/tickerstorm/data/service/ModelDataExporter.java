@@ -139,8 +139,7 @@ public class ModelDataExporter {
 
     logger.info("Exported model data to " + file.getAbsolutePath());
 
-    Notification n = new Notification();
-    n.setStream(command.getStream());
+    Notification n = new Notification(command.getStream());
     n.addMarker(ExportModelDataToCSV.EXPORT_TO_CSV_COMPLETE_MARKER);
     n.getProperties().put(ExportModelDataToCSV.FILE_LOCATION, file.getAbsolutePath());
     notificationBus.post(n);

@@ -23,10 +23,10 @@ import com.google.common.eventbus.EventBus;
 
 import io.tickerstorm.common.data.eventbus.Destinations;
 import io.tickerstorm.common.entity.BaseField;
-import io.tickerstorm.common.entity.BaseMarker;
 import io.tickerstorm.common.entity.Candle;
 import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.entity.Markers;
+import io.tickerstorm.common.entity.Notification;
 import io.tickerstorm.data.TestMarketDataServiceConfig;
 
 @DirtiesContext
@@ -50,11 +50,11 @@ public class ModelDataCassandraSinkITCase extends AbstractTestNGSpringContextTes
 
   @org.testng.annotations.BeforeClass
   public void cleanup() throws Exception {
-    session.getSession().execute("TRUNCATE modeldata");
+    dao.deleteByStream(stream);
     Thread.sleep(2000);
 
     c = new Candle(symbol, stream, this.instant, BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ONE, BigDecimal.ONE, "1m", 1000);
-    
+
   }
 
   @Test
@@ -160,7 +160,7 @@ public class ModelDataCassandraSinkITCase extends AbstractTestNGSpringContextTes
     session.getSession().execute("TRUNCATE modeldata");
     Thread.sleep(2000);
 
-    BaseMarker marker = new BaseMarker(UUID.randomUUID().toString(), "Default");
+    Notification marker = new Notification(UUID.randomUUID().toString(), "Default");
     marker.addMarker(Markers.QUERY_START.toString());
     marker.expect = 100;
 

@@ -25,7 +25,7 @@ import com.google.common.io.Files;
 
 import io.tickerstorm.common.data.eventbus.Destinations;
 import io.tickerstorm.common.data.query.HistoricalFeedQuery;
-import io.tickerstorm.common.entity.BaseMarker;
+import io.tickerstorm.common.entity.Notification;
 import io.tickerstorm.common.entity.Candle;
 import io.tickerstorm.common.entity.Markers;
 import io.tickerstorm.data.TestMarketDataServiceConfig;
@@ -45,8 +45,8 @@ public class HistoricalDataFeedITCase extends AbstractTestNGSpringContextTests {
   @Autowired
   private EventBus queryBus;
 
-  BaseMarker start;
-  BaseMarker end;
+  Notification start;
+  Notification end;
 
   @Autowired
   private CassandraOperations session;
@@ -97,13 +97,13 @@ public class HistoricalDataFeedITCase extends AbstractTestNGSpringContextTests {
   public class HistoricalDataFeedVerifier {
 
     @Subscribe
-    public void onNotification(BaseMarker md) {
+    public void onNotification(Notification md) {
 
       if (md.getMarkers().contains(Markers.QUERY_START.toString()))
-        start = (BaseMarker) md;
+        start = (Notification) md;
 
       if (md.getMarkers().contains(Markers.QUERY_END.toString()))
-        end = (BaseMarker) md;
+        end = (Notification) md;
 
     }
 

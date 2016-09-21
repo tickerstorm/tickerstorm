@@ -21,7 +21,7 @@ import com.google.common.eventbus.Subscribe;
 
 import io.tickerstorm.common.cache.CacheManager;
 import io.tickerstorm.common.data.eventbus.Destinations;
-import io.tickerstorm.common.entity.BaseMarker;
+import io.tickerstorm.common.entity.Notification;
 import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.entity.Markers;
 import io.tickerstorm.common.entity.MarketData;
@@ -117,10 +117,10 @@ public class ModelDataCassandraSink extends BaseCassandraSink<ModelDataDto> {
 
       for (Entry<String, Integer> e : countEntries(data).entrySet()) {
 
-        logger.debug("Persisting " + e.getValue() + " records, " + count.addAndGet(data.size()) + " total saved and " + received.get()
-            + " received");
+        logger.debug("Persisting " + e.getValue() + " records for stream " + e.getKey() + ", " + count.addAndGet(data.size())
+            + " total saved and " + received.get() + " received");
 
-        BaseMarker marker = new BaseMarker(e.getKey());
+        Notification marker = new Notification(e.getKey());
         marker.addMarker(Markers.MODEL_DATA_SAVED.toString());
         marker.expect = e.getValue();
         notificationsBus.post(marker);

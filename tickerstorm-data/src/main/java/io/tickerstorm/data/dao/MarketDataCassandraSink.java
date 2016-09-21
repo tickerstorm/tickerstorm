@@ -21,7 +21,7 @@ import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
 import io.tickerstorm.common.data.eventbus.Destinations;
-import io.tickerstorm.common.entity.BaseMarker;
+import io.tickerstorm.common.entity.Notification;
 import io.tickerstorm.common.entity.Markers;
 import io.tickerstorm.common.entity.MarketData;
 
@@ -88,7 +88,7 @@ public class MarketDataCassandraSink extends BaseCassandraSink<MarketDataDto> {
         Map<String, Integer> streamCounts = countEntries(data);
 
         for (Entry<String, Integer> e : streamCounts.entrySet()) {
-          BaseMarker marker = new BaseMarker(e.getKey());
+          Notification marker = new Notification(e.getKey());
           marker.addMarker(Markers.MARKET_DATA_SAVED.toString());
           marker.expect = e.getValue();
           notificationsBus.post(marker);
