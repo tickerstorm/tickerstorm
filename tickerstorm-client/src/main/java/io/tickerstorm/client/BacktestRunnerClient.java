@@ -1,7 +1,5 @@
 package io.tickerstorm.client;
 
-import java.io.Serializable;
-
 import javax.annotation.PostConstruct;
 
 import org.slf4j.Logger;
@@ -11,9 +9,9 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 
+import com.google.common.eventbus.EventBus;
+
 import io.tickerstorm.common.data.eventbus.Destinations;
-import io.tickerstorm.common.data.query.DataFeedQuery;
-import net.engio.mbassy.bus.MBassador;
 
 
 public abstract class BacktestRunnerClient implements ApplicationListener<ContextRefreshedEvent> {
@@ -21,22 +19,18 @@ public abstract class BacktestRunnerClient implements ApplicationListener<Contex
   private static final Logger logger = LoggerFactory.getLogger(BacktestRunnerClient.class);
   private static final String clientName = "TickerStorm client";
 
-  @Qualifier(Destinations.HISTORICAL_DATA_QUERY_BUS)
-  @Autowired
-  private MBassador<DataFeedQuery> queryBus;
-
   @Qualifier(Destinations.COMMANDS_BUS)
   @Autowired
-  private MBassador<Serializable> commandsBus;
+  private EventBus commandsBus;
 
   @Qualifier(Destinations.NOTIFICATIONS_BUS)
   @Autowired
-  private MBassador<Serializable> notificationBus;
+  private EventBus notificationBus;
 
   @PostConstruct
   protected void init() throws Exception {
-    commandsBus.subscribe(this);
-    notificationBus.subscribe(this);
+    commandsBus.register(this);
+    notificationBus.register(this);
   }
 
   public void onStart() {

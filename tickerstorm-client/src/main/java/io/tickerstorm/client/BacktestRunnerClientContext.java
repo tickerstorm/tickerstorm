@@ -1,7 +1,5 @@
 package io.tickerstorm.client;
 
-import java.io.Serializable;
-
 import javax.jms.ConnectionFactory;
 import javax.jms.Session;
 
@@ -17,24 +15,25 @@ import org.springframework.jms.annotation.EnableJms;
 import org.springframework.jms.core.JmsTemplate;
 
 import com.appx.h2o.H2ORestClient;
+import com.google.common.eventbus.EventBus;
 
 import io.tickerstorm.common.EventBusContext;
+import io.tickerstorm.common.JmsEventBusContext;
 import io.tickerstorm.common.data.eventbus.ByDestinationNameJmsResolver;
 import io.tickerstorm.common.data.eventbus.Destinations;
 import io.tickerstorm.common.data.eventbus.EventBusToJMSBridge;
 import io.tickerstorm.common.data.eventbus.JMSToEventBusBridge;
-import io.tickerstorm.common.data.query.DataFeedQuery;
-import io.tickerstorm.common.entity.MarketData;
-import net.engio.mbassy.bus.MBassador;
 
 @EnableJms
 @SpringBootApplication
 @ComponentScan(basePackages = {"io.tickerstorm.client"})
 @PropertySource({"classpath:default.properties"})
-@Import({EventBusContext.class})
+@Import({EventBusContext.class, JmsEventBusContext.class})
 public class BacktestRunnerClientContext {
 
   public static final Logger logger = org.slf4j.LoggerFactory.getLogger(BacktestRunnerClientContext.class);
+
+  public static final String SERVICE = "client";
 
   public static void main(String[] args) throws Exception {
     SpringApplication.run(BacktestRunnerClientContext.class, args);
@@ -42,31 +41,22 @@ public class BacktestRunnerClientContext {
 
   // SENDERS
   @Bean
-  public EventBusToJMSBridge buildQueryJmsBridge(@Qualifier(Destinations.HISTORICAL_DATA_QUERY_BUS) MBassador<DataFeedQuery> eventbus,
-      JmsTemplate template) {
-    return new EventBusToJMSBridge(eventbus, Destinations.QUEUE_HISTORICAL_DATA_QUERY, template);
+  public EventBusToJMSBridge buildCommandsJmsBridge(@Qualifier(Destinations.COMMANDS_BUS) EventBus eventbus, JmsTemplate template) {
+    return new EventBusToJMSBridge(eventbus, Destinations.TOPIC_COMMANDS, template, SERVICE);
   }
-
-  @Bean
-  public EventBusToJMSBridge buildCommandsJmsBridge(@Qualifier(Destinations.COMMANDS_BUS) MBassador<Serializable> eventbus,
-      JmsTemplate template) {
-    return new EventBusToJMSBridge(eventbus, Destinations.TOPIC_COMMANDS, template);
-  }
-
 
   // RECEIVERS
   @Bean
-  public JMSToEventBusBridge buildRealtimeEventBridge(@Qualifier(Destinations.REALTIME_MARKETDATA_BUS) MBassador<MarketData> realtimeBus) {
-    JMSToEventBusBridge bridge = new JMSToEventBusBridge();
-    bridge.setRealtimeBus(realtimeBus);
+  public JMSToEventBusBridge buildRealtimeEventBridge(@Qualifier(Destinations.REALTIME_MARKETDATA_BUS) EventBus realtimeBus) {
+    JMSToEventBusBridge bridge = new JMSToEventBusBridge(SERVICE);
+    bridge.realtimeBus = realtimeBus;
     return bridge;
   }
 
   @Bean
-  public JMSToEventBusBridge buildNotificationsEventBridge(@Qualifier(Destinations.NOTIFICATIONS_BUS) MBassador<Serializable> bus) {
-    JMSToEventBusBridge bridge = new JMSToEventBusBridge();
-    bridge.setNotificationBus(bus);
-    bridge.setExplodeCollections(true);
+  public JMSToEventBusBridge buildNotificationsEventBridge(@Qualifier(Destinations.NOTIFICATIONS_BUS) EventBus bus) {
+    JMSToEventBusBridge bridge = new JMSToEventBusBridge(SERVICE);
+    bridge.notificationBus = bus;
     return bridge;
   }
 
