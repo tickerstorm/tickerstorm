@@ -10,15 +10,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
-import com.google.common.base.Throwables;
 import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
-import com.google.common.eventbus.SubscriberExceptionContext;
-import com.google.common.eventbus.SubscriberExceptionHandler;
 
 import io.tickerstorm.common.data.eventbus.Destinations;
-import io.tickerstorm.common.data.eventbus.EventBusToEventBusBridge;
-import io.tickerstorm.common.entity.MarketData;
 
 @Configuration
 @ComponentScan("io.tickerstorm.common")
@@ -37,38 +32,9 @@ public class EventBusContext {
   @Qualifier(Destinations.REALTIME_MARKETDATA_BUS)
   @Bean
   public EventBus buildRealtimeEventBus(@Qualifier("eventBus") Executor executor) {
-    return new AsyncEventBus(executor, buildExceptionHandler());
+    return new EventBus(Destinations.REALTIME_MARKETDATA_BUS);
   }
-
-  @Bean
-  public SubscriberExceptionHandler buildExceptionHandler() {
-    return new SubscriberExceptionHandler() {
-
-      @Override
-      public void handleException(Throwable exception, SubscriberExceptionContext context) {
-        logger.error(exception.getMessage(), Throwables.getRootCause(exception));
-
-      }
-    };
-  }
-
-  /**
-   * Enable market realtime data from broker to be directly streamed to internal realtime market
-   * data bus so that models can act upon live data
-   * 
-   * @param source
-   * @param listener
-   * @return
-   */
-  @Qualifier(Destinations.BROKER_MARKETDATA_BUS)
-  @Bean
-  public EventBusToEventBusBridge<MarketData> buildBrokerFeedEventBridge(
-      @Qualifier(Destinations.BROKER_MARKETDATA_BUS) EventBus source,
-      @Qualifier(Destinations.REALTIME_MARKETDATA_BUS) EventBus listener) {
-    EventBusToEventBusBridge<MarketData> bridge = new EventBusToEventBusBridge<MarketData>(source, listener);
-    return bridge;
-  }
-
+  
   /**
    * Market data streaming realtime from brokers
    * 
@@ -78,21 +44,8 @@ public class EventBusContext {
   @Qualifier(Destinations.BROKER_MARKETDATA_BUS)
   @Bean
   public EventBus buildBrokerFeed(@Qualifier("eventBus") Executor executor) {
-    return new AsyncEventBus(executor, buildExceptionHandler());
+    return new EventBus(Destinations.BROKER_MARKETDATA_BUS);
   }
-
-  /**
-   * Query bus to historical data feed service. If you need historical data, query for it on this
-   * bus.
-   * 
-   * @param handler
-   * @return
-   */
-//  @Qualifier(Destinations.HISTORICAL_DATA_QUERY_BUS)
-//  @Bean
-//  public EventBus buildQueryEventBus(@Qualifier("eventBus") Executor executor) {
-//    return new AsyncEventBus(executor, buildExceptionHandler());
-//  }
 
   /**
    * Topic for commands to be executed by other components of the infrastrucutre. Commands
@@ -104,7 +57,7 @@ public class EventBusContext {
   @Qualifier(Destinations.COMMANDS_BUS)
   @Bean
   public EventBus buildCommandsEventBus(@Qualifier("eventBus") Executor executor) {
-    return new AsyncEventBus(executor, buildExceptionHandler());
+    return new AsyncEventBus(Destinations.COMMANDS_BUS, executor);
   }
 
   /**
@@ -117,14 +70,14 @@ public class EventBusContext {
   @Qualifier(Destinations.NOTIFICATIONS_BUS)
   @Bean
   public EventBus buildNotificaitonEventBus(@Qualifier("eventBus") Executor executor) {
-    return new AsyncEventBus(executor, buildExceptionHandler());
+    return new AsyncEventBus(Destinations.NOTIFICATIONS_BUS, executor);
   }
 
 
   @Qualifier(Destinations.MODEL_DATA_BUS)
   @Bean
   public EventBus buildModelDataEventBus(@Qualifier("eventBus") Executor executor) {
-    return new AsyncEventBus(executor, buildExceptionHandler());
+    return new AsyncEventBus(Destinations.MODEL_DATA_BUS, executor);
   }
 
   /**
@@ -137,7 +90,7 @@ public class EventBusContext {
   @Qualifier(Destinations.RETRO_MODEL_DATA_BUS)
   @Bean
   public EventBus buildRetroModelDataEventBus(@Qualifier("eventBus") Executor executor) {
-    return new AsyncEventBus(executor, buildExceptionHandler());
+    return new AsyncEventBus(Destinations.RETRO_MODEL_DATA_BUS, executor);
   }
 
   @Qualifier("eventBus")

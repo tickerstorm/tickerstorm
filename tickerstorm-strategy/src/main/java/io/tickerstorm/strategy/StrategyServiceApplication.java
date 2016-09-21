@@ -1,6 +1,5 @@
 package io.tickerstorm.strategy;
 
-import org.apache.logging.log4j.core.util.Throwables;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.SpringApplication;
@@ -12,8 +11,6 @@ import org.springframework.jms.annotation.EnableJms;
 import org.springframework.jms.core.JmsTemplate;
 
 import com.google.common.eventbus.EventBus;
-import com.google.common.eventbus.SubscriberExceptionContext;
-import com.google.common.eventbus.SubscriberExceptionHandler;
 
 import io.tickerstorm.common.EventBusContext;
 import io.tickerstorm.common.JmsEventBusContext;
@@ -27,6 +24,8 @@ import io.tickerstorm.common.data.eventbus.JMSToEventBusBridge;
 @Import({EventBusContext.class, JmsEventBusContext.class})
 public class StrategyServiceApplication {
 
+  public static final String SERVICE = "strategy-service";
+
   public static final Logger logger = org.slf4j.LoggerFactory.getLogger(StrategyServiceApplication.class);
 
   public static void main(String[] args) throws Exception {
@@ -34,23 +33,25 @@ public class StrategyServiceApplication {
   }
 
   // SENDERS
+  @Qualifier(Destinations.MODEL_DATA_BUS)
   @Bean
   public EventBusToJMSBridge buildModelDataJmsBridge(@Qualifier(Destinations.MODEL_DATA_BUS) EventBus eventbus, JmsTemplate template) {
-    return new EventBusToJMSBridge(eventbus, Destinations.QUEUE_MODEL_DATA, template);
+    return new EventBusToJMSBridge(eventbus, Destinations.QUEUE_MODEL_DATA, template, SERVICE);
   }
 
+  @Qualifier(Destinations.NOTIFICATIONS_BUS)
   @Bean
-  public EventBusToJMSBridge buildNotificationsJmsBridge(@Qualifier(Destinations.NOTIFICATIONS_BUS) EventBus eventbus,
+  public EventBusToJMSBridge buildNotificationsJmsBridge2(@Qualifier(Destinations.NOTIFICATIONS_BUS) EventBus eventbus,
       JmsTemplate template) {
-    return new EventBusToJMSBridge(eventbus, Destinations.TOPIC_NOTIFICATIONS, template);
+    return new EventBusToJMSBridge(eventbus, Destinations.TOPIC_NOTIFICATIONS, template, SERVICE);
   }
 
   // RECEIVERS
   @Bean
-  public JMSToEventBusBridge buildQueryEventBridge(@Qualifier(Destinations.REALTIME_MARKETDATA_BUS) EventBus realtimeBus,
+  public JMSToEventBusBridge buildStrategyListener(@Qualifier(Destinations.REALTIME_MARKETDATA_BUS) EventBus realtimeBus,
       @Qualifier(Destinations.COMMANDS_BUS) EventBus commandsBus,
       @Qualifier(Destinations.RETRO_MODEL_DATA_BUS) EventBus retroModelDataBus) {
-    JMSToEventBusBridge bridge = new JMSToEventBusBridge();
+    JMSToEventBusBridge bridge = new JMSToEventBusBridge(SERVICE);
     bridge.realtimeBus = realtimeBus;
     bridge.commandsBus = commandsBus;
     bridge.retroModelDataBus = retroModelDataBus;
@@ -60,17 +61,6 @@ public class StrategyServiceApplication {
   @Qualifier("processorEventBus")
   @Bean
   public EventBus buildEventProcessorBus() {
-    return new EventBus(new AsyncEventBusExceptionHandler());
-  }
-
-  private class AsyncEventBusExceptionHandler implements SubscriberExceptionHandler {
-
-    @Override
-    public void handleException(Throwable exception, SubscriberExceptionContext context) {
-      logger.error("Event " + context.getEvent() + " threw an exception on listener " + context.getSubscriber() + " with exception "
-          + Throwables.getRootCause(exception));
-
-    }
-
+    return new EventBus("processorEventBus");
   }
 }

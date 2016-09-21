@@ -4,14 +4,15 @@ import java.io.Serializable;
 
 import javax.jms.ObjectMessage;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jms.annotation.JmsListener;
+import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.Payload;
 
 import com.google.common.eventbus.EventBus;
 
-import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.entity.MarketData;
 
 public class JMSToEventBusBridge {
@@ -30,34 +31,54 @@ public class JMSToEventBusBridge {
 
   public EventBus retroModelDataBus;
 
+  public EventBus brokerFeedBus;
+
+  private String consumer;
+
+  public JMSToEventBusBridge(String consumer) {
+    this.consumer = consumer;
+  }
+
   @JmsListener(destination = Destinations.TOPIC_COMMANDS)
   public void onCommandMessage(ObjectMessage md) throws Exception {
-    if (commandsBus != null) {
-      logger.trace("Received command " + md.toString());
-      commandsBus.post(md.getObject());
+    final String source = md.getStringProperty("source");
+    final Object o = md.getObject();
+    if (commandsBus != null
+        && (StringUtils.isEmpty(md.getStringProperty("source")) || !md.getStringProperty("source").equalsIgnoreCase(consumer))) {
+      logger.trace(consumer + " received command " + o.toString() + " from " + source);
+      commandsBus.post(o);
+    }
+  }
+
+  @JmsListener(destination = Destinations.QUEUE_REALTIME_BROKERFEED)
+  public void onBrokerFeedMessage(@Payload MarketData md, @Header("source") String source) {
+    if (realtimeBus != null && (StringUtils.isEmpty(source) || !source.equalsIgnoreCase(consumer))) {
+      logger.debug(consumer + " received market data " + md.toString());
+      brokerFeedBus.post(md);
     }
   }
 
   @JmsListener(destination = Destinations.TOPIC_REALTIME_MARKETDATA)
-  public void onMessage(@Payload MarketData md) {
-    if (realtimeBus != null) {
-      logger.trace("Received market data " + md.toString());
+  public void onMessage(@Payload MarketData md, @Header("source") String source) {
+    if (realtimeBus != null && (StringUtils.isEmpty(source) || !source.equalsIgnoreCase(consumer))) {
+      logger.debug(consumer + " received market data " + md.toString());
       realtimeBus.post(md);
     }
   }
 
   @JmsListener(destination = Destinations.QUEUE_MODEL_DATA)
-  public void onMessage(ObjectMessage md) throws Exception {       
-    if (modelDataBus != null) {
-      logger.trace("Received model data " + md.getObject().toString());
-      modelDataBus.post(md.getObject());
+  public void onMessage(ObjectMessage md, @Header("source") String source) throws Exception {
+    final Object o = md.getObject();
+    if (modelDataBus != null && (StringUtils.isEmpty(source) || !source.equalsIgnoreCase(consumer))) {
+      logger.trace(consumer + " received model data " + o.toString());
+      modelDataBus.post(o);
     }
   }
 
   @JmsListener(destination = Destinations.QUEUE_RETRO_MODEL_DATA)
-  public void onRetroMessage(@Payload Serializable row) {
-    if (retroModelDataBus != null) {
-      logger.trace("Received retro model data " + row.toString());
+  public void onRetroMessage(@Payload Serializable row, @Header("source") String source) {
+    if (retroModelDataBus != null && (StringUtils.isEmpty(source) || !source.equalsIgnoreCase(consumer))) {
+      logger.trace(consumer + " received retro model data " + row.toString());
       retroModelDataBus.post(row);
     }
   }
@@ -67,10 +88,9 @@ public class JMSToEventBusBridge {
   }
 
   @JmsListener(destination = Destinations.TOPIC_NOTIFICATIONS)
-  public void onNotificationMessage(@Payload Object md) {
-    if (notificationBus != null) {
-
-      logger.trace("Received notification " + md.toString());
+  public void onNotificationMessage(@Payload Object md, @Header("source") String source) {
+    if (notificationBus != null && (StringUtils.isEmpty(source) || !source.equalsIgnoreCase(consumer))) {
+      logger.trace(consumer + " received notification " + md.toString());
       notificationBus.post(md);
 
     }

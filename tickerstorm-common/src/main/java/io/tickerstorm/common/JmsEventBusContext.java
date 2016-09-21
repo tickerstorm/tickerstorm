@@ -6,6 +6,7 @@ import javax.jms.JMSException;
 import javax.jms.Session;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
+import org.apache.activemq.RedeliveryPolicy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -39,6 +40,13 @@ public class JmsEventBusContext {
     ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(transport);
     connectionFactory.setOptimizeAcknowledge(true);
     connectionFactory.setAlwaysSessionAsync(false);
+    
+    RedeliveryPolicy policy = connectionFactory.getRedeliveryPolicy();
+    policy.setInitialRedeliveryDelay(500);
+    policy.setBackOffMultiplier(2);
+    policy.setUseExponentialBackOff(true);
+    policy.setMaximumRedeliveries(2);
+    
     CachingConnectionFactory caching = new CachingConnectionFactory(connectionFactory);
     caching.setSessionCacheSize(10);
     caching.setReconnectOnException(true);

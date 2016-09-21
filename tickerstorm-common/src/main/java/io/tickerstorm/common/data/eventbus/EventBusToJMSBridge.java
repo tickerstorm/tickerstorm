@@ -20,56 +20,47 @@ public class EventBusToJMSBridge {
 
   private static final Logger logger = LoggerFactory.getLogger(EventBusToJMSBridge.class);
 
-  public EventBusToJMSBridge(EventBus eventBus, String destination, JmsTemplate template) {
+  public EventBusToJMSBridge(EventBus eventBus, String destination, JmsTemplate template, String source) {
     this.bus = eventBus;
     this.destination = destination;
     this.template = template;
+    this.source = source;
 
     if (destination.contains("topic"))
       template.setPubSubDomain(true);
   }
 
-  private EventBus asyncBus;
-  private EventBus bus;
-  private JmsTemplate template;
-  private String destination;
+  private final EventBus bus;
+  private final JmsTemplate template;
+  private final String destination;
+  private final String source;
 
 
   @PostConstruct
   public void init() {
     if (bus != null)
       bus.register(this);
-
-    if (asyncBus != null)
-      asyncBus.register(this);
   }
 
   @PreDestroy
   public void destroy() {
-    if (asyncBus != null)
-      asyncBus.register(this);
-
     if (bus != null)
-      bus.register(this);
+      bus.unregister(this);
   }
 
   @Subscribe
   public void onEvent(Serializable data) {
 
-
-
     template.send(destination, new MessageCreator() {
 
       @Override
       public Message createMessage(Session session) throws JMSException {
-        logger.trace("Dispatching " + data.toString() + " to destination " + destination);
+        logger.debug("Dispatching " + data.toString() + " to destination " + destination + " from service " + source + ", " + bus.identifier());
         Message m = session.createObjectMessage(data);
+        m.setStringProperty("source", source);
         return m;
       }
     });
-
   }
-
-
 
 }
