@@ -1,15 +1,18 @@
 package io.tickerstorm.data;
 
-import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.jms.core.JmsTemplate;
 
+import com.google.common.base.Throwables;
 import com.google.common.eventbus.EventBus;
 
 import io.tickerstorm.ServiceLauncher;
@@ -21,20 +24,13 @@ import io.tickerstorm.common.data.eventbus.JMSToEventBusBridge;
 
 @Configuration
 @Import({EventBusContext.class, JmsEventBusContext.class})
-public class IntegrationTestContext {
+public class IntegrationTestContext implements ApplicationListener<ContextRefreshedEvent> {
 
   public static final String SERVICE = "integration-test";
 
   @Bean
   public static PropertySourcesPlaceholderConfigurer buildConfig() {
     return new PropertySourcesPlaceholderConfigurer();
-  }
-
-  @PostConstruct
-  public void init() throws Exception {
-    ServiceLauncher.launchMarketDataService(true, 4000, "/tmp/tickerstorm/data-service/monitor");
-    ServiceLauncher.launchStrategyService(true, 4001);
-    Thread.sleep(5000);
   }
 
   @PreDestroy
@@ -64,6 +60,19 @@ public class IntegrationTestContext {
     JMSToEventBusBridge bridge = new JMSToEventBusBridge(SERVICE);
     bridge.notificationBus = notificaitonsBus;
     return bridge;
+  }
+
+  @Override
+  public void onApplicationEvent(ContextRefreshedEvent arg0) {
+    ServiceLauncher.launchMarketDataService(true, 4000, "/tmp/tickerstorm/data-service/monitor");
+    ServiceLauncher.launchStrategyService(true, 4001);
+
+    try {
+      Thread.sleep(5000);
+    } catch (Exception e) {
+      Throwables.propagate(e);
+    }
+
   }
 
 }
