@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import io.tickerstorm.common.data.Locations;
 import io.tickerstorm.common.data.converter.BaseFileConverter;
 
 @Service
@@ -28,31 +29,28 @@ public class DirectoryMonitor {
 
   private FileAlterationMonitor monitor;
 
-  private static String path = System.getenv("service.data.monitor.location");
+  private static String path = System.getProperty("service.data-service.filedrop.location");
 
   @PostConstruct
   public void init() throws Exception {
 
     if (StringUtils.isEmpty(path)) {
-      path = "./data";
+      path = Locations.FILE_DROP_LOCATION;
     }
 
     final File directory = new File(path);
     FileAlterationObserver fao = new FileAlterationObserver(directory);
 
-    logger.info("Monitoring location: " + directory.getAbsolutePath());
-
     for (BaseFileConverter l : listeners) {
       fao.addListener(l);
 
       if (!StringUtils.isEmpty(l.provider()))
-        FileUtils.forceMkdir(new File(path + l.provider()));
+        FileUtils.forceMkdir(new File(path + "/" + l.provider()));
     }
-
-    monitor = new FileAlterationMonitor(2000);
-    monitor.addObserver(fao);
-
-    System.out.println("Starting monitor. CTRL+C to stop.");
+    
+    monitor = new FileAlterationMonitor(2000, fao);
+    
+    logger.info("Monitoring for files at location " + path + ". CTRL+C to stop.");
     monitor.start();
 
     Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
@@ -60,7 +58,7 @@ public class DirectoryMonitor {
       @Override
       public void run() {
         try {
-          System.out.println("Stopping monitor.");
+          logger.info("Stopping monitor.");
           monitor.stop();
         } catch (Exception ignored) {
         }

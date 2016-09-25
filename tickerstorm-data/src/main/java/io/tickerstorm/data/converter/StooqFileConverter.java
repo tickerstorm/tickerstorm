@@ -17,13 +17,19 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
+import com.google.common.eventbus.EventBus;
 import com.google.common.io.Files;
 
 import io.tickerstorm.common.data.converter.BaseFileConverter;
+import io.tickerstorm.common.data.eventbus.Destinations;
 import io.tickerstorm.common.entity.Candle;
+import io.tickerstorm.common.entity.Markers;
 import io.tickerstorm.common.entity.MarketData;
+import io.tickerstorm.common.entity.Notification;
 
 @Component
 public class StooqFileConverter extends BaseFileConverter {
@@ -40,6 +46,10 @@ public class StooqFileConverter extends BaseFileConverter {
     securityTypes.add("currencies");
     securityTypes.add("indices");
   }
+
+  @Qualifier(Destinations.NOTIFICATIONS_BUS)
+  @Autowired
+  private EventBus notifications;
 
   @Override
   public MarketData[] convert(String path) {
@@ -139,12 +149,42 @@ public class StooqFileConverter extends BaseFileConverter {
     File f = new File(file.getPath().replace("\\", "\\\\"));
 
     if (file.getPath().contains(provider()) && Files.getFileExtension(file.getPath()).equals("txt")) {
-      logger.info("Converting " + file.getName());
-      long start = System.currentTimeMillis();
-      MarketData[] data = convert(f.getPath());
-      logger.info("Converted " + data.length + " records.");
-      logger.debug("Conversion took " + (System.currentTimeMillis() - start) + "ms");
-      FileUtils.deleteQuietly(file);
+
+      try {
+
+        Notification not = new Notification(provider());
+        not.addMarker(Markers.FILE.toString());
+        not.addMarker(Markers.START.toString());
+        not.addMarker(Markers.FILE_LOCATION.toString());
+        not.properties.put(Markers.FILE_LOCATION.toString(), file.getPath());
+        notifications.post(not);
+
+        logger.info("Converting " + file.getName());
+        long start = System.currentTimeMillis();
+        MarketData[] data = convert(f.getPath());
+        logger.info("Converted " + data.length + " records.");
+        logger.debug("Conversion took " + (System.currentTimeMillis() - start) + "ms");
+        FileUtils.deleteQuietly(file);
+
+        not = new Notification(provider());
+        not.addMarker(Markers.FILE.toString());
+        not.addMarker(Markers.INGESTED.toString());
+        not.addMarker(Markers.FILE_LOCATION.toString());
+        not.properties.put(Markers.FILE_LOCATION.toString(), file.getPath());
+        not.expect = data.length;
+        notifications.post(not);
+
+      } catch (Exception e) {
+
+        Notification not = new Notification(provider());
+        not.addMarker(Markers.FILE.toString());
+        not.addMarker(Markers.FAILED.toString());
+        not.addMarker(Markers.FILE_LOCATION.toString());
+        not.properties.put(Markers.FILE_LOCATION.toString(), file.getPath());
+        notifications.post(not);
+
+        logger.error(e.getMessage(), e);
+      }
     }
   }
 

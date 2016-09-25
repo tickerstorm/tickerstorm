@@ -28,6 +28,7 @@ import com.google.common.base.Throwables;
 import com.google.common.eventbus.EventBus;
 import com.google.common.io.Files;
 
+import io.tickerstorm.common.data.Locations;
 import io.tickerstorm.common.data.converter.DataConverter;
 import io.tickerstorm.common.data.converter.Mode;
 import io.tickerstorm.common.data.eventbus.Destinations;
@@ -163,7 +164,7 @@ public class DataQueryClient {
     if (header != null)
       filename = header.getValue().split(";")[1].split("=")[1];
 
-    String path = "./data/" + builder.provider() + "/" + filename;
+    String path = Locations.FILE_DROP_LOCATION + "/" + builder.provider() + "/" + filename;
     logger.info("Writing file to " + path);
 
     File f = new File(path);

@@ -2,6 +2,7 @@ package io.tickerstorm.strategy;
 
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -17,6 +18,7 @@ import io.tickerstorm.common.JmsEventBusContext;
 import io.tickerstorm.common.data.eventbus.Destinations;
 import io.tickerstorm.common.data.eventbus.EventBusToJMSBridge;
 import io.tickerstorm.common.data.eventbus.JMSToEventBusBridge;
+import io.tickerstorm.service.HeartBeatGenerator;
 
 @EnableJms
 @SpringBootApplication
@@ -24,12 +26,18 @@ import io.tickerstorm.common.data.eventbus.JMSToEventBusBridge;
 @Import({EventBusContext.class, JmsEventBusContext.class})
 public class StrategyServiceApplication {
 
-  public static final String SERVICE = "strategy-service";
+  @Value("${service.name}")
+  public String SERVICE;
 
   public static final Logger logger = org.slf4j.LoggerFactory.getLogger(StrategyServiceApplication.class);
 
   public static void main(String[] args) throws Exception {
     SpringApplication.run(StrategyServiceApplication.class, args);
+  }
+  
+  @Bean
+  public HeartBeatGenerator generateHeartBeat() {
+    return new HeartBeatGenerator(SERVICE, 5000);
   }
 
   // SENDERS
@@ -43,7 +51,7 @@ public class StrategyServiceApplication {
   @Bean
   public EventBusToJMSBridge buildNotificationsJmsBridge2(@Qualifier(Destinations.NOTIFICATIONS_BUS) EventBus eventbus,
       JmsTemplate template) {
-    return new EventBusToJMSBridge(eventbus, Destinations.TOPIC_NOTIFICATIONS, template, SERVICE);
+    return new EventBusToJMSBridge(eventbus, Destinations.TOPIC_NOTIFICATIONS, template, SERVICE, 5000);
   }
 
   // RECEIVERS

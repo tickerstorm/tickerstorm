@@ -3,6 +3,7 @@ package io.tickerstorm.data;
 import java.util.concurrent.Executor;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -25,6 +26,7 @@ import io.tickerstorm.common.data.eventbus.JMSToEventBusBridge;
 import io.tickerstorm.common.entity.MarketData;
 import io.tickerstorm.data.dao.MarketDataDao;
 import io.tickerstorm.data.dao.ModelDataDao;
+import io.tickerstorm.service.HeartBeatGenerator;
 
 @EnableJms
 @SpringBootApplication
@@ -34,10 +36,16 @@ import io.tickerstorm.data.dao.ModelDataDao;
 @Import({EventBusContext.class, JmsEventBusContext.class})
 public class MarketDataApplication {
 
-  public static final String SERVICE = "data-service";
+  @Value("${service.name}")
+  private String SERVICE;
 
   public static void main(String[] args) throws Exception {
     SpringApplication.run(MarketDataApplication.class, args);
+  }
+
+  @Bean
+  public HeartBeatGenerator generateHeartBeat() {
+    return new HeartBeatGenerator(SERVICE, 5000);
   }
 
   @Qualifier(Destinations.HISTORICL_MARKETDATA_BUS)
@@ -66,7 +74,7 @@ public class MarketDataApplication {
   @Bean
   public EventBusToJMSBridge buildNotificationsJmsBridge(@Qualifier(Destinations.NOTIFICATIONS_BUS) EventBus eventbus,
       JmsTemplate template) {
-    return new EventBusToJMSBridge(eventbus, Destinations.TOPIC_NOTIFICATIONS, template, SERVICE);
+    return new EventBusToJMSBridge(eventbus, Destinations.TOPIC_NOTIFICATIONS, template, SERVICE, 5000);
   }
 
   /**

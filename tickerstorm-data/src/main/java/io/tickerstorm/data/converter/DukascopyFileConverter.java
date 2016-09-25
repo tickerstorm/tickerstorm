@@ -11,16 +11,22 @@ import java.util.List;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
+import com.google.common.eventbus.EventBus;
 import com.google.common.io.Files;
 
 import io.tickerstorm.common.data.converter.BaseFileConverter;
 import io.tickerstorm.common.data.converter.Mode;
+import io.tickerstorm.common.data.eventbus.Destinations;
 import io.tickerstorm.common.entity.Candle;
+import io.tickerstorm.common.entity.Markers;
 import io.tickerstorm.common.entity.MarketData;
+import io.tickerstorm.common.entity.Notification;
 
 @Component
 public class DukascopyFileConverter extends BaseFileConverter {
@@ -29,6 +35,10 @@ public class DukascopyFileConverter extends BaseFileConverter {
       java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss.SSS");
 
   private static final Logger logger = LoggerFactory.getLogger(DukascopyFileConverter.class);
+
+  @Qualifier(Destinations.NOTIFICATIONS_BUS)
+  @Autowired
+  private EventBus notifications;
 
   @Override
   public MarketData[] convert(String path) {
@@ -60,7 +70,7 @@ public class DukascopyFileConverter extends BaseFileConverter {
               new BigDecimal(cols[1]), new BigDecimal(cols[4]), new BigDecimal(cols[2]), new BigDecimal(cols[3]), getInterval(path),
               new BigDecimal(cols[5]).multiply(new BigDecimal("1000000")).intValue());
           c.stream = provider();
-          
+
           historical.post(c);
           data.add(c);
 
@@ -103,12 +113,41 @@ public class DukascopyFileConverter extends BaseFileConverter {
     file = new File(file.getPath().replace("\\", "\\\\"));
 
     if (file.getPath().contains(provider()) && Files.getFileExtension(file.getPath()).equals("csv")) {
-      logger.info("Converting " + file.getPath());
-      long start = System.currentTimeMillis();
-      MarketData[] data = convert(file.getPath());
-      logger.info("Converted " + data.length + " records.");
-      logger.debug("Conversion took " + (System.currentTimeMillis() - start) + "ms");
-      file.delete();
+
+      try {
+
+        Notification not = new Notification(provider());
+        not.addMarker(Markers.FILE.toString());
+        not.addMarker(Markers.START.toString());
+        not.addMarker(Markers.FILE_LOCATION.toString());
+        not.properties.put(Markers.FILE_LOCATION.toString(), file.getPath());
+        notifications.post(not);
+
+        logger.info("Converting " + file.getPath());
+        long start = System.currentTimeMillis();
+        MarketData[] data = convert(file.getPath());
+        logger.info("Converted " + data.length + " records.");
+        logger.debug("Conversion took " + (System.currentTimeMillis() - start) + "ms");
+        file.delete();
+
+        not = new Notification(provider());
+        not.addMarker(Markers.FILE.toString());
+        not.addMarker(Markers.INGESTED.toString());
+        not.addMarker(Markers.FILE_LOCATION.toString());
+        not.properties.put(Markers.FILE_LOCATION.toString(), file.getPath());
+        not.expect = data.length;
+        notifications.post(not);
+
+      } catch (Exception e) {
+        Notification not = new Notification(provider());
+        not.addMarker(Markers.FILE.toString());
+        not.addMarker(Markers.FAILED.toString());
+        not.addMarker(Markers.FILE_LOCATION.toString());
+        not.properties.put(Markers.FILE_LOCATION.toString(), file.getPath());
+
+        logger.error(e.getMessage(), e);
+      }
+
     }
 
   }

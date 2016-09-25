@@ -37,12 +37,12 @@ public class TestDataFactory {
 
   }
   
-  public static void storeGoogleData() throws Exception {
+  public static void storeGoogleData(String location) throws Exception {
     
-    FileUtils.forceMkdir(new File("./data/Google"));
-    Files.copy(new File("./src/test/resources/data/Google/TOL.csv"), new File("./data/Google/TOL.csv"));
+    FileUtils.forceMkdir(new File(location + "/Google"));
+    Files.copy(new File("./src/test/resources/data/Google/TOL.csv"), new File(location + "/Google/TOL.csv"));
     Thread.sleep(5000);
-    FileUtils.deleteQuietly(new File("./data/Google/TOL.csv"));
+    FileUtils.deleteQuietly(new File(location + "/Google/TOL.csv"));
     
   }
 

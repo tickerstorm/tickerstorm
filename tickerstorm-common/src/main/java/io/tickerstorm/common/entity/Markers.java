@@ -8,6 +8,12 @@ public enum Markers {
 
   MODEL_DATA("model_data"),
 
+  FILE("file"),
+
+  INGESTED("ingested"),
+  
+  FILE_LOCATION("file_location"),
+
   SAVED("saved"),
 
   CREATED("created"),
@@ -17,7 +23,7 @@ public enum Markers {
   END("end"),
 
   START("start"),
-  
+
   FAILED("failed");
 
 

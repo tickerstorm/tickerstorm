@@ -14,6 +14,7 @@ import org.testng.annotations.Test;
 import com.google.common.eventbus.Subscribe;
 import com.google.common.io.Files;
 
+import io.tickerstorm.common.data.Locations;
 import io.tickerstorm.common.entity.Candle;
 import io.tickerstorm.common.entity.MarketData;
 
@@ -22,20 +23,21 @@ public class StooqHistoricalForexQueryITCase extends BaseDataQueryITCase {
   @BeforeMethod
   public void setup() throws Exception {
     verifier = new DownloadGloabForextVerification();
-    FileUtils.forceMkdir(new File("./data/Stooq"));
+    FileUtils.forceMkdir(new File(Locations.FILE_DROP_LOCATION + "/Stooq"));
     super.setup();
   }
 
   @AfterMethod
   public void tearDown() throws Exception {
-    FileUtils.deleteQuietly(new File("./data/Stooq/5_world_txt.zip"));
+    FileUtils.deleteQuietly(new File(Locations.FILE_DROP_LOCATION + "/Stooq/5_world_txt.zip"));
     super.tearDown();
   }
-  
-  @Test(enabled=false)
+
+  @Test(enabled = false)
   public void parseGloabForext() throws Exception {
 
-    Files.copy(new File("./src/test/resources/data/Stooq/5_world_txt.zip"), new File("./data/Stooq/5_world_txt.zip"));
+    Files.copy(new File("./src/test/resources/data/Stooq/5_world_txt.zip"),
+        new File(Locations.FILE_DROP_LOCATION + "/Stooq/5_world_txt.zip"));
 
     Thread.sleep(27000);
 
@@ -45,7 +47,7 @@ public class StooqHistoricalForexQueryITCase extends BaseDataQueryITCase {
 
   }
 
-  @Test(enabled=false)
+  @Test(enabled = false)
   public void downloadGloabForext() throws Exception {
 
     StooqHistoricalForexQuery query = new StooqHistoricalForexQuery().currencies().min5();

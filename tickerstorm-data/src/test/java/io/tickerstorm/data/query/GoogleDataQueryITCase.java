@@ -15,6 +15,7 @@ import org.testng.annotations.Test;
 import com.google.common.eventbus.Subscribe;
 import com.google.common.io.Files;
 
+import io.tickerstorm.common.data.Locations;
 import io.tickerstorm.common.entity.Candle;
 import io.tickerstorm.common.entity.MarketData;
 
@@ -24,14 +25,14 @@ public class GoogleDataQueryITCase extends BaseDataQueryITCase {
 
   @BeforeMethod
   public void setup() throws Exception {
-    FileUtils.forceMkdir(new File("./data/Google"));
+    FileUtils.forceMkdir(new File(Locations.FILE_DROP_LOCATION + "/Google"));
     verifier = new GoogleDataVerifier();
     super.setup();
   }
 
   @AfterMethod(alwaysRun = true)
   public void tearDown() throws Exception {
-    FileUtils.deleteQuietly(new File("./data/Google/TOL.csv"));
+    FileUtils.deleteQuietly(new File(Locations.FILE_DROP_LOCATION + "/Google/TOL.csv"));
     super.tearDown();
   }
 
@@ -56,7 +57,7 @@ public class GoogleDataQueryITCase extends BaseDataQueryITCase {
     Long daoCount = dao.count();
     Assert.assertEquals(daoCount, new Long(0));
 
-    Files.copy(new File("./src/test/resources/data/Google/TOL.csv"), new File("./data/Google/TOL.csv"));
+    Files.copy(new File("./src/test/resources/data/Google/TOL.csv"), new File(Locations.FILE_DROP_LOCATION + "/Google/TOL.csv"));
 
     Thread.sleep(12000);
 

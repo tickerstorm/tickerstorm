@@ -16,6 +16,7 @@ import org.testng.annotations.Test;
 import com.google.common.eventbus.Subscribe;
 import com.google.common.io.Files;
 
+import io.tickerstorm.common.data.Locations;
 import io.tickerstorm.common.entity.Candle;
 import io.tickerstorm.common.entity.MarketData;
 
@@ -24,13 +25,13 @@ public class DukascopyHistoricalForexQueryITCase extends BaseDataQueryITCase {
   @BeforeMethod
   public void setup() throws Exception {
     verifier = new DownloadGloabForextVerification();
-    FileUtils.forceMkdir(new File("./data/Dukascopy"));
+    FileUtils.forceMkdir(new File(Locations.FILE_DROP_LOCATION + "/Dukascopy"));
     super.setup();
   }
 
   @AfterMethod
   public void tearDown() throws Exception {
-    FileUtils.deleteQuietly(new File("./data/Dukascopy/AUDCAD_Candlestick_1_m_BID_01.06.2015-06.06.2015.csv"));
+    FileUtils.deleteQuietly(new File(Locations.FILE_DROP_LOCATION + "/Dukascopy/AUDCAD_Candlestick_1_m_BID_01.06.2015-06.06.2015.csv"));
     super.tearDown();
   }
 
@@ -38,7 +39,7 @@ public class DukascopyHistoricalForexQueryITCase extends BaseDataQueryITCase {
   public void parseGloabForext() throws Exception {
 
     Files.copy(new File("./src/test/resources/data/Dukascopy/AUDCAD_Candlestick_1_m_BID_01.06.2015-06.06.2015.csv"),
-        new File("./data/Dukascopy/AUDCAD_Candlestick_1_m_BID_01.06.2015-06.06.2015.csv"));
+        new File(Locations.FILE_DROP_LOCATION + "/Dukascopy/AUDCAD_Candlestick_1_m_BID_01.06.2015-06.06.2015.csv"));
 
     Thread.sleep(16000);
 

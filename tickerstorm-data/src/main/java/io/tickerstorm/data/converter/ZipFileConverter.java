@@ -5,11 +5,15 @@ import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
+import com.google.common.eventbus.EventBus;
 import com.google.common.io.Files;
 
 import io.tickerstorm.common.data.converter.BaseFileConverter;
+import io.tickerstorm.common.data.eventbus.Destinations;
 import io.tickerstorm.common.entity.MarketData;
 import net.lingala.zip4j.core.ZipFile;
 
@@ -17,7 +21,7 @@ import net.lingala.zip4j.core.ZipFile;
 public class ZipFileConverter extends BaseFileConverter {
 
   private static final Logger logger = LoggerFactory.getLogger(ZipFileConverter.class);
-
+  
   @Override
   public void onFileCreate(File path) {
 

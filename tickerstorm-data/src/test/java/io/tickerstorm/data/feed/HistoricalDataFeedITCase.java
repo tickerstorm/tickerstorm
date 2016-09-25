@@ -22,6 +22,7 @@ import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import com.google.common.io.Files;
 
+import io.tickerstorm.common.data.Locations;
 import io.tickerstorm.common.data.eventbus.Destinations;
 import io.tickerstorm.common.data.query.HistoricalFeedQuery;
 import io.tickerstorm.common.entity.Candle;
@@ -60,10 +61,10 @@ public class HistoricalDataFeedITCase extends AbstractTestNGSpringContextTests {
     notificationsBus.register(verifier);
 
     session.getSession().execute("TRUNCATE marketdata");
-    FileUtils.forceMkdir(new File("./data/Google"));
-    Files.copy(new File("./src/test/resources/data/Google/TOL.csv"), new File("./data/Google/TOL.csv"));
+    FileUtils.forceMkdir(new File(Locations.FILE_DROP_LOCATION + "/Google"));
+    Files.copy(new File("./src/test/resources/data/Google/TOL.csv"), new File(Locations.FILE_DROP_LOCATION + "/Google/TOL.csv"));
     Thread.sleep(10000);
-    FileUtils.deleteQuietly(new File("./data/Google/TOL.csv"));
+    FileUtils.deleteQuietly(new File(Locations.FILE_DROP_LOCATION + "/Google/TOL.csv"));
   }
 
   @Test
