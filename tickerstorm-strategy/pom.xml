@@ -6,7 +6,7 @@
 		<artifactId>pom</artifactId>
 		<version>1.0.0-SNAPSHOT</version>
 	</parent>
-	<artifactId>strategy</artifactId>
+	<artifactId>strategy-service</artifactId>
 	<build>
 		<plugins>
 
@@ -22,7 +22,7 @@
 						<configuration>
 							<classifier>exec</classifier>
 							<layout>JAR</layout>
-							<mainClass>io.tickerstorm.data.service.MarketDataService</mainClass>
+							<mainClass>io.tickerstorm.strategy.StrategyServiceApplication</mainClass>
 						</configuration>
 					</execution>
 				</executions>

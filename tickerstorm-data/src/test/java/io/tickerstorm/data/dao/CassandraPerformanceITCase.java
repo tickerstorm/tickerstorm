@@ -11,7 +11,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.cassandra.core.CassandraOperations;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
@@ -123,7 +122,7 @@ public class CassandraPerformanceITCase extends AbstractTestNGSpringContextTests
         Notification n = (Notification) s;
 
         synchronized (count) {
-          if (n.markers.contains(Markers.MODEL_DATA_SAVED.toString())) {
+          if (n.markers.contains(Markers.MODEL_DATA.toString()) && n.markers.contains(Markers.SAVED.toString())) {
             count.addAndGet(n.expect);
           }
         }

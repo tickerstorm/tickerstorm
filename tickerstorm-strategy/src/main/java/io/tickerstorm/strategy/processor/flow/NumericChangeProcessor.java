@@ -21,8 +21,7 @@ import io.tickerstorm.strategy.processor.BaseEventProcessor;
 public class NumericChangeProcessor extends BaseEventProcessor {
 
   public final static String METRIC_TIME_TAKEN = "metric.numericchange.time";
-
-  public static final String PERIODS_CONFIG_KEY = "proc.numericchange.periods";
+  public static final String PERIODS_CONFIG_KEY = "periods";
 
   private Predicate<Field<?>> filter() {
     return p -> (BigDecimal.class.isAssignableFrom(p.getFieldType()) || Integer.class.isAssignableFrom(p.getFieldType()))
@@ -46,7 +45,7 @@ public class NumericChangeProcessor extends BaseEventProcessor {
       CacheManager.put(f, p);
       SynchronizedIndexedTreeMap<Field<?>> cache = CacheManager.getFieldCache(f);
       Field<Number> prior = (Field) cache.get(f.getTimestamp(), p);
-      logger.debug("Caching took :" + (System.currentTimeMillis() - start2) + "ms");
+      logger.trace("Caching took :" + (System.currentTimeMillis() - start2) + "ms");
 
       if (prior != null && !prior.equals(f)) {
 
@@ -64,19 +63,24 @@ public class NumericChangeProcessor extends BaseEventProcessor {
         }
 
         fs.add(new BaseField<>(f, Field.Name.ABS_CHANGE.field() + "-p" + p, absDiff.setScale(4, BigDecimal.ROUND_HALF_UP)));
-        logger.debug("Computation took :" + (System.currentTimeMillis() - start3) + "ms");
+        logger.trace("Computation took :" + (System.currentTimeMillis() - start3) + "ms");
       }
     });
 
-    logger.debug("Numberic Change Processor took :" + (System.currentTimeMillis() - start) + "ms");
+
 
     if (!fs.isEmpty()) {
       publish(fs);
-      logger.debug("Computed " + fs.size() + " values");
+      logger.debug("Numberic Change Processor took :" + (System.currentTimeMillis() - start) + "ms to compute " + fs.size());
     }
 
     gauge.submit(METRIC_TIME_TAKEN, (System.currentTimeMillis() - start));
 
+  }
+
+  @Override
+  public String name() {
+    return "numeric-change";
   }
 
 }

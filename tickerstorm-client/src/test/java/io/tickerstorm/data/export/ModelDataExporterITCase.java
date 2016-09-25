@@ -1,15 +1,16 @@
-package io.tickerstorm.data;
+package io.tickerstorm.data.export;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
+import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -17,12 +18,12 @@ import com.google.common.eventbus.EventBus;
 
 import io.tickerstorm.common.command.ExportModelDataToCSV;
 import io.tickerstorm.common.data.eventbus.Destinations;
-import io.tickerstorm.common.data.eventbus.EventBusToEventBusBridge;
-import io.tickerstorm.common.entity.MarketData;
 import io.tickerstorm.common.entity.SessionFactory;
 import io.tickerstorm.common.test.TestDataFactory;
+import io.tickerstorm.data.IntegrationTestContext;
 
-@ContextConfiguration(classes = {MarketDataApplication.class, ModelDataExporterITCase.Config.class})
+@Profile("modeldata_export")
+@ContextConfiguration(classes = {IntegrationTestContext.class})
 public class ModelDataExporterITCase extends AbstractTestNGSpringContextTests {
 
   @Autowired
@@ -41,11 +42,13 @@ public class ModelDataExporterITCase extends AbstractTestNGSpringContextTests {
   private final String location = "/tmp/testfile.csv";
 
   @BeforeMethod
-  public void setup() {
+  public void setup() throws Exception {
     io.tickerstorm.common.entity.Session session = factory.newSession("Google");
     session.start();
 
-    exportCommend = new ExportModelDataToCSV(session.stream);
+    Files.deleteIfExists(new File(location).toPath());
+
+    exportCommend = new ExportModelDataToCSV(session.stream());
     exportCommend.modelQuery.from = Instant.now().minus(700, ChronoUnit.DAYS);
     exportCommend.config.put(ExportModelDataToCSV.FILE_LOCATION, location);
   }
@@ -54,22 +57,14 @@ public class ModelDataExporterITCase extends AbstractTestNGSpringContextTests {
   public void testExportToCSVFile() throws Exception {
 
     TestDataFactory.storeGoogleData();
-    Thread.sleep(40000);
+    Thread.sleep(3000);
     commandBus.post(exportCommend);
 
-    org.testng.Assert.assertTrue(new File(location).exists());
+    Thread.sleep(10000);
+
+    Assert.assertTrue(new File(location).exists());
 
   }
 
-  @Configuration
-  public class Config {
 
-    @Bean
-    public EventBusToEventBusBridge<MarketData> buildBridge(@Qualifier(Destinations.HISTORICL_MARKETDATA_BUS) EventBus source,
-        @Qualifier(Destinations.REALTIME_MARKETDATA_BUS) EventBus listener) {
-      EventBusToEventBusBridge<MarketData> bridge = new EventBusToEventBusBridge<MarketData>(source, listener);
-      return bridge;
-
-    }
-  }
 }

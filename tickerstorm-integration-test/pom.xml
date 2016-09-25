@@ -9,16 +9,6 @@
 	<artifactId>integration-tests</artifactId>
 	<dependencies>
 		<dependency>
-			<groupId>io.tickerstorm</groupId>
-			<artifactId>strategy</artifactId>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>io.tickerstorm</groupId>
-			<artifactId>data-service</artifactId>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>

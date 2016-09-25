@@ -1,0 +1,8 @@
+stream: sample
+
+transformers: 
+  - transformer: numeric-change
+    periods: [2]
+  
+  - transformer: basic-stats
+    periods: [1, 10, 15, 30, 60, 90]

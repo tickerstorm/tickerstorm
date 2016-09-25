@@ -2,37 +2,23 @@ package io.tickerstorm.common.entity;
 
 public enum Markers {
 
-  /**
-   * First market data of the day
-   */
-  MARKET_OPEN("market_open"),
+  QUERY("query"),
 
-  /**
-   * Last market data of the day
-   */
-  MARKET_CLOSE("market_close"),
+  MARKET_DATA("market_data"),
 
-  /**
-   * Last market data of this query
-   */
-  QUERY_END("query_end"),
+  MODEL_DATA("model_data"),
 
-  /**
-   * First market data of this query
-   */
-  QUERY_START("query_start"),
-  /**
-   * Backtest session end
-   */
-  CSV_CREATED("csv_created"),
-  /**
-   * Backtest session end
-   */
-  MODEL_DATA_SAVED("model_data_saved"),
-  /**
-   * Backtest session end
-   */
-  MARKET_DATA_SAVED("market_data_saved");
+  SAVED("saved"),
+
+  CREATED("created"),
+
+  DELETED("deleted"),
+
+  END("end"),
+
+  START("start"),
+  
+  FAILED("failed");
 
 
   public String marker;

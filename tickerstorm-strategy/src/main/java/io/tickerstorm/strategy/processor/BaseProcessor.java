@@ -68,7 +68,12 @@ public abstract class BaseProcessor implements Processor {
     Predicate<Command> sessionEnd = (p -> command.markers.contains(Session.SESSION_END));
 
     if (sessionStart.test(command)) {
-      getConfig(command.getStream()).putAll(command.config);
+
+      if (command.config.get("transformers") != null) {
+        Map<String, Object> trans = (Map) command.config.get("transformers");
+        Map<String, Object> thisT = (Map) trans.get(name());
+        getConfig(command.getStream()).putAll(thisT);
+      }
     }
 
     if (sessionEnd.test(command)) {
@@ -76,6 +81,8 @@ public abstract class BaseProcessor implements Processor {
     }
 
   }
+
+  public abstract String name();
 
   @Subscribe
   public void onNotification(Notification notification) throws Exception {

@@ -20,7 +20,7 @@ public class Command implements Marker, Event, Stream, Serializable {
 
   public String id = UUID.randomUUID().toString();
   public Set<String> markers = new HashSet<>();
-  public Map<String, String> config = new HashMap<>();
+  public Map<String, Object> config = new HashMap<>();
   public Instant timestamp = Instant.now();
   public static final String TYPE = "command";
   public String stream;

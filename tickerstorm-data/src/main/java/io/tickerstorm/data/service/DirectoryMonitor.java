@@ -28,10 +28,16 @@ public class DirectoryMonitor {
 
   private FileAlterationMonitor monitor;
 
+  private static String path = System.getenv("service.data.monitor.location");
+
   @PostConstruct
   public void init() throws Exception {
 
-    final File directory = new File("./data");
+    if (StringUtils.isEmpty(path)) {
+      path = "./data";
+    }
+
+    final File directory = new File(path);
     FileAlterationObserver fao = new FileAlterationObserver(directory);
 
     logger.info("Monitoring location: " + directory.getAbsolutePath());
@@ -40,7 +46,7 @@ public class DirectoryMonitor {
       fao.addListener(l);
 
       if (!StringUtils.isEmpty(l.provider()))
-        FileUtils.forceMkdir(new File("./data/" + l.provider()));
+        FileUtils.forceMkdir(new File(path + l.provider()));
     }
 
     monitor = new FileAlterationMonitor(2000);

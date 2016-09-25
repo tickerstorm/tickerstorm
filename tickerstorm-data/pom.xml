@@ -64,7 +64,7 @@
 						<configuration>
 							<classifier>exec</classifier>
 							<layout>JAR</layout>
-							<mainClass>io.tickerstorm.data.MarketDataService</mainClass>
+							<mainClass>io.tickerstorm.data.MarketDataApplication</mainClass>
 						</configuration>
 					</execution>
 				</executions>

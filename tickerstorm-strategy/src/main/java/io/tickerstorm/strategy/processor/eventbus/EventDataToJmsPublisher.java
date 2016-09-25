@@ -39,4 +39,9 @@ public class EventDataToJmsPublisher extends BaseEventProcessor {
     modelDataBus.post(fs);
   }
 
+  @Override
+  public String name() {
+    return "event-publisher";
+  }
+
 }

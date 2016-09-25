@@ -95,5 +95,10 @@ public class BasicStatsProcessor extends BaseEventProcessor {
 
   }
 
+  @Override
+  public String name() {
+    return "basic-stats";
+  }
+
 
 }

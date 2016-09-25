@@ -16,6 +16,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.testng.Assert;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.google.common.collect.Sets;
@@ -48,13 +49,11 @@ public class ModelDataCassandraSinkITCase extends AbstractTestNGSpringContextTes
   private final String stream = "ModelDataCassandraSinkITCase".toLowerCase();
   private Candle c;
 
-  @org.testng.annotations.BeforeClass
+  @BeforeClass
   public void cleanup() throws Exception {
     dao.deleteByStream(stream);
-    Thread.sleep(2000);
-
+    Thread.sleep(5000);
     c = new Candle(symbol, stream, this.instant, BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ONE, BigDecimal.ONE, "1m", 1000);
-
   }
 
   @Test
@@ -67,9 +66,9 @@ public class ModelDataCassandraSinkITCase extends AbstractTestNGSpringContextTes
     modelDataBus.post(df);
     modelDataBus.post(cf);
 
-    Thread.sleep(3000);
+    Thread.sleep(5000);
 
-    long count = dao.count();
+    long count = dao.count(stream);
 
     assertEquals(count, 1);
 
@@ -120,7 +119,7 @@ public class ModelDataCassandraSinkITCase extends AbstractTestNGSpringContextTes
 
     Thread.sleep(5000);
 
-    long count = dao.count();
+    long count = dao.count(stream);
 
     assertEquals(count, 1);
 
@@ -157,11 +156,12 @@ public class ModelDataCassandraSinkITCase extends AbstractTestNGSpringContextTes
   @Test
   public void testStoreMarker() throws Exception {
 
-    session.getSession().execute("TRUNCATE modeldata");
+    dao.deleteByStream(stream);
     Thread.sleep(2000);
 
     Notification marker = new Notification(UUID.randomUUID().toString(), "Default");
-    marker.addMarker(Markers.QUERY_START.toString());
+    marker.addMarker(Markers.QUERY.toString());
+    marker.addMarker(Markers.START.toString());
     marker.expect = 100;
 
     modelDataBus.post(marker);
@@ -169,7 +169,7 @@ public class ModelDataCassandraSinkITCase extends AbstractTestNGSpringContextTes
 
     Thread.sleep(2000);
 
-    long count = dao.count();
+    long count = dao.count(stream);
 
     assertEquals(count, 0);
   }

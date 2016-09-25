@@ -21,11 +21,11 @@ import com.google.common.eventbus.Subscribe;
 
 import io.tickerstorm.common.cache.CacheManager;
 import io.tickerstorm.common.data.eventbus.Destinations;
-import io.tickerstorm.common.entity.Notification;
 import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.entity.Markers;
 import io.tickerstorm.common.entity.MarketData;
-import io.tickerstorm.data.service.ModelDataExporter;
+import io.tickerstorm.common.entity.Notification;
+import io.tickerstorm.data.export.ModelDataExporter;
 import net.sf.ehcache.Element;
 
 @DependsOn(value = {"cassandraSetup"})
@@ -92,17 +92,14 @@ public class ModelDataCassandraSink extends BaseCassandraSink<ModelDataDto> {
 
   private void cacheFieldName(Field<?> f) {
 
-    Element e = CacheManager.getInstance(ModelDataExporter.CACHE_KEY).get(f.getStream() + ModelDataExporter.CACHE_KEY_SUFFIX);
+    Element e =
+        CacheManager.getInstance(f.getStream()).putIfAbsent(new Element(ModelDataExporter.CACHE_KEY_SUFFIX, Sets.newHashSet(f.getName())));
 
-    if (e != null) {
-      ((Set) e.getObjectValue()).add(f.getName());
-      CacheManager.getInstance(ModelDataExporter.CACHE_KEY).replace(e,
-          new Element(f.getStream() + ModelDataExporter.CACHE_KEY_SUFFIX, e.getObjectValue()));
-    } else {
-      CacheManager.getInstance(ModelDataExporter.CACHE_KEY)
-          .putIfAbsent(new Element(f.getStream() + ModelDataExporter.CACHE_KEY_SUFFIX, Sets.newHashSet(f.getName())));
+    if (e == null) {
+      ((Set<String>) CacheManager.getInstance(f.getStream()).get(ModelDataExporter.CACHE_KEY_SUFFIX).getObjectValue()).add(f.getName());
     }
 
+    logger.trace("Cached field " + f.getName() + " at " + f.getStream());
   }
 
   @Override
@@ -121,7 +118,8 @@ public class ModelDataCassandraSink extends BaseCassandraSink<ModelDataDto> {
             + " total saved and " + received.get() + " received");
 
         Notification marker = new Notification(e.getKey());
-        marker.addMarker(Markers.MODEL_DATA_SAVED.toString());
+        marker.addMarker(Markers.MODEL_DATA.toString());
+        marker.addMarker(Markers.SAVED.toString());
         marker.expect = e.getValue();
         notificationsBus.post(marker);
 

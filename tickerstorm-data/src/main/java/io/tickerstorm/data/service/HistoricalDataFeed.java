@@ -26,9 +26,9 @@ import com.google.common.eventbus.Subscribe;
 
 import io.tickerstorm.common.data.eventbus.Destinations;
 import io.tickerstorm.common.data.query.HistoricalFeedQuery;
-import io.tickerstorm.common.entity.Notification;
 import io.tickerstorm.common.entity.Candle;
 import io.tickerstorm.common.entity.Markers;
+import io.tickerstorm.common.entity.Notification;
 import io.tickerstorm.data.dao.MarketDataDto;
 
 @Repository
@@ -96,7 +96,8 @@ public class HistoricalDataFeed {
       logger.info("Query took " + (System.currentTimeMillis() - startTimer) + "ms to fetch " + dtos.size() + " results.");
 
       Notification marker = new Notification(query.id, query.getStream());
-      marker.addMarker(Markers.QUERY_START.toString());
+      marker.addMarker(Markers.QUERY.toString());
+      marker.addMarker(Markers.START.toString());
       marker.expect = dtos.size();
       notificationBus.post(marker);
 
@@ -108,7 +109,8 @@ public class HistoricalDataFeed {
       });
 
       marker = new Notification(query.id, query.getStream());
-      marker.addMarker(Markers.QUERY_END.toString());
+      marker.addMarker(Markers.QUERY.toString());
+      marker.addMarker(Markers.END.toString());
       marker.expect = 0;
       notificationBus.post(marker);
 

@@ -55,7 +55,7 @@ public class EventBusToJMSBridge {
 
       @Override
       public Message createMessage(Session session) throws JMSException {
-        logger.debug("Dispatching " + data.toString() + " to destination " + destination + " from service " + source + ", " + bus.identifier());
+        logger.trace("Dispatching " + data.toString() + " to destination " + destination + " from service " + source + ", " + bus.identifier());
         Message m = session.createObjectMessage(data);
         m.setStringProperty("source", source);
         return m;

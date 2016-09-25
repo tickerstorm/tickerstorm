@@ -8,9 +8,8 @@
 	<modules>
 		<module>tickerstorm-data</module>
 		<module>tickerstorm-strategy</module>
-		
-		<module>tickerstorm-common</module>
-		<module>tickerstorm-integration-test</module>
+		<module>tickerstorm-client</module>
+		<module>tickerstorm-common</module>		
 	</modules>
 	<dependencies>
 		<dependency>
@@ -103,7 +102,7 @@
 			</dependency>
 			<dependency>
 				<groupId>io.tickerstorm</groupId>
-				<artifactId>strategy</artifactId>
+				<artifactId>strategy-service</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 			<dependency>

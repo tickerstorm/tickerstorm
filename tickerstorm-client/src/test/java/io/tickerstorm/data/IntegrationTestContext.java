@@ -1,4 +1,4 @@
-package io.tickerstorm;
+package io.tickerstorm.data;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -12,6 +12,7 @@ import org.springframework.jms.core.JmsTemplate;
 
 import com.google.common.eventbus.EventBus;
 
+import io.tickerstorm.ServiceLauncher;
 import io.tickerstorm.common.EventBusContext;
 import io.tickerstorm.common.JmsEventBusContext;
 import io.tickerstorm.common.data.eventbus.Destinations;
@@ -30,9 +31,10 @@ public class IntegrationTestContext {
   }
 
   @PostConstruct
-  public void init() {
-    ServiceLauncher.launchMarketDataService();
-    ServiceLauncher.launchStrategyService();
+  public void init() throws Exception {
+    ServiceLauncher.launchMarketDataService(true, 4000, "/tmp/tickerstorm/data-service/monitor");
+    ServiceLauncher.launchStrategyService(true, 4001);
+    Thread.sleep(5000);
   }
 
   @PreDestroy

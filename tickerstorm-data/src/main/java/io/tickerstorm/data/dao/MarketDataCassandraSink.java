@@ -89,7 +89,8 @@ public class MarketDataCassandraSink extends BaseCassandraSink<MarketDataDto> {
 
         for (Entry<String, Integer> e : streamCounts.entrySet()) {
           Notification marker = new Notification(e.getKey());
-          marker.addMarker(Markers.MARKET_DATA_SAVED.toString());
+          marker.addMarker(Markers.MARKET_DATA.toString());
+          marker.addMarker(Markers.SAVED.toString());
           marker.expect = e.getValue();
           notificationsBus.post(marker);
         }

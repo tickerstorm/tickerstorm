@@ -18,32 +18,32 @@ public class CacheManager {
 
   public static synchronized Cache getInstance(String cache) {
 
-    if (cacheManager == null || !cacheManager.cacheExists(cache)) {
+    if (cacheManager == null || !cacheManager.cacheExists(cache.toLowerCase())) {
       CacheConfiguration config = new CacheConfiguration().eternal(false).maxBytesLocalHeap(100, MemoryUnit.MEGABYTES)
           .memoryStoreEvictionPolicy(MemoryStoreEvictionPolicy.FIFO).persistence(new PersistenceConfiguration().strategy(Strategy.NONE));
-      config.setName(cache);
+      config.setName(cache.toLowerCase());
       cacheManager = net.sf.ehcache.CacheManager.create();
       cacheManager.addCache(new Cache(config));
     }
 
-    return cacheManager.getCache(cache);
+    return cacheManager.getCache(cache.toLowerCase());
   }
 
   public static synchronized void destroyInstance(String cache) {
-    cacheManager.removeCache(cache);
+    cacheManager.removeCache(cache.toLowerCase());
   }
 
   public static SynchronizedIndexedTreeMap<Field<?>> getFieldCache(Field<?> f) {
-    return (SynchronizedIndexedTreeMap) CacheManager.getInstance(f.getStream()).get(CacheManager.buildKey(f).toString()).getObjectValue();
+    return (SynchronizedIndexedTreeMap) CacheManager.getInstance(f.getStream().toLowerCase()).get(CacheManager.buildKey(f).toString()).getObjectValue();
   }
 
   public static void put(Field<?> f, int maxSize) {
 
     final String key = CacheManager.buildKey(f).toString();
-    Element e = CacheManager.getInstance(f.getStream()).putIfAbsent(new Element(key, new SynchronizedIndexedTreeMap<Field<?>>(Field.SORT_BY_INSTANTS, maxSize)));
+    Element e = CacheManager.getInstance(f.getStream().toLowerCase()).putIfAbsent(new Element(key, new SynchronizedIndexedTreeMap<Field<?>>(Field.SORT_BY_INSTANTS, maxSize)));
 
     if (e == null) {
-      e = CacheManager.getInstance(f.getStream()).get(key);
+      e = CacheManager.getInstance(f.getStream().toLowerCase()).get(key);
     }
 
     ((SynchronizedIndexedTreeMap<Field<?>>) e.getObjectValue()).put(f.getTimestamp(), f);

@@ -44,6 +44,16 @@ public class ModelDataDao {
     return cassandra.count(ModelDataDto.class);
   }
 
+  public long count(String stream) {
+    Select select = QueryBuilder.select("stream", "date").from("modeldata");
+    select.where(QueryBuilder.eq("stream", stream));
+    
+    logger.debug("Executing " + select.toString());
+    
+    ResultSet result = cassandra.getSession().execute(select.toString());
+    return result.all().size();    
+  }
+
   public Stream<ModelDataDto> findAll(String stream) {
 
     BigInteger until = new BigInteger(ModelDataDto.dateFormatter.format(Instant.now()));

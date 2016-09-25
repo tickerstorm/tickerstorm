@@ -41,6 +41,10 @@
 			<version>6.9.6</version>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>org.yaml</groupId>
+			<artifactId>snakeyaml</artifactId>
+		</dependency>
 	</dependencies>
 	<!--  build>
 		<plugins>

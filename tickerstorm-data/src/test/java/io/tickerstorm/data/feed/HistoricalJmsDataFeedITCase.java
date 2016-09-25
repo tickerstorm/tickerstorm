@@ -89,7 +89,7 @@ public class HistoricalJmsDataFeedITCase extends AbstractTestNGSpringContextTest
       }
     });
 
-    Thread.sleep(1000);
+    Thread.sleep(5000);
     assertEquals(count.get(), expCount);
     assertTrue(verified);
 

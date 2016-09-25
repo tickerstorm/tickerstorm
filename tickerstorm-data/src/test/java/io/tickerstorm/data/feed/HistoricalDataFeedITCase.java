@@ -15,7 +15,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.cassandra.core.CassandraOperations;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -25,9 +24,9 @@ import com.google.common.io.Files;
 
 import io.tickerstorm.common.data.eventbus.Destinations;
 import io.tickerstorm.common.data.query.HistoricalFeedQuery;
-import io.tickerstorm.common.entity.Notification;
 import io.tickerstorm.common.entity.Candle;
 import io.tickerstorm.common.entity.Markers;
+import io.tickerstorm.common.entity.Notification;
 import io.tickerstorm.data.TestMarketDataServiceConfig;
 
 @ContextConfiguration(classes = {TestMarketDataServiceConfig.class})
@@ -99,10 +98,10 @@ public class HistoricalDataFeedITCase extends AbstractTestNGSpringContextTests {
     @Subscribe
     public void onNotification(Notification md) {
 
-      if (md.getMarkers().contains(Markers.QUERY_START.toString()))
+      if (md.getMarkers().contains(Markers.QUERY.toString()) && md.getMarkers().contains(Markers.START.toString()))
         start = (Notification) md;
 
-      if (md.getMarkers().contains(Markers.QUERY_END.toString()))
+      if (md.getMarkers().contains(Markers.QUERY.toString()) && md.getMarkers().contains(Markers.END.toString()))
         end = (Notification) md;
 
     }
