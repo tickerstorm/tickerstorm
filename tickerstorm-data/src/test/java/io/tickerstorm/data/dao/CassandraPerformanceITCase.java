@@ -122,7 +122,7 @@ public class CassandraPerformanceITCase extends AbstractTestNGSpringContextTests
         Notification n = (Notification) s;
 
         synchronized (count) {
-          if (n.markers.contains(Markers.MODEL_DATA.toString()) && n.markers.contains(Markers.SAVED.toString())) {
+          if (n.markers.contains(Markers.MODEL_DATA.toString()) && n.markers.contains(Markers.SAVE.toString())) {
             count.addAndGet(n.expect);
           }
         }

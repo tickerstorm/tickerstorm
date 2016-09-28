@@ -99,7 +99,7 @@ public class ModelDataCassandraSink extends BaseCassandraSink<ModelDataDto> {
       ((Set<String>) CacheManager.getInstance(f.getStream()).get(ModelDataExporter.CACHE_KEY_SUFFIX).getObjectValue()).add(f.getName());
     }
 
-    logger.trace("Cached field " + f.getName() + " at " + f.getStream());
+    logger.trace("Cached field " + f.getName() + " for stream " + f.getStream());
   }
 
   @Override
@@ -119,7 +119,8 @@ public class ModelDataCassandraSink extends BaseCassandraSink<ModelDataDto> {
 
         Notification marker = new Notification(e.getKey());
         marker.addMarker(Markers.MODEL_DATA.toString());
-        marker.addMarker(Markers.SAVED.toString());
+        marker.addMarker(Markers.SAVE.toString());
+        marker.addMarker(Markers.SUCCESS.toString());
         marker.expect = e.getValue();
         notificationsBus.post(marker);
 

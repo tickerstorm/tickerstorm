@@ -8,6 +8,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.jms.annotation.EnableJms;
 import org.springframework.jms.core.JmsTemplate;
 
@@ -26,17 +27,22 @@ import io.tickerstorm.service.HeartBeatGenerator;
 @Import({EventBusContext.class, JmsEventBusContext.class})
 public class StrategyServiceApplication {
 
-  @Value("${service.name}")
-  public String SERVICE;
+  @Value("${service.name:strategy-service}")
+  private String SERVICE;
 
   public static final Logger logger = org.slf4j.LoggerFactory.getLogger(StrategyServiceApplication.class);
 
   public static void main(String[] args) throws Exception {
     SpringApplication.run(StrategyServiceApplication.class, args);
   }
-  
+
   @Bean
-  public HeartBeatGenerator generateHeartBeat() {
+  public static PropertySourcesPlaceholderConfigurer buildConfig() {
+    return new PropertySourcesPlaceholderConfigurer();
+  }
+
+  @Bean
+  public HeartBeatGenerator generateStrategyServiceHeartBeat() {
     return new HeartBeatGenerator(SERVICE, 5000);
   }
 

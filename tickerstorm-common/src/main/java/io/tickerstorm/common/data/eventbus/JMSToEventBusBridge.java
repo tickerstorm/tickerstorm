@@ -1,7 +1,5 @@
 package io.tickerstorm.common.data.eventbus;
 
-import java.io.Serializable;
-
 import javax.jms.ObjectMessage;
 
 import org.apache.commons.lang3.StringUtils;
@@ -39,7 +37,15 @@ public class JMSToEventBusBridge {
     this.consumer = consumer;
   }
 
-  @JmsListener(destination = Destinations.TOPIC_COMMANDS)
+  @JmsListener(destination = Destinations.QUEUE_REALTIME_BROKERFEED, concurrency = "1-4")
+  public void onBrokerFeedMessage(@Payload MarketData md, @Header("source") String source) {
+    if (realtimeBus != null && (StringUtils.isEmpty(source) || !source.equalsIgnoreCase(consumer))) {
+      logger.trace(consumer + " received market data " + md.toString());
+      brokerFeedBus.post(md);
+    }
+  }
+
+  @JmsListener(destination = Destinations.TOPIC_COMMANDS, concurrency = "1")
   public void onCommandMessage(ObjectMessage md) throws Exception {
     final String source = md.getStringProperty("source");
     final Object o = md.getObject();
@@ -50,23 +56,15 @@ public class JMSToEventBusBridge {
     }
   }
 
-  @JmsListener(destination = Destinations.QUEUE_REALTIME_BROKERFEED)
-  public void onBrokerFeedMessage(@Payload MarketData md, @Header("source") String source) {
-    if (realtimeBus != null && (StringUtils.isEmpty(source) || !source.equalsIgnoreCase(consumer))) {
-      logger.debug(consumer + " received market data " + md.toString());
-      brokerFeedBus.post(md);
-    }
-  }
-
-  @JmsListener(destination = Destinations.TOPIC_REALTIME_MARKETDATA)
+  @JmsListener(destination = Destinations.TOPIC_REALTIME_MARKETDATA, concurrency = "1")
   public void onMessage(@Payload MarketData md, @Header("source") String source) {
     if (realtimeBus != null && (StringUtils.isEmpty(source) || !source.equalsIgnoreCase(consumer))) {
-      logger.debug(consumer + " received market data " + md.toString());
+      logger.trace(consumer + " received market data " + md.toString());
       realtimeBus.post(md);
     }
   }
 
-  @JmsListener(destination = Destinations.QUEUE_MODEL_DATA)
+  @JmsListener(destination = Destinations.QUEUE_MODEL_DATA, concurrency = "1-4")
   public void onMessage(ObjectMessage md, @Header("source") String source) throws Exception {
     final Object o = md.getObject();
     if (modelDataBus != null && (StringUtils.isEmpty(source) || !source.equalsIgnoreCase(consumer))) {
@@ -75,25 +73,27 @@ public class JMSToEventBusBridge {
     }
   }
 
-  @JmsListener(destination = Destinations.QUEUE_RETRO_MODEL_DATA)
-  public void onRetroMessage(@Payload Serializable row, @Header("source") String source) {
+  @JmsListener(destination = Destinations.TOPIC_NOTIFICATIONS, concurrency = "1")
+  public void onNotificationMessage(ObjectMessage md, @Header("source") String source) throws Exception {
+    final Object o = md.getObject();
+    if (notificationBus != null && (StringUtils.isEmpty(source) || !source.equalsIgnoreCase(consumer))) {
+      logger.trace(consumer + " received notification " + o.toString());
+      notificationBus.post(o);
+
+    }
+  }
+
+  @JmsListener(destination = Destinations.QUEUE_RETRO_MODEL_DATA, concurrency = "1-4")
+  public void onRetroMessage(ObjectMessage md, @Header("source") String source) throws Exception {
+    final Object o = md.getObject();
     if (retroModelDataBus != null && (StringUtils.isEmpty(source) || !source.equalsIgnoreCase(consumer))) {
-      logger.trace(consumer + " received retro model data " + row.toString());
-      retroModelDataBus.post(row);
+      logger.trace(consumer + " received retro model data " + o.toString());
+      retroModelDataBus.post(o);
     }
   }
 
   public void setRetroModelDataBus(EventBus retroModelDataBus) {
     this.retroModelDataBus = retroModelDataBus;
-  }
-
-  @JmsListener(destination = Destinations.TOPIC_NOTIFICATIONS)
-  public void onNotificationMessage(@Payload Object md, @Header("source") String source) {
-    if (notificationBus != null && (StringUtils.isEmpty(source) || !source.equalsIgnoreCase(consumer))) {
-      logger.trace(consumer + " received notification " + md.toString());
-      notificationBus.post(md);
-
-    }
   }
 
 

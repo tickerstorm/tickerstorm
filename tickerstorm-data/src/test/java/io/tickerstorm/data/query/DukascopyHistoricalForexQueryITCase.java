@@ -43,7 +43,7 @@ public class DukascopyHistoricalForexQueryITCase extends BaseDataQueryITCase {
 
     Thread.sleep(16000);
 
-    Long daoCount = dao.count();
+    Long daoCount = dao.count("Dukascopy");
     Assert.assertEquals(daoCount, new Long(52860));
     Assert.assertEquals(count.get(), 52860L);
 

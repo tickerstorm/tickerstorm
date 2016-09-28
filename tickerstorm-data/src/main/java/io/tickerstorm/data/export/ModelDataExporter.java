@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -31,6 +32,7 @@ import com.google.common.io.Files;
 import io.tickerstorm.common.cache.CacheManager;
 import io.tickerstorm.common.command.ExportModelDataToCSV;
 import io.tickerstorm.common.data.eventbus.Destinations;
+import io.tickerstorm.common.entity.Markers;
 import io.tickerstorm.common.entity.Notification;
 import io.tickerstorm.data.dao.ModelDataDao;
 import io.tickerstorm.data.dao.ModelDataDto;
@@ -66,27 +68,23 @@ public class ModelDataExporter {
 
   @Subscribe
   public void onCommand(ExportModelDataToCSV command) {
-        
-    if (!CacheManager.getInstance(command.getStream()).isElementInMemory(ModelDataExporter.CACHE_KEY_SUFFIX)) {
-      logger.warn("No header information found to export for stream " + command.getStream());
-      return;
-    }
 
     Element e = CacheManager.getInstance(command.getStream()).get(ModelDataExporter.CACHE_KEY_SUFFIX);
-    Set<String> fieldNames = (Set<String>) e.getObjectValue();
 
-    if (fieldNames.isEmpty()) {
-      logger.warn("No header information found to export for stream " + command.getStream());
-      return;
+    Set<String> fieldNames = new HashSet<>();
+    if (e != null) {
+      fieldNames = (Set<String>) e.getObjectValue();
+      if (fieldNames.isEmpty()) {
+        logger.warn("No header information found to export for stream " + command.getStream());
+        return;
+      }
     }
 
     File file = createTempFile((String) command.config.get(ExportModelDataToCSV.FILE_LOCATION));
-    logger.debug("Found " + fieldNames + " as header columns. Exporting model data to " + file.getAbsolutePath());
-    
+    logger.debug("Found " + fieldNames + " as header columns for stream " + command.getStream() + ". Exporting model data to " + file.getAbsolutePath());
+
     final CellProcessor[] cellProcessor = new CellProcessor[fieldNames.size()];
     Arrays.fill(cellProcessor, new Optional());
-    
-    
 
     try (CsvMapWriter mapWriter = new CsvMapWriter(new FileWriter(file), CsvPreference.STANDARD_PREFERENCE)) {
 
@@ -110,18 +108,28 @@ public class ModelDataExporter {
         }
       });
 
+      logger.info("Exported model data to " + file.getAbsolutePath());
+
+      Notification n = new Notification(command.id, command.getStream());
+      n.addMarker(Markers.FILE.toString());
+      n.addMarker(Markers.SAVE.toString());
+      n.addMarker(Markers.SUCCESS.toString());
+      n.addMarker(Markers.FILE_LOCATION.toString());
+      n.properties.put(Markers.FILE_LOCATION.toString(), file.getAbsolutePath());
+      notificationBus.post(n);
+
     } catch (Exception ex) {
+
+      Notification n = new Notification(command.id, command.getStream());
+      n.addMarker(Markers.FILE.toString());
+      n.addMarker(Markers.SAVE.toString());
+      n.addMarker(Markers.FAILED.toString());
+      n.addMarker(Markers.FILE_LOCATION.toString());
+      n.properties.put(Markers.FILE_LOCATION.toString(), file.getAbsolutePath());
+      notificationBus.post(n);
+
       logger.error(ex.getMessage(), ex);
     }
-
-    logger.info("Exported model data to " + file.getAbsolutePath());
-
-    Notification n = new Notification(command.getStream());
-    n.addMarker(ExportModelDataToCSV.EXPORT_TO_CSV_COMPLETE_MARKER);
-    n.getProperties().put(ExportModelDataToCSV.FILE_LOCATION, file.getAbsolutePath());
-    notificationBus.post(n);
-   
-
   }
 
   private File createTempFile(String locatoion) {

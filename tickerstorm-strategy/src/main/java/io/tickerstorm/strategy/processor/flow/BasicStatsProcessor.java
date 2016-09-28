@@ -66,7 +66,7 @@ public class BasicStatsProcessor extends BaseEventProcessor {
       publish(fs);
 
     gauge.submit(METRIC_TIME_TAKEN, (System.currentTimeMillis() - start));
-    logger.debug("Basic Stats Processor took :" + (System.currentTimeMillis() - start) + "ms");
+    logger.trace("Basic Stats Processor took :" + (System.currentTimeMillis() - start) + "ms");
   }
 
   private SynchronizedDescriptiveStatistics cacheField(Field<?> f, int period) {

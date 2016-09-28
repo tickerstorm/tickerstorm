@@ -54,14 +54,14 @@ public class GoogleDataQueryITCase extends BaseDataQueryITCase {
   @Test
   public void testParseGoogleFile() throws Exception {
 
-    Long daoCount = dao.count();
+    Long daoCount = dao.count("Google");
     Assert.assertEquals(daoCount, new Long(0));
 
     Files.copy(new File("./src/test/resources/data/Google/TOL.csv"), new File(Locations.FILE_DROP_LOCATION + "/Google/TOL.csv"));
 
     Thread.sleep(12000);
 
-    daoCount = dao.count();
+    daoCount = dao.count("Google");
     assertEquals(count.get(), 5792, "Failed message broker count");
     assertEquals(daoCount, new Long(5792), "Failed dao count");
 

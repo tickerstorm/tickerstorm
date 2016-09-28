@@ -74,7 +74,7 @@ public class HistoricalJmsDataFeedITCase extends AbstractTestNGSpringContextTest
 
     long st = System.currentTimeMillis();
 
-    HistoricalFeedQuery query = new HistoricalFeedQuery("google", new String[] {"TOL"});
+    HistoricalFeedQuery query = new HistoricalFeedQuery("google", "google", new String[] {"TOL"});
     query.from = LocalDateTime.of(2015, 6, 10, 0, 0);
     query.until = LocalDateTime.of(2015, 6, 11, 0, 0);
     query.periods.add(Candle.MIN_1_INTERVAL);

@@ -87,7 +87,7 @@ public class HistoricalDataFeed {
 
       Select select = QueryBuilder.select().from(keyspace, "marketdata");
       select.where(QueryBuilder.eq("symbol", s.toLowerCase())).and(QueryBuilder.in("date", dates))
-          .and(QueryBuilder.eq("type", Candle.TYPE.toLowerCase())).and(QueryBuilder.eq("source", query.stream.toLowerCase()))
+          .and(QueryBuilder.eq("type", Candle.TYPE.toLowerCase())).and(QueryBuilder.eq("source", query.source.toLowerCase()))
           .and(QueryBuilder.eq("interval", query.periods.iterator().next()));
 
       logger.debug("Cassandra query: " + select.toString());
@@ -105,6 +105,7 @@ public class HistoricalDataFeed {
       dtos.stream().map(d -> {
         return d.toMarketData(query.getStream());
       }).forEach(m -> {
+        
         realtimeBus.post(m);
       });
 

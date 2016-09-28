@@ -70,7 +70,7 @@ public class MarketDataCassandraSinkITCase extends AbstractTestNGSpringContextTe
 
     Thread.sleep(5000);
 
-    long count = dao.count();
+    long count = dao.count("MarketDataCassandraSinkITCase");
 
     assertEquals(count, 1);
     Assert.assertEquals(listener.count, 1);

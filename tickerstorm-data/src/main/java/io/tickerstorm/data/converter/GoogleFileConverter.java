@@ -62,6 +62,7 @@ public class GoogleFileConverter extends BaseFileConverter implements FileConver
 
         Notification not = new Notification(provider());
         not.addMarker(Markers.FILE.toString());
+        not.addMarker(Markers.INGEST.toString());
         not.addMarker(Markers.START.toString());
         not.addMarker(Markers.FILE_LOCATION.toString());
         not.properties.put(Markers.FILE_LOCATION.toString(), file.getPath());
@@ -75,7 +76,8 @@ public class GoogleFileConverter extends BaseFileConverter implements FileConver
         
         not = new Notification(provider());
         not.addMarker(Markers.FILE.toString());
-        not.addMarker(Markers.INGESTED.toString());
+        not.addMarker(Markers.INGEST.toString());
+        not.addMarker(Markers.SUCCESS.toString());
         not.addMarker(Markers.FILE_LOCATION.toString());
         not.properties.put(Markers.FILE_LOCATION.toString(), file.getPath());
         not.expect = data.length;
@@ -85,6 +87,7 @@ public class GoogleFileConverter extends BaseFileConverter implements FileConver
         
         Notification not = new Notification(provider());
         not.addMarker(Markers.FILE.toString());
+        not.addMarker(Markers.INGEST.toString());
         not.addMarker(Markers.FAILED.toString());
         not.addMarker(Markers.FILE_LOCATION.toString());
         not.properties.put(Markers.FILE_LOCATION.toString(), file.getPath());

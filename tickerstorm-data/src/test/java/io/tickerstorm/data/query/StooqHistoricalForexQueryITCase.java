@@ -55,7 +55,7 @@ public class StooqHistoricalForexQueryITCase extends BaseDataQueryITCase {
 
     Thread.sleep(20000);
 
-    Long count = dao.count();
+    Long count = dao.count("Stooq");
     assertTrue(count > 0);
 
   }

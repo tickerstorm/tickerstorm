@@ -71,7 +71,7 @@ public class NumericChangeProcessor extends BaseEventProcessor {
 
     if (!fs.isEmpty()) {
       publish(fs);
-      logger.debug("Numberic Change Processor took :" + (System.currentTimeMillis() - start) + "ms to compute " + fs.size());
+      logger.trace("Numberic Change Processor took :" + (System.currentTimeMillis() - start) + "ms to compute " + fs.size());
     }
 
     gauge.submit(METRIC_TIME_TAKEN, (System.currentTimeMillis() - start));

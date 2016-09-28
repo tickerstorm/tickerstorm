@@ -17,7 +17,6 @@ import org.springframework.jms.annotation.EnableJms;
 import org.springframework.jms.config.DefaultJmsListenerContainerFactory;
 import org.springframework.jms.connection.CachingConnectionFactory;
 import org.springframework.jms.core.JmsTemplate;
-import org.springframework.jms.listener.DefaultMessageListenerContainer;
 import org.springframework.util.ErrorHandler;
 
 import com.google.common.base.Throwables;
@@ -74,11 +73,11 @@ public class JmsEventBusContext {
 
       }
     });
-    factory.setCacheLevel(DefaultMessageListenerContainer.CACHE_AUTO);
+    
     factory.setDestinationResolver(new ByDestinationNameJmsResolver());
     factory.setSessionAcknowledgeMode(Session.AUTO_ACKNOWLEDGE);
-    factory.setMaxMessagesPerTask(-1);
-    factory.setConcurrency("1-4");
+    //factory.setMaxMessagesPerTask(-1);
+    //factory.setConcurrency("1-4");
     return factory;
   }
 

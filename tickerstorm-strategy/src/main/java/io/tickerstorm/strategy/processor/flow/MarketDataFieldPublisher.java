@@ -17,7 +17,7 @@ public class MarketDataFieldPublisher extends BaseEventProcessor {
 
     long start = System.currentTimeMillis();
     publish(md.getFields());
-    logger.debug("Market Data Field Processor took :" + (System.currentTimeMillis() - start) + "ms");
+    logger.trace("Market Data Field Processor took :" + (System.currentTimeMillis() - start) + "ms");
     gauge.submit(METRIC_TIME_TAKEN, (System.currentTimeMillis() - start));
 
   }

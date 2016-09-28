@@ -7,12 +7,10 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.jms.core.JmsTemplate;
 
-import com.google.common.base.Throwables;
 import com.google.common.eventbus.EventBus;
 
 import io.tickerstorm.ServiceLauncher;
@@ -35,8 +33,8 @@ public class IntegrationTestContext implements ApplicationListener<ContextRefres
 
   @PreDestroy
   public void destroy() {
-    ServiceLauncher.killMarketDataService();
-    ServiceLauncher.killStrategyService();
+//    ServiceLauncher.killMarketDataService();
+//    ServiceLauncher.killStrategyService();
   }
 
   // SENDERS
@@ -66,13 +64,6 @@ public class IntegrationTestContext implements ApplicationListener<ContextRefres
   public void onApplicationEvent(ContextRefreshedEvent arg0) {
     ServiceLauncher.launchMarketDataService(true, 4000, "/tmp/tickerstorm/data-service/monitor");
     ServiceLauncher.launchStrategyService(true, 4001);
-
-    try {
-      Thread.sleep(5000);
-    } catch (Exception e) {
-      Throwables.propagate(e);
-    }
-
   }
 
 }

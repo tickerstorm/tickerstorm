@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.Date;
 
+import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 import org.springframework.cassandra.core.Ordering;
 import org.springframework.cassandra.core.PrimaryKeyType;
 import org.springframework.data.cassandra.mapping.PrimaryKeyClass;
@@ -150,5 +151,10 @@ public class MarketDataPrimaryKey implements Serializable {
 
   public void setType(String type) {
     this.type = type;
+  }
+  
+  @Override
+  public String toString() {
+    return ReflectionToStringBuilder.toString(this);
   }
 }

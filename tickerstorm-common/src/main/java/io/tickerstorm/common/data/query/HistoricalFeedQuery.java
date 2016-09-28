@@ -21,15 +21,22 @@ public class HistoricalFeedQuery implements DataFeedQuery {
   public LocalDateTime until = LocalDateTime.now(ZoneId.of("UTC"));
   public final String id = UUID.randomUUID().toString();
   public Set<String> periods = Sets.newHashSet(Candle.MIN_1_INTERVAL);
+  
+  //Stream the data will be streamed as
   public String stream;
+  
+  //Stream the data is being sourced from
+  public String source;
 
-  public HistoricalFeedQuery(String stream) {
+  public HistoricalFeedQuery(String stream, String source) {
     this.stream = stream;
+    this.source = source;
   }
 
-  public HistoricalFeedQuery(String stream, String... symbols) {
+  public HistoricalFeedQuery(String stream, String source, String... symbols) {
     this.symbols.addAll(Sets.newHashSet(symbols));
     this.stream = stream;
+    this.source = source;
   }
 
   public String getStream() {

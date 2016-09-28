@@ -15,15 +15,17 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Repository;
 
+import com.datastax.driver.core.exceptions.InvalidTypeException;
+import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
 import io.tickerstorm.common.data.eventbus.Destinations;
-import io.tickerstorm.common.entity.Notification;
 import io.tickerstorm.common.entity.Markers;
 import io.tickerstorm.common.entity.MarketData;
+import io.tickerstorm.common.entity.Notification;
 
 @DependsOn(value = {"cassandraSetup"})
 @Repository
@@ -66,6 +68,8 @@ public class MarketDataCassandraSink extends BaseCassandraSink<MarketDataDto> {
     if (null == data || data.isEmpty())
       return;
 
+    List<List<?>> rows = new ArrayList<>();
+
     try {
       synchronized (data) {
 
@@ -76,7 +80,6 @@ public class MarketDataCassandraSink extends BaseCassandraSink<MarketDataDto> {
             + "(symbol, date, type, source, interval, timestamp, hour, min, ask, asksize, bid, bidsize, close, high, low, open, price, properties, quantity, volume) "
             + "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);";
 
-        List<List<?>> rows = new ArrayList<>();
         data.stream().forEach(r -> {
           rows.add(Lists.newArrayList(r.primarykey.symbol, r.primarykey.date, r.primarykey.type, r.primarykey.stream, r.primarykey.interval,
               r.primarykey.timestamp, r.primarykey.hour, r.primarykey.min, r.ask, r.askSize, r.bid, r.bidSize, r.close, r.high, r.low,
@@ -90,12 +93,20 @@ public class MarketDataCassandraSink extends BaseCassandraSink<MarketDataDto> {
         for (Entry<String, Integer> e : streamCounts.entrySet()) {
           Notification marker = new Notification(e.getKey());
           marker.addMarker(Markers.MARKET_DATA.toString());
-          marker.addMarker(Markers.SAVED.toString());
+          marker.addMarker(Markers.SAVE.toString());
+          marker.addMarker(Markers.SUCCESS.toString());
           marker.expect = e.getValue();
           notificationsBus.post(marker);
         }
       }
 
+    } catch (InvalidTypeException e) {
+
+      for (List<?> md : rows) {
+        logger.debug(Joiner.on(", ").skipNulls().join(md.iterator()));
+      }
+
+      logger.error(e.getMessage(), e);
     } catch (Exception e) {
       logger.error(e.getMessage(), e);
     }

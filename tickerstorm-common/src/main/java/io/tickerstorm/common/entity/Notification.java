@@ -108,8 +108,17 @@ public class Notification implements Event, Marker, Stream, Serializable {
     return TYPE;
   }
 
+  public boolean is(String marker) {
+    return markers.contains(marker);
+  }
+
   @Override
   public Instant getTimestamp() {
     return eventTime;
+  }
+  
+  @Override
+  public String toString() {
+    return TYPE + ", stream: " + stream + ", " + markers.toString();
   }
 }

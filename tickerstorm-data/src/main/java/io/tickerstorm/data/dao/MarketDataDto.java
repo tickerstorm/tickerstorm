@@ -10,6 +10,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 import org.springframework.data.cassandra.mapping.Table;
 
 import com.google.common.base.Throwables;
@@ -200,17 +201,17 @@ public class MarketDataDto implements Serializable {
     try {
       if (Candle.TYPE.equals(primarykey.type)) {
 
-        c = new Candle(this.primarykey.symbol, this.primarykey.stream, this.primarykey.timestamp.toInstant(), this.open, this.close,
+        c = new Candle(this.primarykey.symbol, stream, this.primarykey.timestamp.toInstant(), this.open, this.close,
             this.high, this.low, this.primarykey.interval, this.volume.intValue());
 
       } else if (Quote.TYPE.equals(primarykey.type)) {
 
-        c = new Quote(this.primarykey.symbol, this.primarykey.stream, this.primarykey.timestamp.toInstant(), this.ask,
+        c = new Quote(this.primarykey.symbol, stream, this.primarykey.timestamp.toInstant(), this.ask,
             this.askSize.intValue(), this.bid, this.bidSize.intValue());
 
       } else if (Tick.TYPE.equals(primarykey.type)) {
 
-        c = new Tick(this.primarykey.symbol, this.primarykey.stream, this.primarykey.timestamp.toInstant(), this.price, this.quantity);
+        c = new Tick(this.primarykey.symbol, stream, this.primarykey.timestamp.toInstant(), this.price, this.quantity);
 
       }
 
@@ -220,6 +221,11 @@ public class MarketDataDto implements Serializable {
 
     return c;
 
+  }
+
+  @Override
+  public String toString() {
+    return ReflectionToStringBuilder.toString(this);
   }
 
 }

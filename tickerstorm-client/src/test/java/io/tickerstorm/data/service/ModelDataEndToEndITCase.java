@@ -117,7 +117,7 @@ public class ModelDataEndToEndITCase extends AbstractTestNGSpringContextTests {
     @Subscribe
     public void onData(Notification marker) throws Exception {
       if ("google".equals(marker.stream) && marker.markers.contains(Markers.MARKET_DATA.toString())
-          && marker.markers.contains(Markers.SAVED.toString())) {
+          && marker.markers.contains(Markers.SAVE.toString())) {
         Assert.assertEquals(new Integer(1), marker.expect);
         result.set(true);
       }
@@ -156,7 +156,7 @@ public class ModelDataEndToEndITCase extends AbstractTestNGSpringContextTests {
     public void onData(Notification marker) throws Exception {
 
       if (s.stream().equals(marker.stream) && marker.markers.contains(Markers.MODEL_DATA.toString())
-          && marker.markers.contains(Markers.SAVED.toString())) {
+          && marker.markers.contains(Markers.SAVE.toString())) {
 
         Assert.assertTrue(marker.expect > 0);
 

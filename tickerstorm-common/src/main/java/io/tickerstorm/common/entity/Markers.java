@@ -10,11 +10,11 @@ public enum Markers {
 
   FILE("file"),
 
-  INGESTED("ingested"),
+  INGEST("ingested"),
   
   FILE_LOCATION("file_location"),
 
-  SAVED("saved"),
+  SAVE("save"),
 
   CREATED("created"),
 
@@ -24,7 +24,9 @@ public enum Markers {
 
   START("start"),
 
-  FAILED("failed");
+  FAILED("failed"),
+  
+  SUCCESS("success");
 
 
   public String marker;

@@ -10,6 +10,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.ImportResource;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.data.cassandra.repository.config.EnableCassandraRepositories;
 import org.springframework.jms.annotation.EnableJms;
 import org.springframework.jms.core.JmsTemplate;
@@ -33,18 +35,24 @@ import io.tickerstorm.service.HeartBeatGenerator;
 @EnableCassandraRepositories(basePackageClasses = {MarketDataDao.class, ModelDataDao.class})
 @ImportResource(value = {"classpath:/META-INF/spring/cassandra-beans.xml"})
 @ComponentScan(basePackages = {"io.tickerstorm.data"})
+@PropertySource({"classpath:/default.properties"})
 @Import({EventBusContext.class, JmsEventBusContext.class})
 public class MarketDataApplication {
 
-  @Value("${service.name}")
+  @Value("${service.name:data-service}")
   private String SERVICE;
 
   public static void main(String[] args) throws Exception {
     SpringApplication.run(MarketDataApplication.class, args);
-  }
-
+  }  
+  
   @Bean
-  public HeartBeatGenerator generateHeartBeat() {
+  public static PropertySourcesPlaceholderConfigurer buildConfig() {
+    return new PropertySourcesPlaceholderConfigurer();
+  }
+  
+  @Bean
+  public HeartBeatGenerator generateDataServiceHeartBeat() {
     return new HeartBeatGenerator(SERVICE, 5000);
   }
 

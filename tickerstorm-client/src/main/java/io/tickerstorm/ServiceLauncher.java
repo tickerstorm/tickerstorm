@@ -1,6 +1,9 @@
 package io.tickerstorm;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.net.DatagramSocket;
+import java.net.ServerSocket;
 import java.util.List;
 import java.util.concurrent.Executors;
 
@@ -30,6 +33,11 @@ public class ServiceLauncher {
       @Override
       public void run() {
 
+        if (debug && !available(port)) {
+          logger.warn("Unable to start market data service, port " + port + " already taken. Serivce is probably running.");
+          return;
+        }
+
         List<String> commands = Lists.newArrayList("/usr/bin/java", "-jar");
 
         if (debug) {
@@ -45,7 +53,7 @@ public class ServiceLauncher {
         logger.info("Starting market data service using command " + commands.toString());
 
         ProcessBuilder builder = new ProcessBuilder(commands);
-        builder.redirectErrorStream(true);
+        //builder.redirectErrorStream(true);
 
         try {
           marketDataShell = builder.start();
@@ -55,6 +63,8 @@ public class ServiceLauncher {
           IOUtils.copy(shellIn, System.out);
 
         } catch (Exception e) {
+          // TODO: handle exception
+        } catch (Error e) {
           // TODO: handle exception
         }
       }
@@ -69,7 +79,7 @@ public class ServiceLauncher {
       if (marketDataShell != null && marketDataShell.isAlive()) {
         marketDataShell.destroyForcibly();
         int shellExitStatus = marketDataShell.waitFor();
-        System.out.println("Exit status" + shellExitStatus);
+        logger.info("Exit status" + shellExitStatus);
         marketDataShell.getInputStream().close();
       }
     } catch (Exception e) {
@@ -82,7 +92,7 @@ public class ServiceLauncher {
       if (strategyShell != null && strategyShell.isAlive()) {
         strategyShell.destroyForcibly();
         int shellExitStatus = strategyShell.waitFor();
-        System.out.println("Exit status" + shellExitStatus);
+        logger.info("Exit status" + shellExitStatus);
         strategyShell.getInputStream().close();
       }
     } catch (Exception e) {
@@ -94,6 +104,11 @@ public class ServiceLauncher {
     Runnable run = new Runnable() {
       @Override
       public void run() {
+
+        if (debug && !available(port)) {
+          logger.warn("Unable to start strategy service, port " + port + " already taken. Serivce is probably running.");
+          return;
+        }
 
         List<String> commands = Lists.newArrayList("/usr/bin/java", "-jar");
 
@@ -107,7 +122,7 @@ public class ServiceLauncher {
         logger.info("Starting strategy service using command " + commands.toString());
 
         ProcessBuilder builder = new ProcessBuilder(commands);
-        builder.redirectErrorStream(true);
+        //builder.redirectErrorStream(true);
 
         try {
           strategyShell = builder.start();
@@ -117,6 +132,8 @@ public class ServiceLauncher {
           IOUtils.copy(shellIn, System.out);
 
         } catch (Exception e) {
+          // TODO: handle exception
+        } catch (Error e) {
           // TODO: handle exception
         }
       }
@@ -131,5 +148,33 @@ public class ServiceLauncher {
     launchMarketDataService(false, 0, "/tmp/tickerstorm/data-service/monitor");
     launchStrategyService(false, 0);
 
+  }
+
+  private static boolean available(int port) {
+
+    ServerSocket ss = null;
+    DatagramSocket ds = null;
+    try {
+      ss = new ServerSocket(port);
+      ss.setReuseAddress(true);
+      ds = new DatagramSocket(port);
+      ds.setReuseAddress(true);
+      return true;
+    } catch (IOException e) {
+    } finally {
+      if (ds != null) {
+        ds.close();
+      }
+
+      if (ss != null) {
+        try {
+          ss.close();
+        } catch (IOException e) {
+          /* should not be thrown */
+        }
+      }
+    }
+
+    return false;
   }
 }

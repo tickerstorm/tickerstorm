@@ -34,6 +34,16 @@ public class MarketDataDao {
     return cassandra.count(MarketDataDto.class);
   }
 
+  public long count(String stream) {
+    Select select = QueryBuilder.select("symbol", "date").distinct().from("marketdata");
+    select.where(QueryBuilder.eq("source", stream.toLowerCase()));
+
+    logger.debug("Select " + select.toString());
+
+    ResultSet result = cassandra.getSession().execute(select.toString());
+    return result.all().size();
+  }
+
   public Stream<MarketDataDto> findAll(String stream) {
 
     BigInteger until = new BigInteger(ModelDataDto.dateFormatter.format(Instant.now()));

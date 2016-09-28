@@ -20,4 +20,9 @@ public class HeartBeat implements Serializable {
     return timestamp;
   }
 
+  @Override
+  public String toString() {
+    return "Heartbeat from " + service;
+  }
+
 }

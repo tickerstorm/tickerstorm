@@ -3,6 +3,8 @@ package io.tickerstorm.service;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import javax.annotation.PreDestroy;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,11 +39,17 @@ public class HeartBeatGenerator {
     timer.scheduleAtFixedRate(new HeartBeatTask(), 0, interval);
   }
 
+  @PreDestroy
+  public void destroy() {
+    timer.purge();
+    timer.cancel();
+  }
+
   private class HeartBeatTask extends TimerTask {
 
     @Override
     public void run() {
-      logger.debug(serviceName + " sending heartbeat");
+      logger.trace(serviceName + " sending heartbeat");
       notifications.post(new HeartBeat(serviceName));
     }
 
