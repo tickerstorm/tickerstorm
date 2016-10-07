@@ -1,4 +1,4 @@
-package io.tickerstorm.common.data.query;
+package io.tickerstorm.common.data.converter;
 
 import java.util.Map;
 

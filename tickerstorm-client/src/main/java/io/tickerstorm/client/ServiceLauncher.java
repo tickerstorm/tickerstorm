@@ -1,4 +1,4 @@
-package io.tickerstorm;
+package io.tickerstorm.client;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,7 +26,7 @@ public class ServiceLauncher {
       "/home/kkarski/.m2/repository/io/tickerstorm/data-service/1.0.0-SNAPSHOT/data-service-1.0.0-SNAPSHOT-exec.jar";
   private static String STRATEGY_SERVICE_JAR =
       "/home/kkarski/.m2/repository/io/tickerstorm/strategy-service/1.0.0-SNAPSHOT/strategy-service-1.0.0-SNAPSHOT-exec.jar";
-
+  
   public static void launchMarketDataService(boolean debug, int port, final String monitorPath) {
 
     Runnable run = new Runnable() {

@@ -2,6 +2,7 @@ package io.tickerstorm.data;
 
 import java.util.concurrent.Executor;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
@@ -14,6 +15,7 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.data.cassandra.repository.config.EnableCassandraRepositories;
 import org.springframework.jms.annotation.EnableJms;
+import org.springframework.jms.config.JmsListenerContainerFactory;
 import org.springframework.jms.core.JmsTemplate;
 
 import com.google.common.eventbus.AsyncEventBus;
@@ -21,11 +23,11 @@ import com.google.common.eventbus.EventBus;
 
 import io.tickerstorm.common.EventBusContext;
 import io.tickerstorm.common.JmsEventBusContext;
-import io.tickerstorm.common.data.eventbus.Destinations;
-import io.tickerstorm.common.data.eventbus.EventBusToEventBusBridge;
-import io.tickerstorm.common.data.eventbus.EventBusToJMSBridge;
-import io.tickerstorm.common.data.eventbus.JMSToEventBusBridge;
 import io.tickerstorm.common.entity.MarketData;
+import io.tickerstorm.common.eventbus.Destinations;
+import io.tickerstorm.common.eventbus.EventBusToEventBusBridge;
+import io.tickerstorm.common.eventbus.EventBusToJMSBridge;
+import io.tickerstorm.common.eventbus.JMSToEventBusBridge;
 import io.tickerstorm.data.dao.MarketDataDao;
 import io.tickerstorm.data.dao.ModelDataDao;
 import io.tickerstorm.service.HeartBeatGenerator;
@@ -42,15 +44,21 @@ public class MarketDataApplication {
   @Value("${service.name:data-service}")
   private String SERVICE;
 
+  @Autowired
+  private JMSToEventBusBridge jmsBridge;
+
+  @Autowired
+  private JmsListenerContainerFactory containerFactory;
+
   public static void main(String[] args) throws Exception {
     SpringApplication.run(MarketDataApplication.class, args);
-  }  
-  
+  }
+
   @Bean
   public static PropertySourcesPlaceholderConfigurer buildConfig() {
     return new PropertySourcesPlaceholderConfigurer();
   }
-  
+
   @Bean
   public HeartBeatGenerator generateDataServiceHeartBeat() {
     return new HeartBeatGenerator(SERVICE, 5000);
@@ -113,4 +121,6 @@ public class MarketDataApplication {
     bridge.brokerFeedBus = brokerFeedBus;
     return bridge;
   }
+
+
 }

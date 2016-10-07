@@ -10,6 +10,8 @@ import net.sf.ehcache.config.CacheConfiguration;
 import net.sf.ehcache.config.MemoryUnit;
 import net.sf.ehcache.config.PersistenceConfiguration;
 import net.sf.ehcache.config.PersistenceConfiguration.Strategy;
+import net.sf.ehcache.config.SizeOfPolicyConfiguration;
+import net.sf.ehcache.config.SizeOfPolicyConfiguration.MaxDepthExceededBehavior;
 import net.sf.ehcache.store.MemoryStoreEvictionPolicy;
 
 public class CacheManager {
@@ -20,10 +22,12 @@ public class CacheManager {
 
     if (cacheManager == null || !cacheManager.cacheExists(cache.toLowerCase())) {
       CacheConfiguration config = new CacheConfiguration().eternal(false).maxBytesLocalHeap(100, MemoryUnit.MEGABYTES)
+          .sizeOfPolicy(new SizeOfPolicyConfiguration().maxDepth(1000).maxDepthExceededBehavior(MaxDepthExceededBehavior.ABORT))
           .memoryStoreEvictionPolicy(MemoryStoreEvictionPolicy.FIFO).persistence(new PersistenceConfiguration().strategy(Strategy.NONE));
       config.setName(cache.toLowerCase());
       cacheManager = net.sf.ehcache.CacheManager.create();
       cacheManager.addCache(new Cache(config));
+
     }
 
     return cacheManager.getCache(cache.toLowerCase());
@@ -34,13 +38,15 @@ public class CacheManager {
   }
 
   public static SynchronizedIndexedTreeMap<Field<?>> getFieldCache(Field<?> f) {
-    return (SynchronizedIndexedTreeMap) CacheManager.getInstance(f.getStream().toLowerCase()).get(CacheManager.buildKey(f).toString()).getObjectValue();
+    return (SynchronizedIndexedTreeMap) CacheManager.getInstance(f.getStream().toLowerCase()).get(CacheManager.buildKey(f).toString())
+        .getObjectValue();
   }
 
   public static void put(Field<?> f, int maxSize) {
 
     final String key = CacheManager.buildKey(f).toString();
-    Element e = CacheManager.getInstance(f.getStream().toLowerCase()).putIfAbsent(new Element(key, new SynchronizedIndexedTreeMap<Field<?>>(Field.SORT_BY_INSTANTS, maxSize)));
+    Element e = CacheManager.getInstance(f.getStream().toLowerCase())
+        .putIfAbsent(new Element(key, new SynchronizedIndexedTreeMap<Field<?>>(Field.SORT_BY_INSTANTS, maxSize)));
 
     if (e == null) {
       e = CacheManager.getInstance(f.getStream().toLowerCase()).get(key);

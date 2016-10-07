@@ -16,9 +16,9 @@ import com.google.common.eventbus.EventBus;
 
 import io.tickerstorm.common.EventBusContext;
 import io.tickerstorm.common.JmsEventBusContext;
-import io.tickerstorm.common.data.eventbus.Destinations;
-import io.tickerstorm.common.data.eventbus.EventBusToJMSBridge;
-import io.tickerstorm.common.data.eventbus.JMSToEventBusBridge;
+import io.tickerstorm.common.eventbus.Destinations;
+import io.tickerstorm.common.eventbus.EventBusToJMSBridge;
+import io.tickerstorm.common.eventbus.JMSToEventBusBridge;
 import io.tickerstorm.service.HeartBeatGenerator;
 
 @EnableJms
@@ -31,6 +31,8 @@ public class StrategyServiceApplication {
   private String SERVICE;
 
   public static final Logger logger = org.slf4j.LoggerFactory.getLogger(StrategyServiceApplication.class);
+
+  private JMSToEventBusBridge jmsBridge;
 
   public static void main(String[] args) throws Exception {
     SpringApplication.run(StrategyServiceApplication.class, args);
@@ -77,4 +79,6 @@ public class StrategyServiceApplication {
   public EventBus buildEventProcessorBus() {
     return new EventBus("processorEventBus");
   }
+
+
 }

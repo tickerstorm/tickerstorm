@@ -1,8 +1,5 @@
 package io.tickerstorm.client;
 
-import javax.jms.ConnectionFactory;
-import javax.jms.Session;
-
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.SpringApplication;
@@ -19,24 +16,23 @@ import com.google.common.eventbus.EventBus;
 
 import io.tickerstorm.common.EventBusContext;
 import io.tickerstorm.common.JmsEventBusContext;
-import io.tickerstorm.common.data.eventbus.ByDestinationNameJmsResolver;
-import io.tickerstorm.common.data.eventbus.Destinations;
-import io.tickerstorm.common.data.eventbus.EventBusToJMSBridge;
-import io.tickerstorm.common.data.eventbus.JMSToEventBusBridge;
+import io.tickerstorm.common.eventbus.Destinations;
+import io.tickerstorm.common.eventbus.EventBusToJMSBridge;
+import io.tickerstorm.common.eventbus.JMSToEventBusBridge;
 
 @EnableJms
 @SpringBootApplication
 @ComponentScan(basePackages = {"io.tickerstorm.client"})
 @PropertySource({"classpath:default.properties"})
 @Import({EventBusContext.class, JmsEventBusContext.class})
-public class BacktestRunnerClientContext {
+public class TickerStormClientContext {
 
-  public static final Logger logger = org.slf4j.LoggerFactory.getLogger(BacktestRunnerClientContext.class);
+  public static final Logger logger = org.slf4j.LoggerFactory.getLogger(TickerStormClientContext.class);
 
   public static final String SERVICE = "client";
 
   public static void main(String[] args) throws Exception {
-    SpringApplication.run(BacktestRunnerClientContext.class, args);
+    SpringApplication.run(TickerStormClientContext.class, args);
   }
 
   // SENDERS
@@ -47,29 +43,12 @@ public class BacktestRunnerClientContext {
 
   // RECEIVERS
   @Bean
-  public JMSToEventBusBridge buildRealtimeEventBridge(@Qualifier(Destinations.REALTIME_MARKETDATA_BUS) EventBus realtimeBus) {
-    JMSToEventBusBridge bridge = new JMSToEventBusBridge(SERVICE);
+  public JMSToEventBusBridge buildNotificationsEventBridge(@Qualifier(Destinations.NOTIFICATIONS_BUS) EventBus bus,
+      @Qualifier(Destinations.REALTIME_MARKETDATA_BUS) EventBus realtimeBus) {
+    JMSToEventBusBridge bridge = new JMSToEventBusBridge( SERVICE);
+    bridge.notificationBus = bus;
     bridge.realtimeBus = realtimeBus;
     return bridge;
-  }
-
-  @Bean
-  public JMSToEventBusBridge buildNotificationsEventBridge(@Qualifier(Destinations.NOTIFICATIONS_BUS) EventBus bus) {
-    JMSToEventBusBridge bridge = new JMSToEventBusBridge(SERVICE);
-    bridge.notificationBus = bus;
-    return bridge;
-  }
-
-  @Bean
-  public JmsTemplate buildRealtimeJmsTemplate(ConnectionFactory factory) {
-    JmsTemplate template = new JmsTemplate(factory);
-    template.setDestinationResolver(new ByDestinationNameJmsResolver());
-    template.setSessionAcknowledgeMode(Session.CLIENT_ACKNOWLEDGE);
-    template.setTimeToLive(2000);
-    template.setPubSubNoLocal(true);
-    return template;
-
-
   }
 
   @Bean

@@ -20,13 +20,13 @@ import com.google.common.collect.Lists;
 import com.google.common.eventbus.EventBus;
 import com.google.common.io.Files;
 
+import io.tickerstorm.common.command.Markers;
+import io.tickerstorm.common.command.Notification;
 import io.tickerstorm.common.data.converter.BaseFileConverter;
 import io.tickerstorm.common.data.converter.Mode;
-import io.tickerstorm.common.data.eventbus.Destinations;
 import io.tickerstorm.common.entity.Candle;
-import io.tickerstorm.common.entity.Markers;
 import io.tickerstorm.common.entity.MarketData;
-import io.tickerstorm.common.entity.Notification;
+import io.tickerstorm.common.eventbus.Destinations;
 
 @Component
 public class DukascopyFileConverter extends BaseFileConverter {
@@ -120,8 +120,8 @@ public class DukascopyFileConverter extends BaseFileConverter {
         not.addMarker(Markers.FILE.toString());
         not.addMarker(Markers.INGEST.toString());
         not.addMarker(Markers.START.toString());
-        not.addMarker(Markers.FILE_LOCATION.toString());
-        not.properties.put(Markers.FILE_LOCATION.toString(), file.getPath());
+        not.addMarker(Markers.LOCATION.toString());
+        not.properties.put(Markers.LOCATION.toString(), file.getPath());
         notifications.post(not);
 
         logger.info("Converting " + file.getPath());
@@ -135,8 +135,8 @@ public class DukascopyFileConverter extends BaseFileConverter {
         not.addMarker(Markers.FILE.toString());
         not.addMarker(Markers.INGEST.toString());
         not.addMarker(Markers.SUCCESS.toString());
-        not.addMarker(Markers.FILE_LOCATION.toString());
-        not.properties.put(Markers.FILE_LOCATION.toString(), file.getPath());
+        not.addMarker(Markers.LOCATION.toString());
+        not.properties.put(Markers.LOCATION.toString(), file.getPath());
         not.expect = data.length;
         notifications.post(not);
 
@@ -145,8 +145,8 @@ public class DukascopyFileConverter extends BaseFileConverter {
         not.addMarker(Markers.FILE.toString());
         not.addMarker(Markers.INGEST.toString());
         not.addMarker(Markers.FAILED.toString());
-        not.addMarker(Markers.FILE_LOCATION.toString());
-        not.properties.put(Markers.FILE_LOCATION.toString(), file.getPath());
+        not.addMarker(Markers.LOCATION.toString());
+        not.properties.put(Markers.LOCATION.toString(), file.getPath());
 
         logger.error(e.getMessage(), e);
       }

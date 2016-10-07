@@ -49,7 +49,7 @@ public class MarketDataDao {
     BigInteger until = new BigInteger(ModelDataDto.dateFormatter.format(Instant.now()));
 
     String select = "SELECT token(stream, date), stream, date, timestamp, fields FROM " + keyspace + ".modeldata "
-        + "WHERE token(stream, date) <= token('" + stream + "', " + until + ");";
+        + "WHERE token(stream, date) <= token('" + stream.toLowerCase() + "', " + until + ");";
 
     logger.debug("Executing " + select);
 

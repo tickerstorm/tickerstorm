@@ -21,7 +21,7 @@ import org.springframework.util.ErrorHandler;
 
 import com.google.common.base.Throwables;
 
-import io.tickerstorm.common.data.eventbus.ByDestinationNameJmsResolver;
+import io.tickerstorm.common.eventbus.ByDestinationNameJmsResolver;
 
 @EnableJms
 @Configuration
@@ -32,6 +32,9 @@ public class JmsEventBusContext {
 
   @Value("${jms.transport}")
   protected String transport;
+  
+  @Value("${service.name}")
+  protected String serviceName;
 
   @Bean
   public ConnectionFactory buildActiveMQConnectionFactory() throws Exception {
@@ -39,7 +42,8 @@ public class JmsEventBusContext {
     ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(transport);
     connectionFactory.setOptimizeAcknowledge(true);
     connectionFactory.setAlwaysSessionAsync(false);
-    
+    connectionFactory.setClientID(serviceName);
+        
     RedeliveryPolicy policy = connectionFactory.getRedeliveryPolicy();
     policy.setInitialRedeliveryDelay(500);
     policy.setBackOffMultiplier(2);
@@ -76,8 +80,8 @@ public class JmsEventBusContext {
     
     factory.setDestinationResolver(new ByDestinationNameJmsResolver());
     factory.setSessionAcknowledgeMode(Session.AUTO_ACKNOWLEDGE);
-    //factory.setMaxMessagesPerTask(-1);
-    //factory.setConcurrency("1-4");
+    factory.setMaxMessagesPerTask(-1);
+    factory.setClientId(serviceName);
     return factory;
   }
 

@@ -30,10 +30,10 @@ import com.google.common.io.Files;
 
 import io.tickerstorm.common.data.Locations;
 import io.tickerstorm.common.data.converter.DataConverter;
+import io.tickerstorm.common.data.converter.DataQuery;
 import io.tickerstorm.common.data.converter.Mode;
-import io.tickerstorm.common.data.eventbus.Destinations;
-import io.tickerstorm.common.data.query.DataQuery;
 import io.tickerstorm.common.entity.MarketData;
+import io.tickerstorm.common.eventbus.Destinations;
 
 @Service
 public class DataQueryClient {

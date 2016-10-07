@@ -9,8 +9,8 @@ import org.springframework.stereotype.Component;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
-import io.tickerstorm.common.data.eventbus.Destinations;
 import io.tickerstorm.common.entity.Field;
+import io.tickerstorm.common.eventbus.Destinations;
 import io.tickerstorm.strategy.processor.BaseEventProcessor;
 
 /**

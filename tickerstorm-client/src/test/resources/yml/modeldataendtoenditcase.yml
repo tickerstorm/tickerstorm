@@ -1,4 +1,4 @@
-stream: sample
+stream: modeldataendtoenditcase
 transformers: 
   - transformer: numeric-change
     periods: [2]

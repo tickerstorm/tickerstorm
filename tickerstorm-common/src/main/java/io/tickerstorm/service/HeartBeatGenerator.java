@@ -14,7 +14,7 @@ import org.springframework.context.event.EventListener;
 
 import com.google.common.eventbus.EventBus;
 
-import io.tickerstorm.common.data.eventbus.Destinations;
+import io.tickerstorm.common.eventbus.Destinations;
 
 public class HeartBeatGenerator {
 

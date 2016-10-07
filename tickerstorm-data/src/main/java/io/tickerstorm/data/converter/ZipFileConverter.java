@@ -13,8 +13,8 @@ import com.google.common.eventbus.EventBus;
 import com.google.common.io.Files;
 
 import io.tickerstorm.common.data.converter.BaseFileConverter;
-import io.tickerstorm.common.data.eventbus.Destinations;
 import io.tickerstorm.common.entity.MarketData;
+import io.tickerstorm.common.eventbus.Destinations;
 import net.lingala.zip4j.core.ZipFile;
 
 @Component

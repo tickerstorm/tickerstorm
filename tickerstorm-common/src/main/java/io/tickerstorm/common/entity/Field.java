@@ -11,6 +11,8 @@ import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 
+import io.tickerstorm.common.command.Marker;
+
 /**
  *
  * @author kkarski

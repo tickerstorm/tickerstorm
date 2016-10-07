@@ -31,9 +31,9 @@ import com.google.common.io.Files;
 
 import io.tickerstorm.common.cache.CacheManager;
 import io.tickerstorm.common.command.ExportModelDataToCSV;
-import io.tickerstorm.common.data.eventbus.Destinations;
-import io.tickerstorm.common.entity.Markers;
-import io.tickerstorm.common.entity.Notification;
+import io.tickerstorm.common.command.Markers;
+import io.tickerstorm.common.command.Notification;
+import io.tickerstorm.common.eventbus.Destinations;
 import io.tickerstorm.data.dao.ModelDataDao;
 import io.tickerstorm.data.dao.ModelDataDto;
 import net.sf.ehcache.Element;
@@ -80,9 +80,14 @@ public class ModelDataExporter {
       }
     }
 
-    File file = createTempFile((String) command.config.get(ExportModelDataToCSV.FILE_LOCATION));
-    logger.debug("Found " + fieldNames + " as header columns for stream " + command.getStream() + ". Exporting model data to " + file.getAbsolutePath());
+    File file = createTempFile((String) command.config.get(Markers.LOCATION.toString()));
+    logger.debug("Found " + fieldNames + " as header columns for stream " + command.getStream() + ". Exporting model data to "
+        + file.getAbsolutePath());
 
+    Notification n = new Notification(command);
+    n.addMarker(Markers.START.toString());
+    notificationBus.post(n);
+    
     final CellProcessor[] cellProcessor = new CellProcessor[fieldNames.size()];
     Arrays.fill(cellProcessor, new Optional());
 
@@ -93,7 +98,7 @@ public class ModelDataExporter {
       Map<String, Object> row = new HashMap<>();
 
       Stream<ModelDataDto> dtos = cassandraDao
-          .findByStreamAndTimestampIsBetween(command.modelQuery.stream, command.modelQuery.from, command.modelQuery.until).stream();
+          .findByStreamAndTimestampIsBetween(command.modelQuery.getStream(), command.modelQuery.from, command.modelQuery.until).stream();
 
       dtos.forEach(d -> {
 
@@ -110,22 +115,18 @@ public class ModelDataExporter {
 
       logger.info("Exported model data to " + file.getAbsolutePath());
 
-      Notification n = new Notification(command.id, command.getStream());
-      n.addMarker(Markers.FILE.toString());
-      n.addMarker(Markers.SAVE.toString());
+      n = new Notification(command);
       n.addMarker(Markers.SUCCESS.toString());
-      n.addMarker(Markers.FILE_LOCATION.toString());
-      n.properties.put(Markers.FILE_LOCATION.toString(), file.getAbsolutePath());
+      n.addMarker(Markers.LOCATION.toString());
+      n.properties.put(Markers.LOCATION.toString(), file.getAbsolutePath());
       notificationBus.post(n);
 
     } catch (Exception ex) {
 
-      Notification n = new Notification(command.id, command.getStream());
-      n.addMarker(Markers.FILE.toString());
-      n.addMarker(Markers.SAVE.toString());
+      n = new Notification(command);
       n.addMarker(Markers.FAILED.toString());
-      n.addMarker(Markers.FILE_LOCATION.toString());
-      n.properties.put(Markers.FILE_LOCATION.toString(), file.getAbsolutePath());
+      n.addMarker(Markers.LOCATION.toString());
+      n.properties.put(Markers.LOCATION.toString(), file.getAbsolutePath());
       notificationBus.post(n);
 
       logger.error(ex.getMessage(), ex);

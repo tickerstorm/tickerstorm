@@ -1,4 +1,4 @@
-package io.tickerstorm.common.entity;
+package io.tickerstorm.common.command;
 
 import java.io.Serializable;
 import java.util.Set;

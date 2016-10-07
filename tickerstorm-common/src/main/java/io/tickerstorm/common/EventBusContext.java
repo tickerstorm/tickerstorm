@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Configuration;
 import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
 
-import io.tickerstorm.common.data.eventbus.Destinations;
+import io.tickerstorm.common.eventbus.Destinations;
 
 @Configuration
 @ComponentScan("io.tickerstorm.common")

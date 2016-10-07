@@ -11,7 +11,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 
 import com.google.common.eventbus.EventBus;
 
-import io.tickerstorm.common.data.eventbus.Destinations;
+import io.tickerstorm.common.eventbus.Destinations;
 
 public abstract class BaseFileConverter implements FileAlterationListener, FileConverter {
 

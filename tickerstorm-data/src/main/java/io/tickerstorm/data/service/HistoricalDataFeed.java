@@ -24,11 +24,13 @@ import com.datastax.driver.core.querybuilder.Select;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
-import io.tickerstorm.common.data.eventbus.Destinations;
-import io.tickerstorm.common.data.query.HistoricalFeedQuery;
+import io.tickerstorm.common.command.Command;
+import io.tickerstorm.common.command.HistoricalFeedQuery;
+import io.tickerstorm.common.command.Markers;
+import io.tickerstorm.common.command.Notification;
 import io.tickerstorm.common.entity.Candle;
-import io.tickerstorm.common.entity.Markers;
-import io.tickerstorm.common.entity.Notification;
+import io.tickerstorm.common.eventbus.Destinations;
+import io.tickerstorm.data.dao.MarketDataDao;
 import io.tickerstorm.data.dao.MarketDataDto;
 
 @Repository
@@ -52,6 +54,9 @@ public class HistoricalDataFeed {
   private EventBus queryBus;
 
   @Autowired
+  private MarketDataDao dao;
+
+  @Autowired
   private CassandraOperations cassandra;
 
   @Value("${cassandra.keyspace}")
@@ -65,6 +70,18 @@ public class HistoricalDataFeed {
   @PreDestroy
   public void destroy() {
     queryBus.unregister(this);
+  }
+
+  @Subscribe
+  public void onDelete(Command delete) {
+    if (delete.markers.contains(Markers.MARKET_DATA.toString()) && delete.markers.contains(Markers.DELETE.toString())) {
+      dao.deleteByStream(delete.getStream());
+      Notification notif = new Notification(delete);
+      notif.markers.add(Markers.SUCCESS.toString());
+      notificationBus.post(notif);
+
+      logger.debug("Deleted market data per " + delete);
+    }
   }
 
   @Subscribe
@@ -95,8 +112,7 @@ public class HistoricalDataFeed {
       List<MarketDataDto> dtos = cassandra.select(select, MarketDataDto.class);
       logger.info("Query took " + (System.currentTimeMillis() - startTimer) + "ms to fetch " + dtos.size() + " results.");
 
-      Notification marker = new Notification(query.id, query.getStream());
-      marker.addMarker(Markers.QUERY.toString());
+      Notification marker = new Notification(query);
       marker.addMarker(Markers.START.toString());
       marker.expect = dtos.size();
       notificationBus.post(marker);
@@ -105,12 +121,11 @@ public class HistoricalDataFeed {
       dtos.stream().map(d -> {
         return d.toMarketData(query.getStream());
       }).forEach(m -> {
-        
+
         realtimeBus.post(m);
       });
 
-      marker = new Notification(query.id, query.getStream());
-      marker.addMarker(Markers.QUERY.toString());
+      marker = new Notification(query);
       marker.addMarker(Markers.END.toString());
       marker.expect = 0;
       notificationBus.post(marker);

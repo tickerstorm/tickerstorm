@@ -25,16 +25,16 @@ import com.google.common.collect.Sets;
 import com.google.common.eventbus.EventBus;
 import com.google.common.io.Files;
 
+import io.tickerstorm.common.command.Markers;
+import io.tickerstorm.common.command.Notification;
 import io.tickerstorm.common.data.converter.BaseFileConverter;
 import io.tickerstorm.common.data.converter.DataConverter;
+import io.tickerstorm.common.data.converter.DataQuery;
 import io.tickerstorm.common.data.converter.FileConverter;
 import io.tickerstorm.common.data.converter.Mode;
-import io.tickerstorm.common.data.eventbus.Destinations;
-import io.tickerstorm.common.data.query.DataQuery;
 import io.tickerstorm.common.entity.Candle;
-import io.tickerstorm.common.entity.Markers;
 import io.tickerstorm.common.entity.MarketData;
-import io.tickerstorm.common.entity.Notification;
+import io.tickerstorm.common.eventbus.Destinations;
 import io.tickerstorm.data.query.GoogleDataQuery;
 
 @Component
@@ -64,8 +64,8 @@ public class GoogleFileConverter extends BaseFileConverter implements FileConver
         not.addMarker(Markers.FILE.toString());
         not.addMarker(Markers.INGEST.toString());
         not.addMarker(Markers.START.toString());
-        not.addMarker(Markers.FILE_LOCATION.toString());
-        not.properties.put(Markers.FILE_LOCATION.toString(), file.getPath());
+        not.addMarker(Markers.LOCATION.toString());
+        not.properties.put(Markers.LOCATION.toString(), file.getPath());
         notifications.post(not);
         
         String content = new String("SYMBOL=" + symbol + "\n").concat(IOUtils.toString(s));
@@ -78,8 +78,8 @@ public class GoogleFileConverter extends BaseFileConverter implements FileConver
         not.addMarker(Markers.FILE.toString());
         not.addMarker(Markers.INGEST.toString());
         not.addMarker(Markers.SUCCESS.toString());
-        not.addMarker(Markers.FILE_LOCATION.toString());
-        not.properties.put(Markers.FILE_LOCATION.toString(), file.getPath());
+        not.addMarker(Markers.LOCATION.toString());
+        not.properties.put(Markers.LOCATION.toString(), file.getPath());
         not.expect = data.length;
         notifications.post(not);
 
@@ -89,8 +89,8 @@ public class GoogleFileConverter extends BaseFileConverter implements FileConver
         not.addMarker(Markers.FILE.toString());
         not.addMarker(Markers.INGEST.toString());
         not.addMarker(Markers.FAILED.toString());
-        not.addMarker(Markers.FILE_LOCATION.toString());
-        not.properties.put(Markers.FILE_LOCATION.toString(), file.getPath());
+        not.addMarker(Markers.LOCATION.toString());
+        not.properties.put(Markers.LOCATION.toString(), file.getPath());
         notifications.post(not);
         
         Throwables.propagate(e);

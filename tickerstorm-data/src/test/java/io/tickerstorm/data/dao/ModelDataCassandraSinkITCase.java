@@ -11,7 +11,6 @@ import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.cassandra.core.CassandraOperations;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
@@ -22,20 +21,17 @@ import org.testng.annotations.Test;
 import com.google.common.collect.Sets;
 import com.google.common.eventbus.EventBus;
 
-import io.tickerstorm.common.data.eventbus.Destinations;
+import io.tickerstorm.common.command.Markers;
+import io.tickerstorm.common.command.Notification;
 import io.tickerstorm.common.entity.BaseField;
 import io.tickerstorm.common.entity.Candle;
 import io.tickerstorm.common.entity.Field;
-import io.tickerstorm.common.entity.Markers;
-import io.tickerstorm.common.entity.Notification;
+import io.tickerstorm.common.eventbus.Destinations;
 import io.tickerstorm.data.TestMarketDataServiceConfig;
 
 @DirtiesContext
 @ContextConfiguration(classes = {TestMarketDataServiceConfig.class})
 public class ModelDataCassandraSinkITCase extends AbstractTestNGSpringContextTests {
-
-  @Autowired
-  private CassandraOperations session;
 
   @Qualifier(Destinations.MODEL_DATA_BUS)
   @Autowired
@@ -153,7 +149,7 @@ public class ModelDataCassandraSinkITCase extends AbstractTestNGSpringContextTes
 
   }
 
-  @Test
+  @Test(enabled = false)
   public void testStoreMarker() throws Exception {
 
     dao.deleteByStream(stream);

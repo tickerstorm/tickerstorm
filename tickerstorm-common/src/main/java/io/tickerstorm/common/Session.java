@@ -1,8 +1,7 @@
-package io.tickerstorm.common.entity;
+package io.tickerstorm.common;
 
 import java.io.InputStream;
 import java.io.Serializable;
-import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -14,26 +13,28 @@ import org.yaml.snakeyaml.Yaml;
 import com.google.common.eventbus.EventBus;
 
 import io.tickerstorm.common.command.Command;
+import io.tickerstorm.common.command.Markers;
+import io.tickerstorm.common.command.Trigger;
 
 @SuppressWarnings("serial")
 public class Session implements Serializable {
 
-  public static final String SESSION_START = "session_start";
-
-  public static final String SESSION_END = "session_end";
   private String stream;
-
   public final Map<String, Object> config = new HashMap<>();
   private EventBus commandsBus;
+  private EventBus notificationsBus;
   private final AtomicBoolean live = new AtomicBoolean(false);
-  Session(EventBus commandBus) {
+
+  Session(EventBus commandBus, EventBus notificationBus) {
     stream = UUID.randomUUID().toString();
     this.commandsBus = commandBus;
+    this.notificationsBus = notificationBus;
   }
 
-  Session(String id, EventBus commandBus) {
+  Session(String id, EventBus commandBus, EventBus notificationBus) {
     this.stream = id;
     this.commandsBus = commandBus;
+    this.notificationsBus = notificationBus;
   };
 
   public void configure(InputStream stream) {
@@ -56,10 +57,17 @@ public class Session implements Serializable {
     this.config.putAll(content);
   }
 
+  public void execute(Command comm) {
+    comm.setStream(this.stream);
+    assert comm.isValid() : "Command isn't valid";
+    commandsBus.post(comm);
+  }
+
   public void end() {
     live.set(false);
-    Command marker = new Command(stream, Instant.now());
-    marker.addMarker(SESSION_END);
+    Trigger marker = new Trigger(stream, "session.end");
+    marker.addMarker(Markers.SESSION.toString());
+    marker.addMarker(Markers.END.toString());
     marker.config.putAll(this.config);
     commandsBus.post(marker);
   }
@@ -70,8 +78,9 @@ public class Session implements Serializable {
 
   public void start() {
     live.set(true);
-    Command marker = new Command(stream, Instant.now());
-    marker.addMarker(SESSION_START);
+    Trigger marker = new Trigger(stream, "session.start");
+    marker.addMarker(Markers.SESSION.toString());
+    marker.addMarker(Markers.START.toString());
     marker.config.putAll(this.config);
     commandsBus.post(marker);
   }

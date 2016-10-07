@@ -11,7 +11,7 @@ import org.testng.annotations.Test;
 
 import com.google.common.eventbus.EventBus;
 
-import io.tickerstorm.common.data.eventbus.Destinations;
+import io.tickerstorm.common.eventbus.Destinations;
 import io.tickerstorm.data.TestMarketDataServiceConfig;
 
 @DirtiesContext

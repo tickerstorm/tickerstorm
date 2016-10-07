@@ -22,9 +22,9 @@ import org.testng.annotations.Test;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
-import io.tickerstorm.common.data.eventbus.Destinations;
 import io.tickerstorm.common.entity.Candle;
 import io.tickerstorm.common.entity.MarketData;
+import io.tickerstorm.common.eventbus.Destinations;
 import io.tickerstorm.data.TestMarketDataServiceConfig;
 
 @DirtiesContext
@@ -51,7 +51,7 @@ public class MarketDataCassandraSinkITCase extends AbstractTestNGSpringContextTe
   public void cleanup() {
     listener = new RealtimeBusListener();
     realtimeBus.register(listener);
-    dao.deleteByStream("MarketDataCassandraSinkITCase");
+    dao.deleteByStream("MarketDataCassandraSinkITCase".toLowerCase());
   }
 
   @Test
@@ -65,12 +65,12 @@ public class MarketDataCassandraSinkITCase extends AbstractTestNGSpringContextTe
     c.timestamp = Instant.now();
     c.volume = 10;
     c.symbol = "AAPL";
-    c.stream = "MarketDataCassandraSinkITCase";
+    c.stream = "MarketDataCassandraSinkITCase".toLowerCase();
     historicalBus.post(c);
 
     Thread.sleep(5000);
 
-    long count = dao.count("MarketDataCassandraSinkITCase");
+    long count = dao.count("MarketDataCassandraSinkITCase".toLowerCase());
 
     assertEquals(count, 1);
     Assert.assertEquals(listener.count, 1);

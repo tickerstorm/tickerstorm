@@ -1,26 +1,29 @@
 package io.tickerstorm.common.command;
 
-import io.tickerstorm.common.data.query.ModelDataQuery;
-
 @SuppressWarnings("serial")
 public class ExportModelDataToCSV extends Command {
-  
-  public static final String EXPORT_TO_CSV_MARKER = "model_data_export_csv";
-  public static final String EXPORT_TO_CSV_COMPLETE_MARKER = "model_data_export_complete_csv";
-  public static final String FILE_LOCATION = "model_data_export_csv_location";
-  
+
   public ModelDataQuery modelQuery;
 
   public ExportModelDataToCSV(String stream) {
-    super(stream);
-    this.markers.add(EXPORT_TO_CSV_COMPLETE_MARKER);
+    super(stream, "data.modeldata.export.csv");
+    this.markers.add(Markers.FILE.toString());
+    this.markers.add(Markers.EXPORT.toString());
+    this.markers.add(Markers.CSV.toString());
     this.modelQuery = new ModelDataQuery(stream);
   }
-  
+
   public ExportModelDataToCSV(String stream, ModelDataQuery q) {
-    super(stream);
+    super(stream, "data.modeldata.export.csv");
     this.modelQuery = q;
-    this.markers.add(EXPORT_TO_CSV_COMPLETE_MARKER);
+    this.markers.add(Markers.FILE.toString());
+    this.markers.add(Markers.EXPORT.toString());
+    this.markers.add(Markers.CSV.toString());
+  }
+
+  @Override
+  public boolean isValid() {
+    return (super.validate() && this.modelQuery != null);
   }
 
 }

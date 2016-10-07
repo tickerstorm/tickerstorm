@@ -5,7 +5,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.tickerstorm.common.data.query.DataQuery;
+import io.tickerstorm.common.data.converter.DataQuery;
 import io.tickerstorm.common.entity.Quote;
 
 public class YahooRealtimeQuoteQuery implements QueryBuilder, DataQuery {

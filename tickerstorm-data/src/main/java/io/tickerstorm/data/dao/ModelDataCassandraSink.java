@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -14,17 +15,17 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Repository;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
 import io.tickerstorm.common.cache.CacheManager;
-import io.tickerstorm.common.data.eventbus.Destinations;
+import io.tickerstorm.common.command.Markers;
+import io.tickerstorm.common.command.Notification;
 import io.tickerstorm.common.entity.Field;
-import io.tickerstorm.common.entity.Markers;
 import io.tickerstorm.common.entity.MarketData;
-import io.tickerstorm.common.entity.Notification;
+import io.tickerstorm.common.eventbus.Destinations;
 import io.tickerstorm.data.export.ModelDataExporter;
 import net.sf.ehcache.Element;
 
@@ -92,14 +93,18 @@ public class ModelDataCassandraSink extends BaseCassandraSink<ModelDataDto> {
 
   private void cacheFieldName(Field<?> f) {
 
-    Element e =
-        CacheManager.getInstance(f.getStream()).putIfAbsent(new Element(ModelDataExporter.CACHE_KEY_SUFFIX, Sets.newHashSet(f.getName())));
+    Element e = CacheManager.getInstance(f.getStream())
+        .putIfAbsent(new Element(ModelDataExporter.CACHE_KEY_SUFFIX, new ConcurrentSkipListSet<>(Lists.newArrayList(f.getName()))));
 
-    if (e == null) {
-      ((Set<String>) CacheManager.getInstance(f.getStream()).get(ModelDataExporter.CACHE_KEY_SUFFIX).getObjectValue()).add(f.getName());
+    if (e != null) {
+
+      try {
+        CacheManager.getInstance(f.getStream()).acquireWriteLockOnKey(ModelDataExporter.CACHE_KEY_SUFFIX);
+        ((Set) CacheManager.getInstance(f.getStream()).get(ModelDataExporter.CACHE_KEY_SUFFIX).getObjectValue()).add(f.getName());
+      } finally {
+        CacheManager.getInstance(f.getStream()).releaseWriteLockOnKey(ModelDataExporter.CACHE_KEY_SUFFIX);
+      }
     }
-
-    logger.trace("Cached field " + f.getName() + " for stream " + f.getStream());
   }
 
   @Override

@@ -6,7 +6,7 @@ import java.util.Comparator;
 import java.util.Map;
 import java.util.Set;
 
-public interface MarketData extends Event, Stream, Serializable, Comparable<MarketData> {
+public interface MarketData extends Event, Serializable, Comparable<MarketData> {
 
   public static final Comparator<MarketData> SORT_BY_TIMESTAMP = new Comparator<MarketData>() {
 

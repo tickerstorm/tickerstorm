@@ -46,21 +46,19 @@ public class ModelDataDao {
 
   public long count(String stream) {
     Select select = QueryBuilder.select("stream", "date").from("modeldata");
-    select.where(QueryBuilder.eq("stream", stream));
-    
+    select.where(QueryBuilder.eq("stream", stream.toLowerCase()));
+
     logger.debug("Executing " + select.toString());
-    
+
     ResultSet result = cassandra.getSession().execute(select.toString());
-    return result.all().size();    
+    return result.all().size();
   }
 
   public Stream<ModelDataDto> findAll(String stream) {
 
-    BigInteger until = new BigInteger(ModelDataDto.dateFormatter.format(Instant.now()));
-
-    String select = "SELECT token(stream, date), stream, date, timestamp, fields FROM " + keyspace + ".modeldata "
-        + "WHERE token(stream, date) <= token('" + stream + "', " + until + ");";
-
+    Select select = QueryBuilder.select().from("modeldata");
+    select.where(QueryBuilder.eq("stream", stream.toLowerCase())).and(QueryBuilder.lte("timestamp", Date.from(Instant.now())))
+        .and(QueryBuilder.in("date", findAllDatesByStream(stream)));
     logger.debug("Executing " + select);
 
     List<ModelDataDto> dtos = cassandra.select(select, ModelDataDto.class);
@@ -71,7 +69,7 @@ public class ModelDataDao {
 
     List<List<?>> rows = new ArrayList<>();
     dtos.stream().forEach(r -> {
-      rows.add(Lists.newArrayList(r.fields, r.primarykey.stream, r.primarykey.date, r.primarykey.timestamp));
+      rows.add(Lists.newArrayList(r.fields, r.primarykey.stream.toLowerCase(), r.primarykey.date, r.primarykey.timestamp));
     });
 
     cassandra.ingest("UPDATE " + keyspace + ".modeldata SET fields = fields + ? WHERE stream = ? AND date = ? AND timestamp = ?;", rows);
@@ -105,10 +103,9 @@ public class ModelDataDao {
     return dates;
   }
 
-  public void deleteByStream(String stream) {
-
+  private List<BigInteger> findAllDatesByStream(String stream) {
     Select select = QueryBuilder.select("stream", "date").from("modeldata");
-    select.where(QueryBuilder.eq("stream", stream));
+    select.where(QueryBuilder.eq("stream", stream.toLowerCase()));
     ResultSet result = cassandra.getSession().execute(select.toString());
     List<Row> rows = result.all();
 
@@ -116,8 +113,15 @@ public class ModelDataDao {
       return r.getVarint("date");
     }).distinct().collect(Collectors.toList());
 
+    return dates;
+  }
+
+  public void deleteByStream(String stream) {
+
+    List<BigInteger> dates = findAllDatesByStream(stream);
     Delete delete = QueryBuilder.delete().from("modeldata");
-    delete.where(QueryBuilder.eq("stream", stream)).and(QueryBuilder.in("date", dates));
+    delete.where(QueryBuilder.eq("stream", stream.toLowerCase())).and(QueryBuilder.in("date", dates));
+    logger.debug("Executing " + delete);
     cassandra.execute(delete);
 
   }

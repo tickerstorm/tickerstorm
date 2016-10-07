@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 
 import com.google.common.eventbus.EventBus;
 
-import io.tickerstorm.common.data.eventbus.Destinations;
+import io.tickerstorm.common.eventbus.Destinations;
 
 @Component
 public abstract class BaseEventProcessor extends BaseProcessor {

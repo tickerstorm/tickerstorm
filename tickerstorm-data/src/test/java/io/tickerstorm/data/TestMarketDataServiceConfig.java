@@ -17,10 +17,10 @@ import org.springframework.util.ErrorHandler;
 import com.google.common.base.Throwables;
 import com.google.common.eventbus.EventBus;
 
-import io.tickerstorm.common.data.eventbus.ByDestinationNameJmsResolver;
-import io.tickerstorm.common.data.eventbus.Destinations;
-import io.tickerstorm.common.data.eventbus.EventBusToEventBusBridge;
 import io.tickerstorm.common.entity.MarketData;
+import io.tickerstorm.common.eventbus.ByDestinationNameJmsResolver;
+import io.tickerstorm.common.eventbus.Destinations;
+import io.tickerstorm.common.eventbus.EventBusToEventBusBridge;
 
 @EnableAutoConfiguration
 @Configuration

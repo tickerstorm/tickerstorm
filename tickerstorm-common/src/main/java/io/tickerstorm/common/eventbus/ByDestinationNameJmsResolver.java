@@ -1,4 +1,4 @@
-package io.tickerstorm.common.data.eventbus;
+package io.tickerstorm.common.eventbus;
 
 import java.util.HashMap;
 

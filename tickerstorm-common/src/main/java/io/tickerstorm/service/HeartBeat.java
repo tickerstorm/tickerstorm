@@ -1,11 +1,12 @@
 package io.tickerstorm.service;
 
 import java.io.Serializable;
+import java.time.Instant;
 
 @SuppressWarnings("serial")
 public class HeartBeat implements Serializable {
 
-  public final long timestamp = System.currentTimeMillis();
+  public final Instant timestamp = Instant.now();
   public final String service;
 
   public HeartBeat(String service) {
@@ -16,7 +17,7 @@ public class HeartBeat implements Serializable {
     return service;
   }
 
-  public long getTimestamp() {
+  public Instant getTimestamp() {
     return timestamp;
   }
 

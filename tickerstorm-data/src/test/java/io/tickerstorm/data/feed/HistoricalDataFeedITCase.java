@@ -22,12 +22,12 @@ import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import com.google.common.io.Files;
 
+import io.tickerstorm.common.command.HistoricalFeedQuery;
+import io.tickerstorm.common.command.Markers;
+import io.tickerstorm.common.command.Notification;
 import io.tickerstorm.common.data.Locations;
-import io.tickerstorm.common.data.eventbus.Destinations;
-import io.tickerstorm.common.data.query.HistoricalFeedQuery;
 import io.tickerstorm.common.entity.Candle;
-import io.tickerstorm.common.entity.Markers;
-import io.tickerstorm.common.entity.Notification;
+import io.tickerstorm.common.eventbus.Destinations;
 import io.tickerstorm.data.TestMarketDataServiceConfig;
 
 @ContextConfiguration(classes = {TestMarketDataServiceConfig.class})

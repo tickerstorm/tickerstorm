@@ -1,8 +1,8 @@
 package io.tickerstorm.strategy.processor;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.function.Predicate;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -16,10 +16,12 @@ import com.google.common.collect.Maps;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
+import io.tickerstorm.common.cache.CacheManager;
 import io.tickerstorm.common.command.Command;
-import io.tickerstorm.common.data.eventbus.Destinations;
-import io.tickerstorm.common.entity.Notification;
-import io.tickerstorm.common.entity.Session;
+import io.tickerstorm.common.command.CompletionTracker;
+import io.tickerstorm.common.command.Markers;
+import io.tickerstorm.common.command.Notification;
+import io.tickerstorm.common.eventbus.Destinations;
 
 public abstract class BaseProcessor implements Processor {
 
@@ -64,19 +66,28 @@ public abstract class BaseProcessor implements Processor {
 
     logger.debug("Command received " + command);
 
-    Predicate<Command> sessionStart = (p -> command.markers.contains(Session.SESSION_START));
-    Predicate<Command> sessionEnd = (p -> command.markers.contains(Session.SESSION_END));
+    if (CompletionTracker.Session.isStart.test(command)) {
 
-    if (sessionStart.test(command)) {
+      if (command.config.containsKey("transformers")) {
 
-      if (command.config.get("transformers") != null) {
-        Map<String, Object> trans = (Map) command.config.get("transformers");
-        Map<String, Object> thisT = (Map) trans.get(name());
-        getConfig(command.getStream()).putAll(thisT);
+        List<Map<String, String>> trans = (List<Map<String, String>>) command.config.get("transformers");
+
+        trans.stream().filter(m -> m.containsKey("transformer") && m.get("transformer").equalsIgnoreCase(name())).forEach(m -> {
+          getConfig(command.getStream()).putAll(m);
+        });
       }
+
+      // Initialize cache
+      CacheManager.getInstance(command.getStream());
+
+      Notification not = new Notification(command);
+      not.markers.add(Markers.SUCCESS.toString());
+      not.properties.put("transformer", name());
+      notificationsBus.post(not);
+
     }
 
-    if (sessionEnd.test(command)) {
+    if (CompletionTracker.Session.isEnd.test(command)) {
       configs.remove(command.getStream());
     }
 

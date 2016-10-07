@@ -22,10 +22,10 @@ import com.google.common.collect.Maps;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
-import io.tickerstorm.common.data.eventbus.Destinations;
-import io.tickerstorm.common.entity.Markers;
+import io.tickerstorm.common.command.Markers;
+import io.tickerstorm.common.command.Notification;
 import io.tickerstorm.common.entity.MarketData;
-import io.tickerstorm.common.entity.Notification;
+import io.tickerstorm.common.eventbus.Destinations;
 
 @DependsOn(value = {"cassandraSetup"})
 @Repository

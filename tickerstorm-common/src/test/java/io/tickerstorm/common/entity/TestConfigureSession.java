@@ -13,7 +13,9 @@ import org.testng.annotations.Test;
 
 import com.google.common.eventbus.EventBus;
 
-import io.tickerstorm.common.data.eventbus.Destinations;
+import io.tickerstorm.common.Session;
+import io.tickerstorm.common.SessionFactory;
+import io.tickerstorm.common.eventbus.Destinations;
 
 public class TestConfigureSession {
 

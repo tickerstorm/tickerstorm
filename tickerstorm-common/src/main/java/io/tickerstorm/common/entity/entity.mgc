@@ -76,7 +76,7 @@
             default-accepted="false" static-accepted="false"
             accessors-accepted="false" constructors-accepted="false"/>
     </Class>
-    <Class name="io.tickerstorm.common.entity.MarketData" x="867" y="175">
+    <Class name="io.tickerstorm.common.entity.MarketData" x="933" y="163">
         <AttributesDisplayFilter public-accepted="true"
             private-accepted="true" protected-accepted="true"
             default-accepted="true" static-accepted="false"/>
@@ -129,7 +129,7 @@
             accessors-accepted="false" constructors-accepted="false"/>
         <Communication destinationClassName="io.tickerstorm.common.entity.MarketData"/>
     </Class>
-    <Class name="io.tickerstorm.common.entity.Field.Name" x="25" y="63">
+    <Class name="io.tickerstorm.common.entity.Field.Name" x="33" y="36">
         <AttributesDisplayFilter public-accepted="true"
             private-accepted="true" protected-accepted="true"
             default-accepted="true" static-accepted="false"/>
@@ -158,7 +158,7 @@
             accessors-accepted="false" constructors-accepted="false"/>
         <Extension destinationClassName="io.tickerstorm.common.entity.BaseMarketData"/>
     </Class>
-    <Class name="io.tickerstorm.common.entity.Marker" x="673" y="172">
+    <Class name="io.tickerstorm.common.entity.Marker" x="659" y="44">
         <AttributesDisplayFilter public-accepted="true"
             private-accepted="true" protected-accepted="true"
             default-accepted="true" static-accepted="false"/>

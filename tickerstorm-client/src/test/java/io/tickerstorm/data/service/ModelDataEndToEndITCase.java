@@ -12,66 +12,48 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
-import io.tickerstorm.common.command.DeleteData;
-import io.tickerstorm.common.data.eventbus.Destinations;
-import io.tickerstorm.common.data.query.ModelDataQuery;
+import io.tickerstorm.common.command.CompletionTracker;
+import io.tickerstorm.common.command.Markers;
+import io.tickerstorm.common.command.ModelDataQuery;
+import io.tickerstorm.common.command.Notification;
+import io.tickerstorm.common.command.Trigger;
 import io.tickerstorm.common.entity.Candle;
-import io.tickerstorm.common.entity.Markers;
-import io.tickerstorm.common.entity.Notification;
-import io.tickerstorm.common.entity.Session;
-import io.tickerstorm.common.entity.SessionFactory;
+import io.tickerstorm.common.eventbus.Destinations;
+import io.tickerstorm.data.BaseIntegrationTest;
 import io.tickerstorm.data.IntegrationTestContext;
 
 @DirtiesContext
 @ContextConfiguration(classes = {IntegrationTestContext.class})
-public class ModelDataEndToEndITCase extends AbstractTestNGSpringContextTests {
+public class ModelDataEndToEndITCase extends BaseIntegrationTest {
 
   private static final Logger logger = LoggerFactory.getLogger(ModelDataEndToEndITCase.class);
-
-  @Autowired
-  private SessionFactory sFactory;
-
-  private Session s;
 
   @Qualifier(Destinations.BROKER_MARKETDATA_BUS)
   @Autowired
   private EventBus brokderFeed;
 
-  @Qualifier(Destinations.NOTIFICATIONS_BUS)
-  @Autowired
-  private EventBus notificationBus;
+  @Override
+  public void onMarketDataServiceInitialized() throws Exception {
+    session = factory.newSession();
+    session.configure(new DefaultResourceLoader().getResource("classpath:yml/modeldataendtoenditcase.yml").getInputStream());
 
-  @Qualifier(Destinations.COMMANDS_BUS)
-  @Autowired
-  private EventBus commandBus;
-
-  @BeforeMethod
-  public void init() throws Exception {
-
-    notificationBus.register(this);
-
-    s = sFactory.newSession();
-    s.configure(new DefaultResourceLoader().getResource("classpath:yml/modeldataendtoenditcase.yml").getInputStream());
-
-    DeleteData delete = new DeleteData(s.stream());
+    Trigger delete = new Trigger(session.stream(), "delete.data");
     delete.addMarker(Markers.MARKET_DATA.toString());
-    commandBus.post(delete);
+    delete.addMarker(Markers.DELETE.toString());
+    session.execute(delete);
 
-    delete = new DeleteData(s.stream());
+    delete = new Trigger(session.stream(), "delete.data");
     delete.addMarker(Markers.MODEL_DATA.toString());
-    commandBus.post(delete);
+    delete.addMarker(Markers.DELETE.toString());
+    session.execute(delete);
 
     Thread.sleep(5000);
-    s.start();
-
+    session.start();
   }
 
   @Test
@@ -86,17 +68,18 @@ public class ModelDataEndToEndITCase extends AbstractTestNGSpringContextTests {
     notificationBus.register(handler1);
     notificationBus.register(handler2);
 
-    Candle c = new Candle("goog", "google", Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ONE, BigDecimal.ONE, "1m", 1000);
+    Candle c =
+        new Candle("goog", session.stream(), Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ONE, BigDecimal.ONE, "1m", 1000);
     brokderFeed.post(c);
-    Thread.sleep(250000);
+    Thread.sleep(10000);
 
     Assert.assertTrue(triggeredMarket.get());
     Assert.assertTrue(triggeredModel.get());
 
-    ModelDataQuery q = new ModelDataQuery(s.stream());
+    ModelDataQuery q = new ModelDataQuery(session.stream());
     VerifyRetroModelQueryEnded handler3 = new VerifyRetroModelQueryEnded(triggeredRetro, q);
     notificationBus.register(handler3);
-    commandBus.post(q);
+    session.execute(q);
 
     Thread.sleep(2000);
     Assert.assertTrue(triggeredRetro.get());
@@ -116,8 +99,7 @@ public class ModelDataEndToEndITCase extends AbstractTestNGSpringContextTests {
 
     @Subscribe
     public void onData(Notification marker) throws Exception {
-      if ("google".equals(marker.stream) && marker.markers.contains(Markers.MARKET_DATA.toString())
-          && marker.markers.contains(Markers.SAVE.toString())) {
+      if (CompletionTracker.MarketData.isSaved(session.stream()).test(marker)) {
         Assert.assertEquals(new Integer(1), marker.expect);
         result.set(true);
       }
@@ -136,8 +118,7 @@ public class ModelDataEndToEndITCase extends AbstractTestNGSpringContextTests {
 
     @Subscribe
     public void onData(Notification marker) throws Exception {
-
-      if (marker.id.equals(q.id) && marker.markers.contains(Markers.QUERY.toString()) && marker.markers.contains(Markers.END.toString())) {
+      if (q.isDone().test(marker)) {
         result.set(true);
       }
     }
@@ -155,24 +136,12 @@ public class ModelDataEndToEndITCase extends AbstractTestNGSpringContextTests {
     @Subscribe
     public void onData(Notification marker) throws Exception {
 
-      if (s.stream().equals(marker.stream) && marker.markers.contains(Markers.MODEL_DATA.toString())
-          && marker.markers.contains(Markers.SAVE.toString())) {
+      if (CompletionTracker.ModelData.isSaved(session.stream()).test(marker)) {
 
         Assert.assertTrue(marker.expect > 0);
-
         Thread.sleep(2000);
-
         result.set(true);
       }
-
     }
-
   }
-
-
-  @AfterMethod
-  public void end() {
-    s.end();
-  }
-
 }

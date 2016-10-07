@@ -7,7 +7,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,11 +18,11 @@ import org.springframework.stereotype.Repository;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
-import io.tickerstorm.common.command.DeleteData;
-import io.tickerstorm.common.data.eventbus.Destinations;
-import io.tickerstorm.common.data.query.ModelDataQuery;
-import io.tickerstorm.common.entity.Markers;
-import io.tickerstorm.common.entity.Notification;
+import io.tickerstorm.common.command.Command;
+import io.tickerstorm.common.command.Markers;
+import io.tickerstorm.common.command.ModelDataQuery;
+import io.tickerstorm.common.command.Notification;
+import io.tickerstorm.common.eventbus.Destinations;
 import io.tickerstorm.data.dao.ModelDataDao;
 import io.tickerstorm.data.dao.ModelDataDto;
 
@@ -50,9 +49,6 @@ public class ModelDataFeed {
   private EventBus modeldataBus;
 
   @Autowired
-  private CassandraOperations cassandra;
-
-  @Autowired
   private ModelDataDao dao;
 
   @Value("${cassandra.keyspace}")
@@ -69,13 +65,12 @@ public class ModelDataFeed {
   }
 
   @Subscribe
-  public void onDelete(DeleteData delete) {
-    if (!StringUtils.isEmpty(delete.stream) && delete.markers.contains(Markers.MODEL_DATA.toString())) {
-      dao.deleteByStream(delete.stream);
+  public void onDelete(Command delete) {
+    if (delete.markers.contains(Markers.MODEL_DATA.toString()) && delete.markers.contains(Markers.DELETE.toString())) {
+      dao.deleteByStream(delete.getStream());
 
-      Notification notif = new Notification(delete.id, delete.stream);
-      notif.markers.add(Markers.MODEL_DATA.toString());
-      notif.markers.add(Markers.DELETED.toString());
+      Notification notif = new Notification(delete);
+      notif.markers.add(Markers.SUCCESS.toString());
       notificationBus.post(notif);
     }
   }
@@ -85,7 +80,7 @@ public class ModelDataFeed {
 
     logger.debug("Model data feed query received");
 
-    List<ModelDataDto> dtos = dao.findByStreamAndTimestampIsBetween(query.stream, query.from, query.until);
+    List<ModelDataDto> dtos = dao.findByStreamAndTimestampIsBetween(query.getStream(), query.from, query.until);
 
     final AtomicInteger count = new AtomicInteger();
 
@@ -95,7 +90,7 @@ public class ModelDataFeed {
 
     long startTimer = System.currentTimeMillis();
 
-    Notification marker = new Notification(query.id, query.stream);
+    Notification marker = new Notification(query);
     marker.addMarker(Markers.QUERY.toString());
     marker.addMarker(Markers.START.toString());
     marker.expect = count.get();
@@ -107,7 +102,7 @@ public class ModelDataFeed {
       });
     });
 
-    marker = new Notification(query.id, query.stream);
+    marker = new Notification(query);
     marker.addMarker(Markers.QUERY.toString());
     marker.addMarker(Markers.END.toString());
     marker.expect = 0;

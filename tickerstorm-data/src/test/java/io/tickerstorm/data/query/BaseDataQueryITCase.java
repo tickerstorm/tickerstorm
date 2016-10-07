@@ -13,7 +13,7 @@ import org.testng.annotations.BeforeMethod;
 
 import com.google.common.eventbus.EventBus;
 
-import io.tickerstorm.common.data.eventbus.Destinations;
+import io.tickerstorm.common.eventbus.Destinations;
 import io.tickerstorm.data.TestMarketDataServiceConfig;
 import io.tickerstorm.data.converter.DataQueryClient;
 import io.tickerstorm.data.dao.MarketDataDao;

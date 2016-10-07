@@ -1,4 +1,4 @@
-package io.tickerstorm.common.entity;
+package io.tickerstorm.common.command;
 
 import java.io.Serializable;
 import java.time.Instant;
@@ -8,10 +8,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-@SuppressWarnings("serial")
-public class Notification implements Event, Marker, Stream, Serializable {
+import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 
-  public static final String TYPE = "notification";
+import io.tickerstorm.common.entity.Event;
+
+@SuppressWarnings("serial")
+public class Notification implements Event, Marker, Serializable {
+
+  public String type = "notification";
   public Integer expect = null;
   public String stream;
   public Instant eventTime = Instant.now();
@@ -31,6 +35,13 @@ public class Notification implements Event, Marker, Stream, Serializable {
   public Notification(String id, String stream) {
     this.id = id;
     this.stream = stream;
+  }
+
+  public Notification(Command comm) {
+    this.id = comm.id;
+    this.stream = comm.getStream();
+    this.type = comm.getType();
+    this.markers.addAll(comm.markers);
   }
 
   public Notification(String stream) {
@@ -105,7 +116,7 @@ public class Notification implements Event, Marker, Stream, Serializable {
   }
 
   public String getType() {
-    return TYPE;
+    return type;
   }
 
   public boolean is(String marker) {
@@ -116,9 +127,9 @@ public class Notification implements Event, Marker, Stream, Serializable {
   public Instant getTimestamp() {
     return eventTime;
   }
-  
+
   @Override
   public String toString() {
-    return TYPE + ", stream: " + stream + ", " + markers.toString();
+    return ReflectionToStringBuilder.toString(this);
   }
 }

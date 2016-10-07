@@ -1,4 +1,4 @@
-package io.tickerstorm.common.entity;
+package io.tickerstorm.common.command;
 
 public enum Markers {
 
@@ -7,22 +7,28 @@ public enum Markers {
   MARKET_DATA("market_data"),
 
   MODEL_DATA("model_data"),
+  
+  SESSION("session"),
 
   FILE("file"),
 
   INGEST("ingested"),
-  
-  FILE_LOCATION("file_location"),
 
   SAVE("save"),
 
   CREATED("created"),
 
-  DELETED("deleted"),
+  DELETE("deleted"),
 
   END("end"),
 
   START("start"),
+  
+  EXPORT("export"),
+  
+  CSV("csv"),
+  
+  LOCATION("location"),
 
   FAILED("failed"),
   
