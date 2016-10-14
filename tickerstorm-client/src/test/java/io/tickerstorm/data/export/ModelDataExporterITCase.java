@@ -17,12 +17,12 @@ import org.testng.annotations.Test;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
-import io.tickerstorm.common.command.BaseCompletionTracker;
 import io.tickerstorm.common.command.CompletionTracker;
 import io.tickerstorm.common.command.ExportModelDataToCSV;
 import io.tickerstorm.common.command.HistoricalFeedQuery;
 import io.tickerstorm.common.command.Markers;
 import io.tickerstorm.common.command.Notification;
+import io.tickerstorm.common.command.OnEventHandler;
 import io.tickerstorm.common.data.Locations;
 import io.tickerstorm.common.entity.Candle;
 import io.tickerstorm.common.eventbus.Destinations;
@@ -61,8 +61,8 @@ public class ModelDataExporterITCase extends BaseIntegrationTest {
   @Test
   public void testExportToCSVFile() throws Exception {
 
-    new BaseCompletionTracker(CompletionTracker.ModelData.isSaved(session.stream()), CompletionTracker.ModelData.isSaved(session.stream()),
-        notificationsBus, 2000L, null, () -> {
+    OnEventHandler.newHandler(session.getNotificationsBus()).startCountDownOn(CompletionTracker.ModelData.isSaved(session.stream()))
+        .extendTimeoutOn(CompletionTracker.ModelData.isSaved(session.stream())).timeoutDelay(2000).whenTimedOut(() -> {
 
           exportCommend = new ExportModelDataToCSV(session.stream());
           exportCommend.modelQuery.from = Instant.now().minus(700, ChronoUnit.DAYS);
@@ -70,10 +70,10 @@ public class ModelDataExporterITCase extends BaseIntegrationTest {
           exportCommend.config.put(Markers.LOCATION.toString(), location);
           session.execute(exportCommend);
 
-        });
+        }).start();
 
-    new BaseCompletionTracker(CompletionTracker.Ingest.someIngestStarted, null, CompletionTracker.Ingest.someIngestFinished,
-        notificationsBus, 2000L, () -> {
+    OnEventHandler.newHandler(session.getNotificationsBus()).startCountDownOn(CompletionTracker.Ingest.someIngestStarted)
+        .completeWhen(CompletionTracker.Ingest.someIngestFinished).timeoutDelay(2000).whenComplete((n) -> {
 
           HistoricalFeedQuery query = new HistoricalFeedQuery(stream, "Google", new String[] {"TOL"});
           query.from = LocalDateTime.of(2015, 6, 10, 0, 0);
@@ -82,16 +82,16 @@ public class ModelDataExporterITCase extends BaseIntegrationTest {
           query.zone = ZoneOffset.ofHours(-7);
           session.execute(query);
 
-        }, () -> {
+        }).whenTimedOut(() -> {
           Assert.fail();
         });
 
-    new BaseCompletionTracker(CompletionTracker.ModelData.Export.someCsvExportStarted, null,
-        CompletionTracker.ModelData.Export.someCsvExportFinished, notificationsBus, 2000L, () -> {
+    OnEventHandler.newHandler(session.getNotificationsBus()).startCountDownOn(CompletionTracker.ModelData.Export.someCsvExportStarted)
+        .completeWhen(CompletionTracker.ModelData.Export.someCsvExportFinished).timeoutDelay(2000).whenComplete((n) -> {
 
           file_saved = true;
 
-        }, () -> {
+        }).whenTimedOut(() -> {
           Assert.fail();
         });
 

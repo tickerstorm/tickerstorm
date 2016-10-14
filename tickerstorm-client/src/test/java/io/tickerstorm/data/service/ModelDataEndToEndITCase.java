@@ -2,28 +2,26 @@ package io.tickerstorm.data.service;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.junit.Assert;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import com.google.common.eventbus.EventBus;
-import com.google.common.eventbus.Subscribe;
 
 import io.tickerstorm.common.command.CompletionTracker;
 import io.tickerstorm.common.command.Markers;
 import io.tickerstorm.common.command.ModelDataQuery;
-import io.tickerstorm.common.command.Notification;
+import io.tickerstorm.common.command.OnEventHandler;
 import io.tickerstorm.common.command.Trigger;
-import io.tickerstorm.common.entity.Candle;
 import io.tickerstorm.common.eventbus.Destinations;
+import io.tickerstorm.common.test.TestDataFactory;
 import io.tickerstorm.data.BaseIntegrationTest;
 import io.tickerstorm.data.IntegrationTestContext;
 
@@ -31,11 +29,11 @@ import io.tickerstorm.data.IntegrationTestContext;
 @ContextConfiguration(classes = {IntegrationTestContext.class})
 public class ModelDataEndToEndITCase extends BaseIntegrationTest {
 
-  private static final Logger logger = LoggerFactory.getLogger(ModelDataEndToEndITCase.class);
-
   @Qualifier(Destinations.BROKER_MARKETDATA_BUS)
   @Autowired
   private EventBus brokderFeed;
+
+  private ModelDataQuery q;
 
   @Override
   public void onMarketDataServiceInitialized() throws Exception {
@@ -62,86 +60,40 @@ public class ModelDataEndToEndITCase extends BaseIntegrationTest {
     AtomicBoolean triggeredModel = new AtomicBoolean(false);
     AtomicBoolean triggeredMarket = new AtomicBoolean(false);
     AtomicBoolean triggeredRetro = new AtomicBoolean(false);
-    VerifyModelDataStoredHandler handler1 = new VerifyModelDataStoredHandler(triggeredModel);
-    VerifyMarketDataStoredHandler handler2 = new VerifyMarketDataStoredHandler(triggeredMarket);
 
-    notificationBus.register(handler1);
-    notificationBus.register(handler2);
+    q = new ModelDataQuery(session.stream());
+    q.from = Instant.now().minus(1, ChronoUnit.DAYS);
 
-    Candle c =
-        new Candle("goog", session.stream(), Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ONE, BigDecimal.ONE, "1m", 1000);
-    brokderFeed.post(c);
-    Thread.sleep(10000);
+    OnEventHandler.newHandler(session.getNotificationsBus()).startCountDownOn(CompletionTracker.MarketData.isSaved(session.stream()))
+        .extendTimeoutOn(CompletionTracker.MarketData.isSaved(session.stream())).timeoutDelay(2000).whenTimedOut(() -> {
 
-    Assert.assertTrue(triggeredMarket.get());
-    Assert.assertTrue(triggeredModel.get());
+          triggeredMarket.set(true);
 
-    ModelDataQuery q = new ModelDataQuery(session.stream());
-    VerifyRetroModelQueryEnded handler3 = new VerifyRetroModelQueryEnded(triggeredRetro, q);
-    notificationBus.register(handler3);
-    session.execute(q);
+        }).start();
 
-    Thread.sleep(2000);
+    OnEventHandler.newHandler(session.getNotificationsBus()).startCountDownOn(CompletionTracker.ModelData.isSaved(session.stream()))
+        .extendTimeoutOn(CompletionTracker.ModelData.isSaved(session.stream())).timeoutDelay(2000).whenTimedOut(() -> {
+
+          triggeredModel.set(true);
+          session.execute(q);
+
+        }).start();
+
+    OnEventHandler.newHandler(session.getNotificationsBus()).completeWhen(q.isDone()).timeoutDelay(2000).whenComplete((n) -> {      
+      triggeredRetro.set(true);
+    }).whenTimedOut(() -> {
+      org.testng.Assert.fail();
+    }).start();
+
+    TestDataFactory.buildCandles(10, "goog", session.stream(), BigDecimal.ONE).stream().forEach(c -> {
+      brokderFeed.post(c);
+    });
+
+    while (!triggeredRetro.get()) {
+      Thread.sleep(2000);
+    }
+
     Assert.assertTrue(triggeredRetro.get());
-
-    notificationBus.unregister(handler1);
-    notificationBus.unregister(handler2);
-    notificationBus.unregister(handler3);
   }
 
-  private class VerifyMarketDataStoredHandler {
-
-    AtomicBoolean result;
-
-    public VerifyMarketDataStoredHandler(AtomicBoolean result) {
-      this.result = result;
-    }
-
-    @Subscribe
-    public void onData(Notification marker) throws Exception {
-      if (CompletionTracker.MarketData.isSaved(session.stream()).test(marker)) {
-        Assert.assertEquals(new Integer(1), marker.expect);
-        result.set(true);
-      }
-    }
-  }
-
-  private class VerifyRetroModelQueryEnded {
-
-    AtomicBoolean result;
-    ModelDataQuery q;
-
-    public VerifyRetroModelQueryEnded(AtomicBoolean result, ModelDataQuery q) {
-      this.result = result;
-      this.q = q;
-    }
-
-    @Subscribe
-    public void onData(Notification marker) throws Exception {
-      if (q.isDone().test(marker)) {
-        result.set(true);
-      }
-    }
-
-  }
-
-  private class VerifyModelDataStoredHandler {
-
-    AtomicBoolean result;
-
-    public VerifyModelDataStoredHandler(AtomicBoolean result) {
-      this.result = result;
-    }
-
-    @Subscribe
-    public void onData(Notification marker) throws Exception {
-
-      if (CompletionTracker.ModelData.isSaved(session.stream()).test(marker)) {
-
-        Assert.assertTrue(marker.expect > 0);
-        Thread.sleep(2000);
-        result.set(true);
-      }
-    }
-  }
 }

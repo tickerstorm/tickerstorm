@@ -38,6 +38,13 @@ public interface CompletionTracker {
           && n.is(Markers.SUCCESS.toString()));
     }
 
+    public static Predicate<Notification> someModelDataQueryEnded =
+        (n -> n.is(Markers.MODEL_DATA.toString()) && n.is(Markers.QUERY.toString()) && n.is(Markers.END.toString()));
+
+    public static Predicate<Notification> someModelDataQueryStarted =
+        (n -> n.is(Markers.MODEL_DATA.toString()) && n.is(Markers.QUERY.toString()) && n.is(Markers.START.toString()));
+
+
   }
 
   public interface Session {

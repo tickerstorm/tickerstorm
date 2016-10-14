@@ -32,25 +32,31 @@ public class JmsEventBusContext {
 
   @Value("${jms.transport}")
   protected String transport;
-  
+
   @Value("${service.name}")
   protected String serviceName;
 
-  @Bean
-  public ConnectionFactory buildActiveMQConnectionFactory() throws Exception {
+  @Bean(name = "cf")
+  public ConnectionFactory buildActiveMQConnectionFactory() {
 
     ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(transport);
-    connectionFactory.setOptimizeAcknowledge(true);
     connectionFactory.setAlwaysSessionAsync(false);
     connectionFactory.setClientID(serviceName);
-        
+
     RedeliveryPolicy policy = connectionFactory.getRedeliveryPolicy();
     policy.setInitialRedeliveryDelay(500);
     policy.setBackOffMultiplier(2);
     policy.setUseExponentialBackOff(true);
     policy.setMaximumRedeliveries(2);
-    
-    CachingConnectionFactory caching = new CachingConnectionFactory(connectionFactory);
+
+    return connectionFactory;
+  }
+
+  @Bean
+  public CachingConnectionFactory buildConnectionFactoryCache() {
+
+    // Not recommended with listener container
+    CachingConnectionFactory caching = new CachingConnectionFactory(buildActiveMQConnectionFactory());
     caching.setSessionCacheSize(10);
     caching.setReconnectOnException(true);
     caching.setExceptionListener(new ExceptionListener() {
@@ -65,11 +71,10 @@ public class JmsEventBusContext {
   }
 
   @Bean
-  public DefaultJmsListenerContainerFactory jmsListenerContainerFactory(ConnectionFactory cf) {
-    
-    
+  public DefaultJmsListenerContainerFactory jmsListenerContainerFactory() {
+
     DefaultJmsListenerContainerFactory factory = new DefaultJmsListenerContainerFactory();
-    factory.setConnectionFactory(cf);
+    factory.setConnectionFactory(buildConnectionFactoryCache());
     factory.setErrorHandler(new ErrorHandler() {
       @Override
       public void handleError(Throwable arg0) {
@@ -77,17 +82,17 @@ public class JmsEventBusContext {
 
       }
     });
-    
+
     factory.setDestinationResolver(new ByDestinationNameJmsResolver());
     factory.setSessionAcknowledgeMode(Session.AUTO_ACKNOWLEDGE);
     factory.setMaxMessagesPerTask(-1);
-    factory.setClientId(serviceName);
+
     return factory;
   }
 
   @Bean
-  public JmsTemplate buildJmsTemplate(ConnectionFactory factory) {
-    JmsTemplate template = new JmsTemplate(factory);
+  public JmsTemplate buildJmsTemplate() {
+    JmsTemplate template = new JmsTemplate(buildConnectionFactoryCache());
     template.setDestinationResolver(new ByDestinationNameJmsResolver());
     template.setSessionAcknowledgeMode(Session.AUTO_ACKNOWLEDGE);
     template.setTimeToLive(2000);

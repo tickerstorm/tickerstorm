@@ -40,7 +40,7 @@ public class EventBusToEventBusBridge<T> {
   @Subscribe
   public void onMessage(T o) {
     for (EventBus l : listeners) {
-      logger.debug("Bridging message " + o.toString() + " from " + source.identifier() + " to " + l.identifier());
+      logger.trace("Bridging message " + o.toString() + " from " + source.identifier() + " to " + l.identifier());
       l.post(o);
     }
   }

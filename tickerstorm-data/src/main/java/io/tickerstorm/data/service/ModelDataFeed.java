@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.cassandra.core.CassandraOperations;
 import org.springframework.stereotype.Repository;
 
 import com.google.common.eventbus.EventBus;
@@ -78,7 +77,7 @@ public class ModelDataFeed {
   @Subscribe
   public void onQuery(ModelDataQuery query) {
 
-    logger.debug("Model data feed query received");
+    logger.debug("Model data feed query received " + query);
 
     List<ModelDataDto> dtos = dao.findByStreamAndTimestampIsBetween(query.getStream(), query.from, query.until);
 
@@ -91,7 +90,6 @@ public class ModelDataFeed {
     long startTimer = System.currentTimeMillis();
 
     Notification marker = new Notification(query);
-    marker.addMarker(Markers.QUERY.toString());
     marker.addMarker(Markers.START.toString());
     marker.expect = count.get();
     notificationBus.post(marker);
@@ -103,13 +101,12 @@ public class ModelDataFeed {
     });
 
     marker = new Notification(query);
-    marker.addMarker(Markers.QUERY.toString());
     marker.addMarker(Markers.END.toString());
     marker.expect = 0;
     notificationBus.post(marker);
 
 
-    logger.info("Dispatch model data feed took " + (System.currentTimeMillis() - startTimer) + "ms");
+    logger.info("Dispatching " + dtos.size() + " model data fields took " + (System.currentTimeMillis() - startTimer) + "ms");
 
 
   }

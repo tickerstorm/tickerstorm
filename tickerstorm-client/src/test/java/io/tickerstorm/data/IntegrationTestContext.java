@@ -9,7 +9,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
-import org.springframework.jms.annotation.EnableJms;
 import org.springframework.jms.core.JmsTemplate;
 
 import com.google.common.eventbus.EventBus;
@@ -21,7 +20,6 @@ import io.tickerstorm.common.eventbus.Destinations;
 import io.tickerstorm.common.eventbus.EventBusToJMSBridge;
 import io.tickerstorm.common.eventbus.JMSToEventBusBridge;
 
-@EnableJms
 @Configuration
 @Import({EventBusContext.class, JmsEventBusContext.class})
 public class IntegrationTestContext implements ApplicationListener<ContextRefreshedEvent> {
@@ -36,8 +34,8 @@ public class IntegrationTestContext implements ApplicationListener<ContextRefres
 
   @PreDestroy
   public void destroy() {
-    // ServiceLauncher.killMarketDataService();
-    // ServiceLauncher.killStrategyService();
+    ServiceLauncher.killMarketDataService();
+    ServiceLauncher.killStrategyService();
   }
 
   // SENDERS

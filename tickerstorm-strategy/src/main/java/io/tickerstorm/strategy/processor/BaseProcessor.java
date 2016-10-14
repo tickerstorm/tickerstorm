@@ -21,6 +21,7 @@ import io.tickerstorm.common.command.Command;
 import io.tickerstorm.common.command.CompletionTracker;
 import io.tickerstorm.common.command.Markers;
 import io.tickerstorm.common.command.Notification;
+import io.tickerstorm.common.command.Trigger;
 import io.tickerstorm.common.eventbus.Destinations;
 
 public abstract class BaseProcessor implements Processor {
@@ -64,10 +65,8 @@ public abstract class BaseProcessor implements Processor {
   @Subscribe
   public void onCommand(Command command) throws Exception {
 
-    logger.debug("Command received " + command);
-
     if (CompletionTracker.Session.isStart.test(command)) {
-
+      logger.debug("Command received " + command);
       if (command.config.containsKey("transformers")) {
 
         List<Map<String, String>> trans = (List<Map<String, String>>) command.config.get("transformers");
@@ -88,6 +87,7 @@ public abstract class BaseProcessor implements Processor {
     }
 
     if (CompletionTracker.Session.isEnd.test(command)) {
+      logger.debug("Command received " + command);
       configs.remove(command.getStream());
     }
 

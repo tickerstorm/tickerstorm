@@ -20,22 +20,23 @@ import io.tickerstorm.common.command.Trigger;
 public class Session implements Serializable {
 
   private String stream;
+
   public final Map<String, Object> config = new HashMap<>();
+
   private EventBus commandsBus;
   private EventBus notificationsBus;
   private final AtomicBoolean live = new AtomicBoolean(false);
-
+  
   Session(EventBus commandBus, EventBus notificationBus) {
     stream = UUID.randomUUID().toString();
     this.commandsBus = commandBus;
     this.notificationsBus = notificationBus;
   }
-
   Session(String id, EventBus commandBus, EventBus notificationBus) {
     this.stream = id;
     this.commandsBus = commandBus;
     this.notificationsBus = notificationBus;
-  };
+  }
 
   public void configure(InputStream stream) {
     Yaml yaml = new Yaml();
@@ -47,7 +48,7 @@ public class Session implements Serializable {
 
   public void configure(Map<String, Object> config) {
     this.config.putAll(config);
-  }
+  };
 
   public void configure(String yamlContent) {
     Yaml yaml = new Yaml();
@@ -57,12 +58,6 @@ public class Session implements Serializable {
     this.config.putAll(content);
   }
 
-  public void execute(Command comm) {
-    comm.setStream(this.stream);
-    assert comm.isValid() : "Command isn't valid";
-    commandsBus.post(comm);
-  }
-
   public void end() {
     live.set(false);
     Trigger marker = new Trigger(stream, "session.end");
@@ -70,6 +65,20 @@ public class Session implements Serializable {
     marker.addMarker(Markers.END.toString());
     marker.config.putAll(this.config);
     commandsBus.post(marker);
+  }
+
+  public void execute(Command comm) {
+    comm.setStream(this.stream);
+    assert comm.isValid() : "Command isn't valid";
+    commandsBus.post(comm);
+  }
+
+  public EventBus getCommandsBus() {
+    return commandsBus;
+  }
+
+  public EventBus getNotificationsBus() {
+    return notificationsBus;
   }
 
   public boolean live() {

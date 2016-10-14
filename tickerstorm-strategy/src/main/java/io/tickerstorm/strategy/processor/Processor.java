@@ -9,6 +9,6 @@ public interface Processor {
 
   void onCommand(Command command) throws Exception;
 
-  
+
 
 }

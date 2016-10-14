@@ -23,7 +23,7 @@ public abstract class Command implements Marker, Event, Serializable {
   public final Set<String> markers = new HashSet<>();
   public final Map<String, Object> config = new HashMap<>();
   public Instant timestamp = Instant.now();
-  private String stream;
+  protected String stream;
 
   public void setStream(String stream) {
     this.stream = stream;

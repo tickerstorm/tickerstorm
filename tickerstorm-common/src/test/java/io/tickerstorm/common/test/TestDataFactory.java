@@ -25,25 +25,31 @@ public class TestDataFactory {
 
       BigDecimal close = randomRange(open, 0.03, 0.03);
       BigDecimal high = BigDecimal.valueOf(Math.max(close.doubleValue(), open.doubleValue())).multiply(BigDecimal.valueOf(1.03));
-      BigDecimal low = BigDecimal.valueOf(Math.min(close.doubleValue(), open.doubleValue())).divide(BigDecimal.valueOf(1.03), 4, BigDecimal.ROUND_HALF_UP);
+      BigDecimal low = BigDecimal.valueOf(Math.min(close.doubleValue(), open.doubleValue())).divide(BigDecimal.valueOf(1.03), 4,
+          BigDecimal.ROUND_HALF_UP);
       BigDecimal vol = randomRange(new BigDecimal(2321513D), new BigDecimal(4354234562D));
 
       Candle c = new Candle(symbol, "Google", Instant.now(), open, close, high, low, Candle.MIN_1_INTERVAL, vol.intValue());
       c.stream = stream;
       cs.add(c);
+      try {
+        Thread.sleep(10);
+      } catch (Exception e) {
+        // TODO: handle exception
+      }
     }
 
     return cs;
 
   }
-  
+
   public static void storeGoogleData(String location) throws Exception {
-    
+
     FileUtils.forceMkdir(new File(location + "/Google"));
     Files.copy(new File("./src/test/resources/data/Google/TOL.csv"), new File(location + "/Google/TOL.csv"));
     Thread.sleep(5000);
     FileUtils.deleteQuietly(new File(location + "/Google/TOL.csv"));
-    
+
   }
 
   public static BigDecimal randomRange(BigDecimal min, BigDecimal max) {

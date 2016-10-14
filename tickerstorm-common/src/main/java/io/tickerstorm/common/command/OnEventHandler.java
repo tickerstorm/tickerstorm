@@ -44,9 +44,9 @@ import com.google.common.eventbus.Subscribe;
  * @author kkarski
  *
  */
-public class BaseCompletionTracker implements CompletionTracker {
+public class OnEventHandler implements CompletionTracker {
 
-  private final static Logger logger = LoggerFactory.getLogger(BaseCompletionTracker.class);
+  private final static Logger logger = LoggerFactory.getLogger(OnEventHandler.class);
 
   private final AtomicInteger completed = new AtomicInteger(0);
   private final AtomicInteger expect = new AtomicInteger(0);
@@ -58,13 +58,19 @@ public class BaseCompletionTracker implements CompletionTracker {
   private Predicate<Notification> resetCondition;
   private Predicate<Notification> timerStart;
   private Predicate<Notification> completionCondition;
-  private long delay;
-  private Runnable onCompletion;
+  private long delay = 500;
+  private Handler onCompletion;
   private Runnable onTimeout;
   private ScheduledFuture<?> future;
   private ScheduledFuture<?> mustStart;
   private final AtomicBoolean done = new AtomicBoolean(false);
   private final Timeout task = new Timeout();
+  private Notification not;
+
+  @FunctionalInterface
+  public interface Handler {
+    public void handle(Notification n);
+  }
 
   /**
    * 
@@ -79,22 +85,48 @@ public class BaseCompletionTracker implements CompletionTracker {
    * @param onCompletion The callback on completion
    * @param onTimeout The callback on timeout
    */
-  public BaseCompletionTracker(Predicate<Notification> startCondition, Predicate<Notification> resetCondition, EventBus notificationsBus,
-      long delay, Runnable onCompletion, Runnable onTimeout) {
-    this.resetCondition = resetCondition;
-    this.notificationsBus = notificationsBus;
-    this.delay = delay;
-    this.onCompletion = onCompletion;
-    this.onTimeout = onTimeout;
-    this.notificationsBus.register(this);
-    this.timerStart = startCondition;
-    this.mustStart = timer.schedule(task, delay * 4, TimeUnit.MILLISECONDS);
+  protected OnEventHandler(EventBus notificationBus) {
+    this.notificationsBus = notificationBus;
   }
 
-  public BaseCompletionTracker(Predicate<Notification> startCondition, Predicate<Notification> resetCondition,
-      Predicate<Notification> completionCondition, EventBus notificationsBus, long delay, Runnable onCompletion, Runnable onTimeout) {
-    this(startCondition, resetCondition, notificationsBus, delay, onCompletion, onTimeout);
+  public static OnEventHandler newHandler(EventBus notificationBus) {
+    OnEventHandler handler = new OnEventHandler(notificationBus);
+    return handler;
+  }
+
+  public OnEventHandler startCountDownOn(Predicate<Notification> startCondition) {
+    this.timerStart = startCondition;
+    return this;
+  }
+
+  public OnEventHandler extendTimeoutOn(Predicate<Notification> resetCondition) {
+    this.resetCondition = resetCondition;
+    return this;
+  }
+
+  public OnEventHandler completeWhen(Predicate<Notification> completionCondition) {
     this.completionCondition = completionCondition;
+    return this;
+  }
+
+  public OnEventHandler timeoutDelay(long delay) {
+    this.delay = delay;
+    return this;
+  }
+
+  public OnEventHandler whenTimedOut(Runnable onTimeout) {
+    this.onTimeout = onTimeout;
+    return this;
+  }
+
+  public OnEventHandler whenComplete(Handler onCompletion) {
+    this.onCompletion = onCompletion;
+    return this;
+  }
+
+  public void start() {
+    this.notificationsBus.register(this);
+    this.mustStart = timer.schedule(task, delay * 4, TimeUnit.MILLISECONDS);
   }
 
   @Subscribe
@@ -131,6 +163,7 @@ public class BaseCompletionTracker implements CompletionTracker {
 
       notificationsBus.unregister(this);
       done.compareAndSet(false, true);
+      this.not = not;
 
       if (future != null && !future.isCancelled())
         future.cancel(false);
@@ -139,7 +172,7 @@ public class BaseCompletionTracker implements CompletionTracker {
         mustStart.cancel(false);
 
       if (onCompletion != null) {
-        onCompletion.run();
+        onCompletion.handle(not);
       }
     }
   }
@@ -203,7 +236,7 @@ public class BaseCompletionTracker implements CompletionTracker {
       timedout.compareAndSet(false, true);
 
       if (done.get() && onCompletion != null) {
-        onCompletion.run();
+        onCompletion.handle(not);
       }
 
       if (onTimeout != null) {

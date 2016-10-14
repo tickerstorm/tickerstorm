@@ -2,7 +2,6 @@ package io.tickerstorm.common.eventbus;
 
 import javax.jms.ObjectMessage;
 
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jms.annotation.JmsListenerConfigurer;
@@ -39,6 +38,7 @@ public class JMSToEventBusBridge implements JmsListenerConfigurer {
       endpoint.setConcurrency(concurrency);
       endpoint.setDestination(destination);
       endpoint.setId(consumer + "-" + destination);
+      //endpoint.setSelector("source IS NULL OR source = '" + consumer + "'");
       endpoint.setMessageListener(message -> {
 
         String source = null;
@@ -47,14 +47,14 @@ public class JMSToEventBusBridge implements JmsListenerConfigurer {
         try {
           source = message.getStringProperty("source");
           o = ((ObjectMessage) message).getObject();
+
+          logger.trace(consumer + " received " + o.toString() + " from source " + source + ", " + destination);
+
+          bus.post(o);
+          message.acknowledge();
+
         } catch (Exception e) {
           logger.error(e.getMessage(), e);
-        }
-
-        logger.trace(consumer + " received " + o.toString() + " from source " + source + ", " + destination);
-
-        if (StringUtils.isEmpty(source) || !source.equalsIgnoreCase(consumer)) {
-          bus.post(o);
         }
       });
 
@@ -81,7 +81,7 @@ public class JMSToEventBusBridge implements JmsListenerConfigurer {
   }
 
   public void subsribeToRetroModelDataBus(JmsListenerEndpointRegistrar registrar, String consumer) {
-    register(registrar, consumer, retroModelDataBus, Destinations.QUEUE_RETRO_MODEL_DATA, "1-4");
+    register(registrar, consumer, retroModelDataBus, Destinations.QUEUE_RETRO_MODEL_DATA, "1");
   }
 
   public void subsribeToNotificationsBus(JmsListenerEndpointRegistrar registrar, String consumer) {
@@ -99,14 +99,14 @@ public class JMSToEventBusBridge implements JmsListenerConfigurer {
 
     if (brokerFeedBus != null)
       subsribeToBrokerFeedBus(registrar, consumer);
-    
-    if(realtimeBus != null)
+
+    if (realtimeBus != null)
       subsribeToRealtimeBus(registrar, consumer);
-    
-    if(notificationBus != null)
+
+    if (notificationBus != null)
       subsribeToNotificationsBus(registrar, consumer);
-    
-    if(retroModelDataBus != null)
+
+    if (retroModelDataBus != null)
       subsribeToRetroModelDataBus(registrar, consumer);
   }
 }

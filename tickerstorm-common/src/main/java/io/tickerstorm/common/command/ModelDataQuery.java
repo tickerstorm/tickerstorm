@@ -22,8 +22,13 @@ public class ModelDataQuery extends Command implements DataFeedQuery {
   }
 
   public Predicate<Notification> isDone() {
-    return (n -> this.getStream().equalsIgnoreCase(n.getStream()) && n.markers.contains(Markers.MODEL_DATA.toString())
-        && n.markers.contains(Markers.QUERY.toString()) && n.markers.contains(Markers.END.toString()) && n.id.equals(this.id));
+    return CompletionTracker.ModelData.someModelDataQueryEnded
+        .and(n -> this.getStream().equalsIgnoreCase(n.getStream()) && n.id.equals(this.id));
+  }
+  
+  public Predicate<Notification> started() {
+    return CompletionTracker.ModelData.someModelDataQueryStarted
+        .and(n -> this.getStream().equalsIgnoreCase(n.getStream()) && n.id.equals(this.id));
   }
 
   @Override

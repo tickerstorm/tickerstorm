@@ -8,13 +8,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.ImportResource;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.data.cassandra.repository.config.EnableCassandraRepositories;
-import org.springframework.jms.annotation.EnableJms;
 import org.springframework.jms.config.JmsListenerContainerFactory;
 import org.springframework.jms.core.JmsTemplate;
 
@@ -32,11 +30,9 @@ import io.tickerstorm.data.dao.MarketDataDao;
 import io.tickerstorm.data.dao.ModelDataDao;
 import io.tickerstorm.service.HeartBeatGenerator;
 
-@EnableJms
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages={"io.tickerstorm.data"})
 @EnableCassandraRepositories(basePackageClasses = {MarketDataDao.class, ModelDataDao.class})
 @ImportResource(value = {"classpath:/META-INF/spring/cassandra-beans.xml"})
-@ComponentScan(basePackages = {"io.tickerstorm.data"})
 @PropertySource({"classpath:/default.properties"})
 @Import({EventBusContext.class, JmsEventBusContext.class})
 public class MarketDataApplication {

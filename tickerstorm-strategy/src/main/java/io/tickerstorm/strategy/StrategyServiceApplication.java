@@ -6,10 +6,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
-import org.springframework.jms.annotation.EnableJms;
 import org.springframework.jms.core.JmsTemplate;
 
 import com.google.common.eventbus.EventBus;
@@ -21,9 +19,8 @@ import io.tickerstorm.common.eventbus.EventBusToJMSBridge;
 import io.tickerstorm.common.eventbus.JMSToEventBusBridge;
 import io.tickerstorm.service.HeartBeatGenerator;
 
-@EnableJms
-@SpringBootApplication
-@ComponentScan(basePackages = {"io.tickerstorm.strategy.backtest", "io.tickerstorm.strategy.processor", "io.tickerstorm.strategy.util"})
+@SpringBootApplication(
+    scanBasePackages = {"io.tickerstorm.strategy.backtest", "io.tickerstorm.strategy.processor", "io.tickerstorm.strategy.util"})
 @Import({EventBusContext.class, JmsEventBusContext.class})
 public class StrategyServiceApplication {
 
