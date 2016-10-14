@@ -75,7 +75,14 @@ public class ModelDataExporter {
     if (e != null) {
       fieldNames = (Set<String>) e.getObjectValue();
       if (fieldNames.isEmpty()) {
-        logger.warn("No header information found to export for stream " + command.getStream());
+
+        Notification n = new Notification(command);
+        n.addMarker(Markers.FAILED.toString());
+        n.addMarker(Markers.MESSAGE.toString());
+        n.properties.put(Markers.MESSAGE.toString(), "No header information found to export for stream " + command.getStream());
+        notificationBus.post(n);
+
+        logger.error("No header information found to export for stream " + command.getStream());
         return;
       }
     }
@@ -87,7 +94,7 @@ public class ModelDataExporter {
     Notification n = new Notification(command);
     n.addMarker(Markers.START.toString());
     notificationBus.post(n);
-    
+
     final CellProcessor[] cellProcessor = new CellProcessor[fieldNames.size()];
     Arrays.fill(cellProcessor, new Optional());
 

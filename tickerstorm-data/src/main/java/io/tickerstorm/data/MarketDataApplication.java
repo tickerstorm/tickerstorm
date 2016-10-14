@@ -2,7 +2,6 @@ package io.tickerstorm.data;
 
 import java.util.concurrent.Executor;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
@@ -13,7 +12,6 @@ import org.springframework.context.annotation.ImportResource;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.data.cassandra.repository.config.EnableCassandraRepositories;
-import org.springframework.jms.config.JmsListenerContainerFactory;
 import org.springframework.jms.core.JmsTemplate;
 
 import com.google.common.eventbus.AsyncEventBus;
@@ -30,7 +28,7 @@ import io.tickerstorm.data.dao.MarketDataDao;
 import io.tickerstorm.data.dao.ModelDataDao;
 import io.tickerstorm.service.HeartBeatGenerator;
 
-@SpringBootApplication(scanBasePackages={"io.tickerstorm.data"})
+@SpringBootApplication(scanBasePackages = {"io.tickerstorm.data"})
 @EnableCassandraRepositories(basePackageClasses = {MarketDataDao.class, ModelDataDao.class})
 @ImportResource(value = {"classpath:/META-INF/spring/cassandra-beans.xml"})
 @PropertySource({"classpath:/default.properties"})
@@ -39,12 +37,6 @@ public class MarketDataApplication {
 
   @Value("${service.name:data-service}")
   private String SERVICE;
-
-  @Autowired
-  private JMSToEventBusBridge jmsBridge;
-
-  @Autowired
-  private JmsListenerContainerFactory containerFactory;
 
   public static void main(String[] args) throws Exception {
     SpringApplication.run(MarketDataApplication.class, args);

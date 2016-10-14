@@ -82,7 +82,7 @@ public class ModelDataDao {
     select.where(QueryBuilder.eq("stream", stream.toLowerCase())).and(QueryBuilder.in("date", dates(from, until)))
         .and(QueryBuilder.gte("timestamp", Date.from(from))).and(QueryBuilder.lte("timestamp", Date.from(until)));
 
-    logger.debug("Executing " + select.getQueryString());
+    logger.debug("Executing " + select);
     long startTimer = System.currentTimeMillis();
     List<ModelDataDto> s = cassandra.select(select, ModelDataDto.class);
     logger.info("Query took " + (System.currentTimeMillis() - startTimer) + "ms to fetch " + s.size() + " results.");

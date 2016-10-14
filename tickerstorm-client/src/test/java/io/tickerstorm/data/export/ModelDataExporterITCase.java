@@ -84,7 +84,7 @@ public class ModelDataExporterITCase extends BaseIntegrationTest {
 
         }).whenTimedOut(() -> {
           Assert.fail();
-        });
+        }).start();
 
     OnEventHandler.newHandler(session.getNotificationsBus()).startCountDownOn(CompletionTracker.ModelData.Export.someCsvExportStarted)
         .completeWhen(CompletionTracker.ModelData.Export.someCsvExportFinished).timeoutDelay(2000).whenComplete((n) -> {
@@ -93,7 +93,7 @@ public class ModelDataExporterITCase extends BaseIntegrationTest {
 
         }).whenTimedOut(() -> {
           Assert.fail();
-        });
+        }).start();
 
     while (!file_saved) {
       Thread.sleep(5000);

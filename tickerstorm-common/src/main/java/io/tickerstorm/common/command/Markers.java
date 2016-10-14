@@ -32,6 +32,8 @@ public enum Markers {
 
   FAILED("failed"),
   
+  MESSAGE("message"),
+  
   SUCCESS("success");
 
 

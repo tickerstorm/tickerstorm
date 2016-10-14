@@ -1,6 +1,5 @@
 package io.tickerstorm.data;
 
-import javax.jms.ConnectionFactory;
 import javax.jms.Session;
 
 import org.slf4j.Logger;
@@ -10,17 +9,14 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
+import org.springframework.jms.connection.CachingConnectionFactory;
 import org.springframework.jms.listener.DefaultMessageListenerContainer;
 import org.springframework.util.ErrorHandler;
 
 import com.google.common.base.Throwables;
-import com.google.common.eventbus.EventBus;
 
-import io.tickerstorm.common.entity.MarketData;
 import io.tickerstorm.common.eventbus.ByDestinationNameJmsResolver;
 import io.tickerstorm.common.eventbus.Destinations;
-import io.tickerstorm.common.eventbus.EventBusToEventBusBridge;
 
 @EnableAutoConfiguration
 @Configuration
@@ -32,12 +28,9 @@ public class TestMarketDataServiceConfig extends MarketDataApplication {
     SpringApplication.run(TestMarketDataServiceConfig.class, args);
   }
 
-
-  
-
   @Qualifier("realtime")
   @Bean
-  public DefaultMessageListenerContainer buildQueryListenerContainer(ConnectionFactory factory) {
+  public DefaultMessageListenerContainer buildQueryListenerContainer(CachingConnectionFactory factory) {
 
     DefaultMessageListenerContainer container = null;
 
