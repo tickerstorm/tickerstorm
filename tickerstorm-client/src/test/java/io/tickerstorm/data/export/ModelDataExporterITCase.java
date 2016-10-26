@@ -1,7 +1,7 @@
 package io.tickerstorm.data.export;
 
 import java.io.File;
-import java.nio.file.Files;
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -9,6 +9,7 @@ import java.time.temporal.ChronoUnit;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.test.context.ContextConfiguration;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
@@ -23,7 +24,6 @@ import io.tickerstorm.common.command.HistoricalFeedQuery;
 import io.tickerstorm.common.command.Markers;
 import io.tickerstorm.common.command.Notification;
 import io.tickerstorm.common.command.OnEventHandler;
-import io.tickerstorm.common.data.Locations;
 import io.tickerstorm.common.entity.Candle;
 import io.tickerstorm.common.eventbus.Destinations;
 import io.tickerstorm.common.test.TestDataFactory;
@@ -41,6 +41,9 @@ public class ModelDataExporterITCase extends BaseIntegrationTest {
 
   private boolean file_saved = false;
 
+  @Qualifier(Destinations.BROKER_MARKETDATA_BUS)
+  @Autowired
+  private EventBus brokderFeed;
 
   @Qualifier(Destinations.NOTIFICATIONS_BUS)
   @Autowired
@@ -48,14 +51,14 @@ public class ModelDataExporterITCase extends BaseIntegrationTest {
 
   @Override
   public void onMarketDataServiceInitialized() throws Exception {
-    session = factory.newSession(stream);
+    session = factory.newSession();
+    session.configure(new DefaultResourceLoader().getResource("classpath:yml/modeldataendtoenditcase.yml").getInputStream(), stream);
     session.start();
-    TestDataFactory.storeGoogleData(Locations.FILE_DROP_LOCATION);
   }
 
   @BeforeMethod
   public void setup() throws Exception {
-    Files.deleteIfExists(new File(location).toPath());
+    java.nio.file.Files.deleteIfExists(new File(location).toPath());
   }
 
   @Test
@@ -94,6 +97,10 @@ public class ModelDataExporterITCase extends BaseIntegrationTest {
         }).whenTimedOut(() -> {
           Assert.fail();
         }).start();
+
+    TestDataFactory.buildCandles(100, "goog", session.stream(), BigDecimal.ONE).stream().forEach(c -> {
+      brokderFeed.post(c);
+    });
 
     while (!file_saved) {
       Thread.sleep(5000);

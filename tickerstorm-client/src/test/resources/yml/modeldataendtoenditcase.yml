@@ -1,7 +1,13 @@
 stream: modeldataendtoenditcase
+
+symbols:
+  - symbol: GOOG
+    periods: [1m]
+    source: Google
+  
 transformers: 
   - transformer: numeric-change
-    periods: [2]
+    periods: [10]
   
   - transformer: basic-stats
-    periods: [1, 10, 15, 30, 60, 90]
+    periods: [30, 60, 90]

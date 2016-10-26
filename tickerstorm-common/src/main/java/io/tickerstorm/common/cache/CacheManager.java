@@ -15,6 +15,8 @@ import net.sf.ehcache.config.SizeOfPolicyConfiguration.MaxDepthExceededBehavior;
 import net.sf.ehcache.store.MemoryStoreEvictionPolicy;
 
 public class CacheManager {
+  
+  private final static int MAX_ELEMENTS_PER_SERIES = 1000;
 
   private static net.sf.ehcache.CacheManager cacheManager = null;
 
@@ -42,11 +44,11 @@ public class CacheManager {
         .getObjectValue();
   }
 
-  public static void put(Field<?> f, int maxSize) {
+  public static void cache(Field<?> f) {
 
     final String key = CacheManager.buildKey(f).toString();
     Element e = CacheManager.getInstance(f.getStream().toLowerCase())
-        .putIfAbsent(new Element(key, new SynchronizedIndexedTreeMap<Field<?>>(Field.SORT_BY_INSTANTS, maxSize)));
+        .putIfAbsent(new Element(key, new SynchronizedIndexedTreeMap<Field<?>>(Field.SORT_BY_INSTANTS, MAX_ELEMENTS_PER_SERIES)));
 
     if (e == null) {
       e = CacheManager.getInstance(f.getStream().toLowerCase()).get(key);

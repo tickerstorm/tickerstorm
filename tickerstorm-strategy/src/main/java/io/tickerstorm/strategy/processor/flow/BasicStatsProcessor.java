@@ -25,8 +25,6 @@ public class BasicStatsProcessor extends BaseEventProcessor {
 
   public final static String METRIC_TIME_TAKEN = "metric.basicstats.time";
 
-  private List<Integer> periods = Lists.newArrayList(1, 10, 15, 30, 60, 90);
-
   private Predicate<Field<?>> filter() {
     return p -> (BigDecimal.class.isAssignableFrom(p.getFieldType()) || Integer.class.isAssignableFrom(p.getFieldType()))
         && !p.getName().contains(Field.Name.MAX.field()) && !p.getName().contains(Field.Name.MIN.field())
@@ -40,6 +38,8 @@ public class BasicStatsProcessor extends BaseEventProcessor {
 
     final Set<Field<?>> fs = new HashSet<>();
     fss.stream().filter(filter()).forEach(f -> {
+
+      List<Integer> periods = (List<Integer>) getConfig(f.getStream()).getOrDefault(METRIC_TIME_TAKEN, Lists.newArrayList(30));
 
       try {
         for (Integer p : periods) {

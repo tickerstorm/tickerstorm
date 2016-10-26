@@ -53,7 +53,7 @@ public class TestNumericChangeProcessor {
 
     Candle md = new Candle("TOL", stream, Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.TEN,
         Candle.MIN_1_INTERVAL, Integer.MAX_VALUE);
-    CacheManager.put(new BaseField<>(md.getEventId(), "warm cache", BigDecimal.class), 2);
+    CacheManager.cache(new BaseField<>(md.getEventId(), "warm cache", BigDecimal.class));
     CacheManager.getInstance(stream).removeAll();
   }
 
@@ -131,7 +131,7 @@ public class TestNumericChangeProcessor {
 
     cs.stream().forEach(c -> {
       c.getFields().stream().filter(f -> f.getFieldType().isAssignableFrom(BigDecimal.class)).forEach(f -> {
-        CacheManager.put(f, 2);
+        CacheManager.cache(f);
       });
     });
 

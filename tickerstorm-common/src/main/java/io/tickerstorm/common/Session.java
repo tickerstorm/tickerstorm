@@ -45,6 +45,14 @@ public class Session implements Serializable {
     assert !StringUtils.isEmpty(this.stream) : "A stream name must be provided";
     this.config.putAll(content);
   }
+  
+  public void configure(InputStream input, String stream) {
+    Yaml yaml = new Yaml();
+    Map<String, Object> content = (Map) yaml.load(input);
+    this.stream = stream;
+    assert !StringUtils.isEmpty(this.stream) : "A stream name must be provided";
+    this.config.putAll(content);
+  }
 
   public void configure(Map<String, Object> config) {
     this.config.putAll(config);

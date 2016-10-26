@@ -21,7 +21,6 @@ import io.tickerstorm.common.command.Command;
 import io.tickerstorm.common.command.CompletionTracker;
 import io.tickerstorm.common.command.Markers;
 import io.tickerstorm.common.command.Notification;
-import io.tickerstorm.common.command.Trigger;
 import io.tickerstorm.common.eventbus.Destinations;
 
 public abstract class BaseProcessor implements Processor {
