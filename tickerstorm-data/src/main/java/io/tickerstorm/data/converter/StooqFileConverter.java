@@ -27,7 +27,7 @@ import com.google.common.io.Files;
 import io.tickerstorm.common.command.Markers;
 import io.tickerstorm.common.command.Notification;
 import io.tickerstorm.common.data.converter.BaseFileConverter;
-import io.tickerstorm.common.entity.Candle;
+import io.tickerstorm.common.entity.Bar;
 import io.tickerstorm.common.entity.MarketData;
 import io.tickerstorm.common.eventbus.Destinations;
 
@@ -79,21 +79,21 @@ public class StooqFileConverter extends BaseFileConverter {
             if (line.startsWith("Date"))
               continue;
 
-            Candle c = null;
+            Bar c = null;
             try {
 
               String[] cols = line.split(",");
 
               try {
 
-                c = new Candle(symbol, provider(), LocalDateTime.parse(cols[0] + " " + cols[1], formatter).toInstant(ZoneOffset.UTC),
+                c = new Bar(symbol, provider(), LocalDateTime.parse(cols[0] + " " + cols[1], formatter).toInstant(ZoneOffset.UTC),
                     new BigDecimal(cols[2]), new BigDecimal(cols[5]), new BigDecimal(cols[3]), new BigDecimal(cols[4]), interval(path),
                     new Integer(cols[6]));
                 c.stream = provider();
 
               } catch (Exception ex) {
 
-                c = new Candle(symbol, provider(), LocalDateTime.from(dayFormatter.parse(cols[0])).toInstant(ZoneOffset.of("GMT")),
+                c = new Bar(symbol, provider(), LocalDateTime.from(dayFormatter.parse(cols[0])).toInstant(ZoneOffset.of("GMT")),
                     new BigDecimal(cols[1]), new BigDecimal(cols[4]), new BigDecimal(cols[2]), new BigDecimal(cols[3]), interval(path),
                     new Integer(cols[5]));
                 c.stream = provider();
@@ -126,15 +126,15 @@ public class StooqFileConverter extends BaseFileConverter {
   private String interval(String path) {
 
     if (path.contains("5 min"))
-      return Candle.MIN_5_INTERVAL;
+      return Bar.MIN_5_INTERVAL;
 
     if (path.contains("hourly"))
-      return Candle.HOURLY_INTERVAL;
+      return Bar.HOURLY_INTERVAL;
 
     if (path.contains("daily"))
-      return Candle.EOD;
+      return Bar.EOD;
 
-    return Candle.MIN_5_INTERVAL;
+    return Bar.MIN_5_INTERVAL;
 
   }
 

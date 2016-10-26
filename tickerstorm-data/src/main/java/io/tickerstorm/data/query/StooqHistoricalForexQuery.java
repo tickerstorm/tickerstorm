@@ -7,13 +7,13 @@ import java.util.Set;
 import com.google.common.collect.Maps;
 
 import io.tickerstorm.common.data.converter.DataQuery;
-import io.tickerstorm.common.entity.Candle;
+import io.tickerstorm.common.entity.Bar;
 
 
 public class StooqHistoricalForexQuery implements QueryBuilder, DataQuery {
 
   public String getInterval() {
-    return Candle.MIN_5_INTERVAL;
+    return Bar.MIN_5_INTERVAL;
   }
 
   @Override

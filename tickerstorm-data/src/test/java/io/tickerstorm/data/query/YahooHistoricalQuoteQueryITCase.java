@@ -11,7 +11,7 @@ import org.testng.annotations.Test;
 
 import com.google.common.eventbus.Subscribe;
 
-import io.tickerstorm.common.entity.Candle;
+import io.tickerstorm.common.entity.Bar;
 import io.tickerstorm.common.entity.MarketData;
 
 public class YahooHistoricalQuoteQueryITCase extends BaseDataQueryITCase {
@@ -43,14 +43,14 @@ public class YahooHistoricalQuoteQueryITCase extends BaseDataQueryITCase {
       assertEquals(md.getStream(), "Yahoo");
       assertNotNull(md.getTimestamp());
 
-      Candle c = (Candle) md;
+      Bar c = (Bar) md;
 
       assertNotNull(c.close);
       assertNotNull(c.open);
       assertNotNull(c.low);
       assertNotNull(c.high);
       assertNotNull(c.volume);
-      assertEquals(c.interval, Candle.EOD);
+      assertEquals(c.interval, Bar.EOD);
       count.incrementAndGet();
     }
 

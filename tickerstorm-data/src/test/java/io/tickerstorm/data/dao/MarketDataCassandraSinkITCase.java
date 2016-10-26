@@ -22,7 +22,7 @@ import org.testng.annotations.Test;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
-import io.tickerstorm.common.entity.Candle;
+import io.tickerstorm.common.entity.Bar;
 import io.tickerstorm.common.entity.MarketData;
 import io.tickerstorm.common.eventbus.Destinations;
 import io.tickerstorm.data.TestMarketDataServiceConfig;
@@ -57,10 +57,10 @@ public class MarketDataCassandraSinkITCase extends AbstractTestNGSpringContextTe
   @Test
   public void storeCandle() throws Exception {
 
-    Candle c = new Candle();
+    Bar c = new Bar();
     c.high = BigDecimal.TEN;
     c.low = BigDecimal.ONE;
-    c.interval = Candle.MIN_10_INTERVAL;
+    c.interval = Bar.MIN_10_INTERVAL;
     c.open = BigDecimal.ZERO;
     c.timestamp = Instant.now();
     c.volume = 10;
@@ -90,7 +90,7 @@ public class MarketDataCassandraSinkITCase extends AbstractTestNGSpringContextTe
       assertEquals(dto.primarykey.symbol, c.symbol.toLowerCase());
       assertNotNull(dto.primarykey.date);
 
-      Candle d = (Candle) dto.toMarketData(c.stream);
+      Bar d = (Bar) dto.toMarketData(c.stream);
 
       assertEquals(d.close, c.close);
       assertEquals(d.low, c.low);

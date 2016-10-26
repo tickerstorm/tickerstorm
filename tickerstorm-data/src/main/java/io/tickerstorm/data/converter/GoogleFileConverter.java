@@ -32,7 +32,7 @@ import io.tickerstorm.common.data.converter.DataConverter;
 import io.tickerstorm.common.data.converter.DataQuery;
 import io.tickerstorm.common.data.converter.FileConverter;
 import io.tickerstorm.common.data.converter.Mode;
-import io.tickerstorm.common.entity.Candle;
+import io.tickerstorm.common.entity.Bar;
 import io.tickerstorm.common.entity.MarketData;
 import io.tickerstorm.common.eventbus.Destinations;
 import io.tickerstorm.data.query.GoogleDataQuery;
@@ -185,8 +185,8 @@ public class GoogleFileConverter extends BaseFileConverter implements FileConver
         mins = Integer.valueOf(args[0]);
       }
 
-      Candle c = new Candle(symbol, provider(), timestamp.plus(mins, ChronoUnit.MINUTES), new BigDecimal(args[4]), new BigDecimal(args[1]),
-          new BigDecimal(args[2]), new BigDecimal(args[3]), Candle.MIN_1_INTERVAL,
+      Bar c = new Bar(symbol, provider(), timestamp.plus(mins, ChronoUnit.MINUTES), new BigDecimal(args[4]), new BigDecimal(args[1]),
+          new BigDecimal(args[2]), new BigDecimal(args[3]), Bar.MIN_1_INTERVAL,
           new BigDecimal(args[5]).multiply(new BigDecimal("1000")).intValue());
       
       if (historical != null)// in case being invoked standalone (i.e. tests)

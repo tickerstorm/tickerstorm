@@ -29,8 +29,8 @@ public interface MarketData extends Event, Serializable, Comparable<MarketData> 
   public static MarketData build(Set<Field<?>> fields) {
 
     switch (getMarketDataType(fields)) {
-      case Candle.TYPE:
-        return new Candle(fields);
+      case Bar.TYPE:
+        return new Bar(fields);
 
       case Quote.TYPE:
         return new Quote(fields);
@@ -51,7 +51,7 @@ public interface MarketData extends Event, Serializable, Comparable<MarketData> 
     Field<String> interval = (Field<String>) Field.findField(Field.Name.INTERVAL.field(), fields);
 
     if (interval != null)
-      return Candle.TYPE;
+      return Bar.TYPE;
 
     if (Field.findField(Field.Name.ASK.field(), fields) != null)
       return Quote.TYPE;

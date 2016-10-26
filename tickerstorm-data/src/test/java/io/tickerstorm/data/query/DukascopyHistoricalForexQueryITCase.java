@@ -17,7 +17,7 @@ import com.google.common.eventbus.Subscribe;
 import com.google.common.io.Files;
 
 import io.tickerstorm.common.data.Locations;
-import io.tickerstorm.common.entity.Candle;
+import io.tickerstorm.common.entity.Bar;
 import io.tickerstorm.common.entity.MarketData;
 
 public class DukascopyHistoricalForexQueryITCase extends BaseDataQueryITCase {
@@ -58,7 +58,7 @@ public class DukascopyHistoricalForexQueryITCase extends BaseDataQueryITCase {
       assertEquals(md.getStream(), "Dukascopy");
       assertNotNull(md.getTimestamp());
 
-      Candle c = (Candle) md;
+      Bar c = (Bar) md;
       assertNotNull(c.close);
       assertTrue(c.close.compareTo(BigDecimal.ZERO) > 0);
       assertNotNull(c.open);
@@ -68,7 +68,7 @@ public class DukascopyHistoricalForexQueryITCase extends BaseDataQueryITCase {
       assertNotNull(c.high);
       assertTrue(c.high.compareTo(BigDecimal.ZERO) > 0);
       assertNotNull(c.volume);
-      assertEquals(c.interval, Candle.MIN_1_INTERVAL);
+      assertEquals(c.interval, Bar.MIN_1_INTERVAL);
       count.incrementAndGet();
 
     }

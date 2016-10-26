@@ -22,7 +22,7 @@ import com.google.common.eventbus.EventBus;
 
 import io.tickerstorm.common.cache.CacheManager;
 import io.tickerstorm.common.entity.BaseField;
-import io.tickerstorm.common.entity.Candle;
+import io.tickerstorm.common.entity.Bar;
 import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.test.TestDataFactory;
 import io.tickerstorm.strategy.processor.flow.NumericChangeProcessor;
@@ -51,8 +51,8 @@ public class TestNumericChangeProcessor {
     bolt.gauge = service;
     Mockito.doNothing().when(service).submit(Mockito.anyString(), Mockito.anyDouble());
 
-    Candle md = new Candle("TOL", stream, Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.TEN,
-        Candle.MIN_1_INTERVAL, Integer.MAX_VALUE);
+    Bar md = new Bar("TOL", stream, Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.TEN,
+        Bar.MIN_1_INTERVAL, Integer.MAX_VALUE);
     CacheManager.cache(new BaseField<>(md.getEventId(), "warm cache", BigDecimal.class));
     CacheManager.getInstance(stream).removeAll();
   }
@@ -66,8 +66,8 @@ public class TestNumericChangeProcessor {
   @Test
   public void testComputeFirstDiscreteChange() throws Exception {
 
-    Candle md = new Candle("TOL", stream, Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.TEN,
-        Candle.MIN_1_INTERVAL, Integer.MAX_VALUE);
+    Bar md = new Bar("TOL", stream, Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.TEN,
+        Bar.MIN_1_INTERVAL, Integer.MAX_VALUE);
 
     bolt.handle(md.getFields());
 
@@ -80,21 +80,21 @@ public class TestNumericChangeProcessor {
   public void testComputeSecondDiscreteChange() throws Exception {
 
 
-    Candle md = new Candle("TOL", stream, Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.TEN,
-        Candle.MIN_1_INTERVAL, Integer.MAX_VALUE);
+    Bar md = new Bar("TOL", stream, Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.TEN,
+        Bar.MIN_1_INTERVAL, Integer.MAX_VALUE);
 
 
     bolt.handle(md.getFields());
 
 
-    md = new Candle("TOL", stream, Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.TEN, Candle.MIN_1_INTERVAL,
+    md = new Bar("TOL", stream, Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.TEN, Bar.MIN_1_INTERVAL,
         12335253);
 
 
     bolt.handle(md.getFields());
 
 
-    md = new Candle("TOL", stream, Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.TEN, Candle.MIN_1_INTERVAL,
+    md = new Bar("TOL", stream, Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.TEN, Bar.MIN_1_INTERVAL,
         11145345);
 
 
@@ -127,7 +127,7 @@ public class TestNumericChangeProcessor {
   public void testComputeNDiscreteChange() throws Exception {
 
     // Prime cache with prior tuple's fields
-    List<Candle> cs = TestDataFactory.buildCandles(10, "GOOG", stream, new BigDecimal(10.19));
+    List<Bar> cs = TestDataFactory.buildCandles(10, "GOOG", stream, new BigDecimal(10.19));
 
     cs.stream().forEach(c -> {
       c.getFields().stream().filter(f -> f.getFieldType().isAssignableFrom(BigDecimal.class)).forEach(f -> {

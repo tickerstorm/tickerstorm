@@ -24,7 +24,7 @@ import io.tickerstorm.common.command.Markers;
 import io.tickerstorm.common.command.Notification;
 import io.tickerstorm.common.data.converter.BaseFileConverter;
 import io.tickerstorm.common.data.converter.Mode;
-import io.tickerstorm.common.entity.Candle;
+import io.tickerstorm.common.entity.Bar;
 import io.tickerstorm.common.entity.MarketData;
 import io.tickerstorm.common.eventbus.Destinations;
 
@@ -66,7 +66,7 @@ public class DukascopyFileConverter extends BaseFileConverter {
             continue;
 
           String[] cols = l.split(",");
-          Candle c = new Candle(currency, provider(), LocalDateTime.parse(cols[0], formatter).toInstant(ZoneOffset.UTC),
+          Bar c = new Bar(currency, provider(), LocalDateTime.parse(cols[0], formatter).toInstant(ZoneOffset.UTC),
               new BigDecimal(cols[1]), new BigDecimal(cols[4]), new BigDecimal(cols[2]), new BigDecimal(cols[3]), getInterval(path),
               new BigDecimal(cols[5]).multiply(new BigDecimal("1000000")).intValue());
           c.stream = provider();
@@ -93,18 +93,18 @@ public class DukascopyFileConverter extends BaseFileConverter {
   private String getInterval(String fileName) {
 
     if (fileName.contains("_1_m_")) {
-      return Candle.MIN_1_INTERVAL;
+      return Bar.MIN_1_INTERVAL;
     } else if (fileName.contains("_10_m_")) {
-      return Candle.MIN_10_INTERVAL;
+      return Bar.MIN_10_INTERVAL;
     } else if (fileName.contains("_5_m_")) {
-      return Candle.MIN_5_INTERVAL;
+      return Bar.MIN_5_INTERVAL;
     } else if (fileName.contains("_1_h_")) {
-      return Candle.HOURLY_INTERVAL;
+      return Bar.HOURLY_INTERVAL;
     } else if (fileName.contains("_1_d_")) {
-      return Candle.EOD;
+      return Bar.EOD;
     }
 
-    return Candle.EOD;
+    return Bar.EOD;
   }
 
   @Override

@@ -28,7 +28,7 @@ import io.tickerstorm.common.command.Command;
 import io.tickerstorm.common.command.HistoricalFeedQuery;
 import io.tickerstorm.common.command.Markers;
 import io.tickerstorm.common.command.Notification;
-import io.tickerstorm.common.entity.Candle;
+import io.tickerstorm.common.entity.Bar;
 import io.tickerstorm.common.eventbus.Destinations;
 import io.tickerstorm.data.dao.MarketDataDao;
 import io.tickerstorm.data.dao.MarketDataDto;
@@ -104,7 +104,7 @@ public class HistoricalDataFeed {
 
       Select select = QueryBuilder.select().from(keyspace, "marketdata");
       select.where(QueryBuilder.eq("symbol", s.toLowerCase())).and(QueryBuilder.in("date", dates))
-          .and(QueryBuilder.eq("type", Candle.TYPE.toLowerCase())).and(QueryBuilder.eq("source", query.source.toLowerCase()))
+          .and(QueryBuilder.eq("type", Bar.TYPE.toLowerCase())).and(QueryBuilder.eq("source", query.source.toLowerCase()))
           .and(QueryBuilder.eq("interval", query.periods.iterator().next()));
 
       logger.debug("Cassandra query: " + select.toString());

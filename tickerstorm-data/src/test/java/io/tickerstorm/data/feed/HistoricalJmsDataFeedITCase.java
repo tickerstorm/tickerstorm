@@ -32,7 +32,7 @@ import com.google.common.io.Files;
 
 import io.tickerstorm.common.command.HistoricalFeedQuery;
 import io.tickerstorm.common.data.Locations;
-import io.tickerstorm.common.entity.Candle;
+import io.tickerstorm.common.entity.Bar;
 import io.tickerstorm.common.entity.MarketData;
 import io.tickerstorm.common.eventbus.Destinations;
 import io.tickerstorm.data.TestMarketDataServiceConfig;
@@ -77,7 +77,7 @@ public class HistoricalJmsDataFeedITCase extends AbstractTestNGSpringContextTest
     HistoricalFeedQuery query = new HistoricalFeedQuery("google", "google", new String[] {"TOL"});
     query.from = LocalDateTime.of(2015, 6, 10, 0, 0);
     query.until = LocalDateTime.of(2015, 6, 11, 0, 0);
-    query.periods.add(Candle.MIN_1_INTERVAL);
+    query.periods.add(Bar.MIN_1_INTERVAL);
     query.zone = ZoneOffset.ofHours(-7);
 
     jmsTemplate.send(Destinations.TOPIC_COMMANDS, new MessageCreator() {
@@ -109,9 +109,9 @@ public class HistoricalJmsDataFeedITCase extends AbstractTestNGSpringContextTest
       assertEquals(md.getStream(), "google");
       assertNotNull(md.getTimestamp());
 
-      if (Candle.class.isAssignableFrom(md.getClass())) {
+      if (Bar.class.isAssignableFrom(md.getClass())) {
 
-        Candle c = (Candle) md;
+        Bar c = (Bar) md;
         assertNotNull(c.close);
         assertTrue(c.close.longValue() > 0);
         assertNotNull(c.open);
@@ -122,7 +122,7 @@ public class HistoricalJmsDataFeedITCase extends AbstractTestNGSpringContextTest
         assertTrue(c.high.longValue() > 0);
         assertNotNull(c.volume);
         assertTrue(c.volume.longValue() > 0);
-        assertEquals(c.interval, Candle.MIN_1_INTERVAL);
+        assertEquals(c.interval, Bar.MIN_1_INTERVAL);
         verified = true;
         synchronized (count) {
           count.incrementAndGet();

@@ -12,13 +12,13 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import io.tickerstorm.common.entity.BaseField;
-import io.tickerstorm.common.entity.Candle;
+import io.tickerstorm.common.entity.Bar;
 import io.tickerstorm.common.entity.Field;
 
 public class TestSynchronizedIndexedTreeMap {
 
   private SynchronizedIndexedTreeMap<Field<Integer>> q;
-  private Candle c;
+  private Bar c;
   private Random rand = new Random();
 
   @BeforeMethod
@@ -34,7 +34,7 @@ public class TestSynchronizedIndexedTreeMap {
       Instant in = Instant.now();
       insts.add(in);
       Thread.sleep(5);
-      c = new Candle("GOOG", "google", in, BigDecimal.ONE, BigDecimal.TEN, BigDecimal.TEN, BigDecimal.ZERO, "1m", 10000);
+      c = new Bar("GOOG", "google", in, BigDecimal.ONE, BigDecimal.TEN, BigDecimal.TEN, BigDecimal.ZERO, "1m", 10000);
       Assert.assertNull(q.put(in, new BaseField<>(c.getEventId(), "test_field-p" + i, rand.nextInt())));
     }
 
@@ -63,7 +63,7 @@ public class TestSynchronizedIndexedTreeMap {
     Collections.shuffle(insts, new Random(System.nanoTime()));
 
     for (Instant i : insts) {
-      c = new Candle("GOOG", "google", i, BigDecimal.ONE, BigDecimal.TEN, BigDecimal.TEN, BigDecimal.ZERO, "1m", 10000);
+      c = new Bar("GOOG", "google", i, BigDecimal.ONE, BigDecimal.TEN, BigDecimal.TEN, BigDecimal.ZERO, "1m", 10000);
       q.put(i, new BaseField<Integer>(c.getEventId(), "test_field-p" + i, rand.nextInt()));
     }
 

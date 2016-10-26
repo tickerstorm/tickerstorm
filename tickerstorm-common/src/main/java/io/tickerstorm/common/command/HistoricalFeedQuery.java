@@ -9,7 +9,7 @@ import java.util.function.Predicate;
 
 import com.google.common.collect.Sets;
 
-import io.tickerstorm.common.entity.Candle;
+import io.tickerstorm.common.entity.Bar;
 
 @SuppressWarnings("serial")
 public class HistoricalFeedQuery extends Command implements DataFeedQuery {
@@ -18,7 +18,7 @@ public class HistoricalFeedQuery extends Command implements DataFeedQuery {
   public Set<String> symbols = new HashSet<>();
   public LocalDateTime from = LocalDateTime.now(ZoneId.of("UTC")).minusYears(1);
   public LocalDateTime until = LocalDateTime.now(ZoneId.of("UTC"));
-  public Set<String> periods = Sets.newHashSet(Candle.MIN_1_INTERVAL);
+  public Set<String> periods = Sets.newHashSet(Bar.MIN_1_INTERVAL);
 
   // Stream the data is being sourced from
   public String source;

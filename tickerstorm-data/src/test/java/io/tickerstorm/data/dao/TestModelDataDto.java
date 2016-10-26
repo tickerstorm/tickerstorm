@@ -11,13 +11,13 @@ import java.util.Set;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import io.tickerstorm.common.entity.Candle;
+import io.tickerstorm.common.entity.Bar;
 import io.tickerstorm.common.entity.Field;
 
 public class TestModelDataDto {
 
-  private final Candle c =
-      new Candle("goog", "google", Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ONE, BigDecimal.ONE, "1m", 1000);
+  private final Bar c =
+      new Bar("goog", "google", Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ONE, BigDecimal.ONE, "1m", 1000);
 
   @BeforeMethod
   public void init() {

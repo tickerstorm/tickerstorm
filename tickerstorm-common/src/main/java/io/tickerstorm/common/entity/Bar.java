@@ -1,14 +1,13 @@
 package io.tickerstorm.common.entity;
 
 import java.math.BigDecimal;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.Set;
 
 import com.google.common.base.MoreObjects;
 
 @SuppressWarnings("serial")
-public class Candle extends BaseMarketData {
+public class Bar extends BaseMarketData {
 
   public static final String TYPE = "candle";
   public static final String MIN_5_INTERVAL = "5m";
@@ -18,7 +17,7 @@ public class Candle extends BaseMarketData {
   public static final String HOURLY_INTERVAL = "1h";
   public static final String EOD = "EOD";
 
-  public Candle() {}
+  public Bar() {}
 
   public static String parseInterval(String eventId) {
 
@@ -29,7 +28,7 @@ public class Candle extends BaseMarketData {
     return null;
   }
 
-  public Candle(Set<Field<?>> fields) {
+  public Bar(Set<Field<?>> fields) {
     super(fields);
 
     for (Field<?> f : fields) {
@@ -54,7 +53,7 @@ public class Candle extends BaseMarketData {
     }
   }
 
-  public Candle(String symbol, String source, Instant timestamp, BigDecimal open, BigDecimal close, BigDecimal high, BigDecimal low,
+  public Bar(String symbol, String source, Instant timestamp, BigDecimal open, BigDecimal close, BigDecimal high, BigDecimal low,
       String interval, int volume) {
     super(symbol, source, timestamp);
     this.close = close;
@@ -63,28 +62,6 @@ public class Candle extends BaseMarketData {
     this.low = low;
     this.interval = interval;
     this.volume = volume;
-  }
-
-  public Duration duration() {
-
-    if (interval != null) {
-      if (MIN_1_INTERVAL.equals(interval))
-        return Duration.ofMinutes(1);
-
-      if (MIN_5_INTERVAL.equals(interval))
-        return Duration.ofMinutes(5);
-
-      if (MIN_10_INTERVAL.equals(interval))
-        return Duration.ofMinutes(10);
-
-      if (EOD.equals(interval))
-        return Duration.ofDays(1);
-
-      if (HOURLY_INTERVAL.equals(interval))
-        return Duration.ofHours(1);
-    }
-
-    return null;
   }
 
   public BigDecimal low;
@@ -152,7 +129,7 @@ public class Candle extends BaseMarketData {
       return false;
     if (getClass() != obj.getClass())
       return false;
-    Candle other = (Candle) obj;
+    Bar other = (Bar) obj;
     if (close == null) {
       if (other.close != null)
         return false;

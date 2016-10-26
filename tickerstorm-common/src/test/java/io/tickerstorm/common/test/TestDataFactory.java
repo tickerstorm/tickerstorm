@@ -11,15 +11,15 @@ import org.apache.commons.io.FileUtils;
 import com.beust.jcommander.internal.Lists;
 import com.google.common.io.Files;
 
-import io.tickerstorm.common.entity.Candle;
+import io.tickerstorm.common.entity.Bar;
 
 public class TestDataFactory {
 
   private static final Random r = new Random();
 
-  public static List<Candle> buildCandles(int count, String symbol, String stream, BigDecimal open) {
+  public static List<Bar> buildCandles(int count, String symbol, String stream, BigDecimal open) {
 
-    List<Candle> cs = Lists.newArrayList();
+    List<Bar> cs = Lists.newArrayList();
 
     for (int i = 0; i < count; i++) {
 
@@ -29,7 +29,7 @@ public class TestDataFactory {
           BigDecimal.ROUND_HALF_UP);
       BigDecimal vol = randomRange(new BigDecimal(2321513D), new BigDecimal(4354234562D));
 
-      Candle c = new Candle(symbol, "Google", Instant.now(), open, close, high, low, Candle.MIN_1_INTERVAL, vol.intValue());
+      Bar c = new Bar(symbol, "Google", Instant.now(), open, close, high, low, Bar.MIN_1_INTERVAL, vol.intValue());
       c.stream = stream;
       cs.add(c);
       try {

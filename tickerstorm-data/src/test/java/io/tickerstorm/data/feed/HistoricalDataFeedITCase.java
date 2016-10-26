@@ -26,7 +26,7 @@ import io.tickerstorm.common.command.HistoricalFeedQuery;
 import io.tickerstorm.common.command.Markers;
 import io.tickerstorm.common.command.Notification;
 import io.tickerstorm.common.data.Locations;
-import io.tickerstorm.common.entity.Candle;
+import io.tickerstorm.common.entity.Bar;
 import io.tickerstorm.common.eventbus.Destinations;
 import io.tickerstorm.data.TestMarketDataServiceConfig;
 
@@ -75,7 +75,7 @@ public class HistoricalDataFeedITCase extends AbstractTestNGSpringContextTests {
     HistoricalFeedQuery query = new HistoricalFeedQuery("google", "google", new String[] {"TOL"});
     query.from = LocalDateTime.of(2015, 6, 10, 0, 0);
     query.until = LocalDateTime.of(2015, 6, 11, 0, 0);
-    query.periods.add(Candle.MIN_1_INTERVAL);
+    query.periods.add(Bar.MIN_1_INTERVAL);
     query.zone = ZoneOffset.ofHours(-7);
     queryBus.post(query);
 
@@ -108,7 +108,7 @@ public class HistoricalDataFeedITCase extends AbstractTestNGSpringContextTests {
     }
 
     @Subscribe
-    public void onMarketData(Candle c) {
+    public void onMarketData(Bar c) {
 
       assertNotNull(c.getSymbol());
       assertEquals(c.getStream(), "google");
@@ -124,7 +124,7 @@ public class HistoricalDataFeedITCase extends AbstractTestNGSpringContextTests {
       assertTrue(c.high.longValue() > 0);
       assertNotNull(c.volume);
       assertTrue(c.volume.longValue() > 0);
-      assertEquals(c.interval, Candle.MIN_1_INTERVAL);
+      assertEquals(c.interval, Bar.MIN_1_INTERVAL);
       count.incrementAndGet();
     }
 

@@ -24,7 +24,7 @@ import com.google.common.eventbus.EventBus;
 import io.tickerstorm.common.command.Markers;
 import io.tickerstorm.common.command.Notification;
 import io.tickerstorm.common.entity.BaseField;
-import io.tickerstorm.common.entity.Candle;
+import io.tickerstorm.common.entity.Bar;
 import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.eventbus.Destinations;
 import io.tickerstorm.data.TestMarketDataServiceConfig;
@@ -43,13 +43,13 @@ public class ModelDataCassandraSinkITCase extends AbstractTestNGSpringContextTes
   private final Instant instant = Instant.now();
   private final String symbol = "goog";
   private final String stream = "ModelDataCassandraSinkITCase".toLowerCase();
-  private Candle c;
+  private Bar c;
 
   @BeforeClass
   public void cleanup() throws Exception {
     dao.deleteByStream(stream);
     Thread.sleep(5000);
-    c = new Candle(symbol, stream, this.instant, BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ONE, BigDecimal.ONE, "1m", 1000);
+    c = new Bar(symbol, stream, this.instant, BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ONE, BigDecimal.ONE, "1m", 1000);
   }
 
   @Test

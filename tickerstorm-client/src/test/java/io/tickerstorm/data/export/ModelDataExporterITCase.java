@@ -24,7 +24,7 @@ import io.tickerstorm.common.command.HistoricalFeedQuery;
 import io.tickerstorm.common.command.Markers;
 import io.tickerstorm.common.command.Notification;
 import io.tickerstorm.common.command.OnEventHandler;
-import io.tickerstorm.common.entity.Candle;
+import io.tickerstorm.common.entity.Bar;
 import io.tickerstorm.common.eventbus.Destinations;
 import io.tickerstorm.common.test.TestDataFactory;
 import io.tickerstorm.data.BaseIntegrationTest;
@@ -81,7 +81,7 @@ public class ModelDataExporterITCase extends BaseIntegrationTest {
           HistoricalFeedQuery query = new HistoricalFeedQuery(stream, "Google", new String[] {"TOL"});
           query.from = LocalDateTime.of(2015, 6, 10, 0, 0);
           query.until = LocalDateTime.of(2015, 6, 11, 0, 0);
-          query.periods.add(Candle.MIN_1_INTERVAL);
+          query.periods.add(Bar.MIN_1_INTERVAL);
           query.zone = ZoneOffset.ofHours(-7);
           session.execute(query);
 

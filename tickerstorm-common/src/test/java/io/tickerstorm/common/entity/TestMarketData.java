@@ -16,12 +16,12 @@ public class TestMarketData {
   @Test
   public void testComparable(){
     
-    List<Candle> cs = new ArrayList<>();
+    List<Bar> cs = new ArrayList<>();
     
-    Candle c1 = new Candle();
+    Bar c1 = new Bar();
     c1.timestamp = Instant.now();
     
-    Candle c2 = new Candle();
+    Bar c2 = new Bar();
     c2.timestamp = Instant.now().minusMillis(5000);
     
     cs.add(c2);
@@ -41,12 +41,12 @@ public class TestMarketData {
   @Test
   public void testComparableReverseTimestmap(){
     
-    List<Candle> cs = new ArrayList<>();
+    List<Bar> cs = new ArrayList<>();
     
-    Candle c1 = new Candle();
+    Bar c1 = new Bar();
     c1.timestamp = Instant.now();
     
-    Candle c2 = new Candle();
+    Bar c2 = new Bar();
     c2.timestamp = Instant.now().minusMillis(5000);
     
     cs.add(c2);
@@ -66,12 +66,12 @@ public class TestMarketData {
   @Test
   public void testComparableByTimestmap(){
     
-    List<Candle> cs = new ArrayList<>();
+    List<Bar> cs = new ArrayList<>();
     
-    Candle c1 = new Candle();
+    Bar c1 = new Bar();
     c1.timestamp = Instant.now();
     
-    Candle c2 = new Candle();
+    Bar c2 = new Bar();
     c2.timestamp = Instant.now().minusMillis(5000);
     
     cs.add(c2);

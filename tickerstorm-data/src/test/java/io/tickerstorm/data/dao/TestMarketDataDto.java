@@ -9,7 +9,7 @@ import java.util.Date;
 
 import org.testng.annotations.Test;
 
-import io.tickerstorm.common.entity.Candle;
+import io.tickerstorm.common.entity.Bar;
 import io.tickerstorm.common.entity.Quote;
 import io.tickerstorm.common.entity.Tick;
 
@@ -18,14 +18,14 @@ public class TestMarketDataDto {
   @Test
   public void convertCandle() {
 
-    Candle c = new Candle();
+    Bar c = new Bar();
     c.close = BigDecimal.TEN;
     c.open = BigDecimal.TEN;
     c.low = BigDecimal.TEN;
     c.high = BigDecimal.TEN;
     c.stream = "test";
     c.symbol = "AAPL";
-    c.interval = Candle.EOD;
+    c.interval = Bar.EOD;
     c.timestamp = Instant.now();
     c.volume = 0;
 
@@ -42,7 +42,7 @@ public class TestMarketDataDto {
     assertEquals(dto.primarykey.symbol, c.symbol.toLowerCase());
     assertNotNull(dto.primarykey.date);
 
-    Candle d = (Candle) dto.toMarketData(c.stream);
+    Bar d = (Bar) dto.toMarketData(c.stream);
 
     assertEquals(d.close, c.close);
     assertEquals(d.low, c.low);

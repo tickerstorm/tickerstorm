@@ -15,7 +15,7 @@ import com.google.common.eventbus.Subscribe;
 import com.google.common.io.Files;
 
 import io.tickerstorm.common.data.Locations;
-import io.tickerstorm.common.entity.Candle;
+import io.tickerstorm.common.entity.Bar;
 import io.tickerstorm.common.entity.MarketData;
 
 public class StooqHistoricalForexQueryITCase extends BaseDataQueryITCase {
@@ -69,7 +69,7 @@ public class StooqHistoricalForexQueryITCase extends BaseDataQueryITCase {
       assertEquals(md.getStream(), "Stooq");
       assertNotNull(md.getTimestamp());
 
-      Candle c = (Candle) md;
+      Bar c = (Bar) md;
       assertNotNull(c.close);
       assertTrue(c.close.longValue() > 0);
       assertNotNull(c.open);
@@ -78,7 +78,7 @@ public class StooqHistoricalForexQueryITCase extends BaseDataQueryITCase {
       assertTrue(c.low.longValue() > 0);
       assertNotNull(c.high);
       assertTrue(c.high.longValue() > 0);
-      assertEquals(c.interval, Candle.MIN_5_INTERVAL);
+      assertEquals(c.interval, Bar.MIN_5_INTERVAL);
       count.incrementAndGet();
 
     }

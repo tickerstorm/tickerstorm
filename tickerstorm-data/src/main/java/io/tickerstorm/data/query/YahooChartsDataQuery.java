@@ -6,7 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.tickerstorm.common.data.converter.DataQuery;
-import io.tickerstorm.common.entity.Candle;
+import io.tickerstorm.common.entity.Bar;
 
 public class YahooChartsDataQuery implements QueryBuilder, DataQuery {
 
@@ -37,12 +37,12 @@ public class YahooChartsDataQuery implements QueryBuilder, DataQuery {
   }
 
   public String type() {
-    return Candle.TYPE;
+    return Bar.TYPE;
   }
 
   @Override
   public String getInterval() {
-    return Candle.MIN_5_INTERVAL;
+    return Bar.MIN_5_INTERVAL;
   }
 
   public String getSymbol() {

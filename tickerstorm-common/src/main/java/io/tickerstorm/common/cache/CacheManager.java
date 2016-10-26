@@ -1,7 +1,7 @@
 package io.tickerstorm.common.cache;
 
 import io.tickerstorm.common.collections.SynchronizedIndexedTreeMap;
-import io.tickerstorm.common.entity.Candle;
+import io.tickerstorm.common.entity.Bar;
 import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.entity.MarketData;
 import net.sf.ehcache.Cache;
@@ -68,7 +68,7 @@ public class CacheManager {
    */
   public static StringBuffer buildKey(Field<?> f) {
     return new StringBuffer("field-").append(f.getStream()).append(f.getSymbol()).append(f.getName())
-        .append(Candle.parseInterval(f.getEventId()));
+        .append(Bar.parseInterval(f.getEventId()));
   }
 
   /**
@@ -80,7 +80,7 @@ public class CacheManager {
    * @return
    */
   public static StringBuffer buildKey(MarketData f) {
-    return new StringBuffer(f.getStream()).append("|").append(f.getSymbol()).append("|").append(Candle.parseInterval(f.getEventId()));
+    return new StringBuffer(f.getStream()).append("|").append(f.getSymbol()).append("|").append(Bar.parseInterval(f.getEventId()));
   }
 
   protected CacheManager() {}

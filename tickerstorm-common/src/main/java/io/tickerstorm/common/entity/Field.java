@@ -55,7 +55,7 @@ public interface Field<T> extends Serializable, Comparable<Field<T>> {
             BigDecimal.class), BID("bid", BigDecimal.class), ASK("ask", BigDecimal.class), BID_SIZE("bidSize", BigDecimal.class), ASK_SIZE(
                 "askSize", BigDecimal.class), VOLUME("volume", Integer.class), PRICE("price", BigDecimal.class), QUANTITY("quantity",
                     Integer.class), INTERVAL("interval", String.class), MARKETDATA("marketdata", MarketData.class, 0), CANDEL("candel",
-                        Candle.class), QUOTE("quote", Quote.class), TICK("tick", Tick.class), AVE("ave", BigDecimal.class), SMA("ma",
+                        Bar.class), QUOTE("quote", Quote.class), TICK("tick", Tick.class), AVE("ave", BigDecimal.class), SMA("ma",
                             BigDecimal.class), MEDIAN("median", BigDecimal.class), STD("std", BigDecimal.class), NOW("now",
                                 Instant.class), MARKER("marker", Marker.class), FEATURES("features", Collection.class), DISCRETE_FIELDS(
                                     "discrete_fields", Collection.class,

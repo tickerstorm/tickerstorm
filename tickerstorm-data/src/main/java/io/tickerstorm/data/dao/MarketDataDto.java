@@ -15,7 +15,7 @@ import org.springframework.data.cassandra.mapping.Table;
 
 import com.google.common.base.Throwables;
 
-import io.tickerstorm.common.entity.Candle;
+import io.tickerstorm.common.entity.Bar;
 import io.tickerstorm.common.entity.MarketData;
 import io.tickerstorm.common.entity.Quote;
 import io.tickerstorm.common.entity.Tick;
@@ -29,13 +29,13 @@ public class MarketDataDto implements Serializable {
   public static MarketDataDto convert(MarketData data) {
 
     // Ignore ticks or quotes
-    if (Candle.TYPE.equals(data.getType())) {
+    if (Bar.TYPE.equals(data.getType())) {
 
       MarketDataDto dto = new MarketDataDto();
       MarketDataPrimaryKey key = new MarketDataPrimaryKey();
       try {
 
-        Candle c = (Candle) data;
+        Bar c = (Bar) data;
         dto.close = c.close;
         dto.open = c.open;
         dto.volume = BigDecimal.valueOf(c.volume);
@@ -199,9 +199,9 @@ public class MarketDataDto implements Serializable {
     MarketData c = null;
 
     try {
-      if (Candle.TYPE.equals(primarykey.type)) {
+      if (Bar.TYPE.equals(primarykey.type)) {
 
-        c = new Candle(this.primarykey.symbol, stream, this.primarykey.timestamp.toInstant(), this.open, this.close,
+        c = new Bar(this.primarykey.symbol, stream, this.primarykey.timestamp.toInstant(), this.open, this.close,
             this.high, this.low, this.primarykey.interval, this.volume.intValue());
 
       } else if (Quote.TYPE.equals(primarykey.type)) {

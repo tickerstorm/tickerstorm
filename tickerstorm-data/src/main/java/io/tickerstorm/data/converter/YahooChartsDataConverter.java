@@ -12,7 +12,7 @@ import com.google.common.collect.Sets;
 import io.tickerstorm.common.data.converter.DataConverter;
 import io.tickerstorm.common.data.converter.DataQuery;
 import io.tickerstorm.common.data.converter.Mode;
-import io.tickerstorm.common.entity.Candle;
+import io.tickerstorm.common.entity.Bar;
 import io.tickerstorm.data.query.YahooChartsDataQuery;
 
 @Component
@@ -31,7 +31,7 @@ public class YahooChartsDataConverter implements DataConverter {
     return "Yahoo";
   }
 
-  public Candle[] convert(String line, DataQuery query) {
+  public Bar[] convert(String line, DataQuery query) {
 
     TimeZone timezone = null;
 
@@ -46,11 +46,11 @@ public class YahooChartsDataConverter implements DataConverter {
 
     String[] args = line.split(",");
 
-    Candle c = new Candle(query.getSymbol(), "yahoo", Instant.ofEpochSecond(Long.valueOf(args[0])), new BigDecimal(args[4]),
+    Bar c = new Bar(query.getSymbol(), "yahoo", Instant.ofEpochSecond(Long.valueOf(args[0])), new BigDecimal(args[4]),
         new BigDecimal(args[1]), new BigDecimal(args[2]), new BigDecimal(args[3]), query.getInterval(), new Integer(args[5]));
     c.stream = provider();
         
-    return new Candle[] {c};
+    return new Bar[] {c};
   }
 
 }

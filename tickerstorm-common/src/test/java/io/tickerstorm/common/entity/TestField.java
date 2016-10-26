@@ -10,8 +10,8 @@ import org.testng.annotations.Test;
 
 public class TestField {
 
-  private final Candle c =
-      new Candle("goog", "google", Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ONE, BigDecimal.ONE, "1m", 1000);
+  private final Bar c =
+      new Bar("goog", "google", Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ONE, BigDecimal.ONE, "1m", 1000);
 
   @Test
   public void testFieldParsing() {

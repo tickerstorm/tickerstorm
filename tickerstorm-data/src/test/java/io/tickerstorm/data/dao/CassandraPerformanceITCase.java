@@ -24,7 +24,7 @@ import com.google.common.eventbus.Subscribe;
 import io.tickerstorm.common.command.Markers;
 import io.tickerstorm.common.command.Notification;
 import io.tickerstorm.common.entity.BaseField;
-import io.tickerstorm.common.entity.Candle;
+import io.tickerstorm.common.entity.Bar;
 import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.eventbus.Destinations;
 import io.tickerstorm.data.TestMarketDataServiceConfig;
@@ -45,7 +45,7 @@ public class CassandraPerformanceITCase extends AbstractTestNGSpringContextTests
   private EventBus modelDataBus;
 
   private final List<ModelDataDto> dtos = new ArrayList<>();
-  private final List<Candle> cs = new ArrayList<>();
+  private final List<Bar> cs = new ArrayList<>();
   private final String stream = UUID.randomUUID().toString();
 
   @BeforeMethod
@@ -59,7 +59,7 @@ public class CassandraPerformanceITCase extends AbstractTestNGSpringContextTests
 
     long time = System.currentTimeMillis();
     for (int j = 0; j < 2000; j++) {
-      Candle c = new Candle("Goog", stream, Instant.now().plus(1, ChronoUnit.MINUTES), new BigDecimal(Math.random()),
+      Bar c = new Bar("Goog", stream, Instant.now().plus(1, ChronoUnit.MINUTES), new BigDecimal(Math.random()),
           new BigDecimal(Math.random()), new BigDecimal(Math.random()), new BigDecimal(Math.random()), "1m",
           Double.valueOf(Math.random()).intValue());
 

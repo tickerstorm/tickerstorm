@@ -13,7 +13,7 @@ import com.google.common.collect.Sets;
 import io.tickerstorm.common.data.converter.DataConverter;
 import io.tickerstorm.common.data.converter.DataQuery;
 import io.tickerstorm.common.data.converter.Mode;
-import io.tickerstorm.common.entity.Candle;
+import io.tickerstorm.common.entity.Bar;
 import io.tickerstorm.data.query.YahooHistoricalQuoteQuery;
 
 @Component
@@ -26,25 +26,25 @@ public class YahooHistoricalQuoteConverter implements DataConverter {
     return Sets.newHashSet(YahooHistoricalQuoteQuery.HOST);
   }
 
-  public Candle[] convert(String line, DataQuery dq) {
+  public Bar[] convert(String line, DataQuery dq) {
 
     if (line.contains("Date"))
       return null;
 
     String[] args = line.split(",");
 
-    String cInterval = Candle.EOD;
+    String cInterval = Bar.EOD;
 
     if (dq.getInterval().equals("d"))
-      cInterval = Candle.EOD;
+      cInterval = Bar.EOD;
     if (dq.getInterval().equals("w"))
-      cInterval = Candle.WEEK_INTERVAL;
+      cInterval = Bar.WEEK_INTERVAL;
 
-    Candle c = new Candle(dq.getSymbol(), "yahoo", LocalDate.parse(args[0], FORMATTER).atTime(0, 0).toInstant(ZoneOffset.ofHours(-7)),
+    Bar c = new Bar(dq.getSymbol(), "yahoo", LocalDate.parse(args[0], FORMATTER).atTime(0, 0).toInstant(ZoneOffset.ofHours(-7)),
         new BigDecimal(args[1]), new BigDecimal(args[1]), new BigDecimal(args[2]), new BigDecimal(args[3]), cInterval,
         new Integer(args[5]));
     c.stream = provider();
-    return new Candle[] {c};
+    return new Bar[] {c};
   }
 
 
