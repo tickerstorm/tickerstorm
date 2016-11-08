@@ -21,8 +21,10 @@ import org.testng.annotations.Test;
 import com.google.common.eventbus.EventBus;
 
 import io.tickerstorm.common.cache.CacheManager;
-import io.tickerstorm.common.entity.BaseField;
+import io.tickerstorm.common.config.SymbolConfig;
+import io.tickerstorm.common.config.TransformerConfig;
 import io.tickerstorm.common.entity.Bar;
+import io.tickerstorm.common.entity.BaseField;
 import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.test.TestDataFactory;
 import io.tickerstorm.strategy.processor.flow.NumericChangeProcessor;
@@ -46,13 +48,20 @@ public class TestNumericChangeProcessor {
     bolt = Mockito.spy(bolt);
     Mockito.doNothing().when(eventBus).post(Mockito.any(Field.class));
     bolt.eventBus = eventBus;
-    bolt.getConfig(stream).put(NumericChangeProcessor.PERIODS_CONFIG_KEY, "2");
+ 
+    SymbolConfig config = new SymbolConfig();
+    config.symbol.add("*");
+    config.interval.add("*");
+    config.periods.add("2");
+
+    bolt.getConfig(stream)
+        .put(BaseProcessor.TRANSFORMER_CONFIG_KEY, new TransformerConfig(com.google.common.collect.Sets.newHashSet(config)));
 
     bolt.gauge = service;
     Mockito.doNothing().when(service).submit(Mockito.anyString(), Mockito.anyDouble());
 
-    Bar md = new Bar("TOL", stream, Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.TEN,
-        Bar.MIN_1_INTERVAL, Integer.MAX_VALUE);
+    Bar md = new Bar("TOL", stream, Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.TEN, Bar.MIN_1_INTERVAL,
+        Integer.MAX_VALUE);
     CacheManager.cache(new BaseField<>(md.getEventId(), "warm cache", BigDecimal.class));
     CacheManager.getInstance(stream).removeAll();
   }
@@ -66,8 +75,8 @@ public class TestNumericChangeProcessor {
   @Test
   public void testComputeFirstDiscreteChange() throws Exception {
 
-    Bar md = new Bar("TOL", stream, Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.TEN,
-        Bar.MIN_1_INTERVAL, Integer.MAX_VALUE);
+    Bar md = new Bar("TOL", stream, Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.TEN, Bar.MIN_1_INTERVAL,
+        Integer.MAX_VALUE);
 
     bolt.handle(md.getFields());
 
@@ -80,8 +89,8 @@ public class TestNumericChangeProcessor {
   public void testComputeSecondDiscreteChange() throws Exception {
 
 
-    Bar md = new Bar("TOL", stream, Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.TEN,
-        Bar.MIN_1_INTERVAL, Integer.MAX_VALUE);
+    Bar md = new Bar("TOL", stream, Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.TEN, Bar.MIN_1_INTERVAL,
+        Integer.MAX_VALUE);
 
 
     bolt.handle(md.getFields());

@@ -10,11 +10,11 @@ import java.util.function.Predicate;
 
 import org.springframework.stereotype.Component;
 
-import com.google.common.collect.Lists;
 import com.google.common.eventbus.Subscribe;
 
 import io.tickerstorm.common.cache.CacheManager;
 import io.tickerstorm.common.collections.SynchronizedIndexedTreeMap;
+import io.tickerstorm.common.config.TransformerConfig;
 import io.tickerstorm.common.entity.BaseField;
 import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.strategy.processor.BaseEventProcessor;
@@ -39,11 +39,12 @@ public class NumericChangeProcessor extends BaseEventProcessor {
 
     fss.stream().filter(filter()).forEach(f -> {
 
-      List<Integer> ps = (List<Integer>) getConfig(f.getStream()).getOrDefault(PERIODS_CONFIG_KEY, Lists.newArrayList(2));
+      TransformerConfig config = (TransformerConfig) getConfig(f.getStream()).get(TRANSFORMER_CONFIG_KEY);
+      Set<Integer> ps = config.findPeriod(f.getSymbol(), f.getInterval());
 
       BigDecimal absDiff = BigDecimal.ZERO;
       BigDecimal pctDiff = BigDecimal.ZERO;
-         
+
       for (Integer p : ps) {
 
         long start2 = System.currentTimeMillis();

@@ -1,8 +1,25 @@
 stream: sample
 
+series: 
+ - symbol: [GOOG, TOL]
+   interval: [1m]
+   source: Google
+ - symbol: [TOL]
+   interval: [1d]
+   source: Google
+
 transformers: 
-  - transformer: numeric-change
-    periods: [2]
-  
-  - transformer: basic-stats
-    periods: [1, 10, 15, 30, 60, 90]
+ numeric-change: 
+ - symbol: [GOOG]
+   interval: [1m]
+   periods : [10]
+ - symbol: [GOOG]
+   interval: [1d]
+   periods : [5, 10]
+ - symbol  : ["*"]
+   interval: ["*"]
+   periods : [10, 20, 30]
+ basic-stats: 
+ - symbol  : ["*"]
+   interval: ["*"]
+   periods : [1, 10, 15, 30, 60, 90]

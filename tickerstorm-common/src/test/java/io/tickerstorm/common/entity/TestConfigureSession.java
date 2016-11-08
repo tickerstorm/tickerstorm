@@ -2,12 +2,12 @@ package io.tickerstorm.common.entity;
 
 import java.io.InputStream;
 
-import org.junit.Assert;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.io.DefaultResourceLoader;
+import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -42,6 +42,8 @@ public class TestConfigureSession {
     Assert.assertNotNull(session.config);
     Assert.assertTrue(session.config.size() > 0);
 
+    String stream = (String) session.config.get("stream");
+    Assert.assertEquals(session.stream(), stream);
   }
 
 }

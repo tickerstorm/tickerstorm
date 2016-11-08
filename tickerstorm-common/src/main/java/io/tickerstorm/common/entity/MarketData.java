@@ -76,6 +76,15 @@ public interface MarketData extends Event, Serializable, Comparable<MarketData> 
     return MarketData.parseEventId(eventId)[1];
   }
 
+  public static String parseInterval(String eventId) {
+
+    String[] parts = MarketData.parseEventId(eventId);
+    if (parts.length == 4)
+      return parts[3];
+
+    return null;
+  }
+
   public static Instant parseTimestamp(String eventId) {
     String part = MarketData.parseEventId(eventId)[2];
     return Instant.ofEpochMilli(Long.valueOf(part));
@@ -87,8 +96,7 @@ public interface MarketData extends Event, Serializable, Comparable<MarketData> 
    * @return
    */
   default String getEventId() {
-    return new StringBuffer(getStream()).append("|").append(getSymbol()).append("|")
-        .append(getTimestamp().toEpochMilli()).toString();
+    return new StringBuffer(getStream()).append("|").append(getSymbol()).append("|").append(getTimestamp().toEpochMilli()).toString();
   }
 
   public Set<Field<?>> getFields();

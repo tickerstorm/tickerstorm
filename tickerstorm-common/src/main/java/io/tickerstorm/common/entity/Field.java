@@ -12,6 +12,7 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 
 import io.tickerstorm.common.command.Marker;
+import io.tickerstorm.common.data.converter.Util;
 
 /**
  *
@@ -52,17 +53,17 @@ public interface Field<T> extends Serializable, Comparable<Field<T>> {
 
     SYMBOL("symbol", String.class), TIMESTAMP("timestamp", Instant.class), SOURCE("source", String.class), STREAM("stream",
         String.class), OPEN("open", BigDecimal.class), CLOSE("close", BigDecimal.class), HIGH("high", BigDecimal.class), LOW("low",
-            BigDecimal.class), BID("bid", BigDecimal.class), ASK("ask", BigDecimal.class), BID_SIZE("bidSize", BigDecimal.class), ASK_SIZE(
-                "askSize", BigDecimal.class), VOLUME("volume", Integer.class), PRICE("price", BigDecimal.class), QUANTITY("quantity",
-                    Integer.class), INTERVAL("interval", String.class), MARKETDATA("marketdata", MarketData.class, 0), CANDEL("candel",
-                        Bar.class), QUOTE("quote", Quote.class), TICK("tick", Tick.class), AVE("ave", BigDecimal.class), SMA("ma",
-                            BigDecimal.class), MEDIAN("median", BigDecimal.class), STD("std", BigDecimal.class), NOW("now",
-                                Instant.class), MARKER("marker", Marker.class), FEATURES("features", Collection.class), DISCRETE_FIELDS(
-                                    "discrete_fields", Collection.class,
-                                    2), CONTINOUS_FIELDS("continous_fields", Collection.class, 3), TEMPORAL_FIELDS("temporal_fields",
-                                        Collection.class, 4), CATEGORICAL_FIELDS("categorical_fields", Collection.class, 1), MIN("min",
-                                            Collection.class), MAX("max", Collection.class), PCT_CHANGE("pct_change",
-                                                Collection.class), ABS_CHANGE("abs_change", Collection.class);
+            BigDecimal.class), BID("bid", BigDecimal.class), ASK("ask", BigDecimal.class), BID_SIZE("bidSize",
+                BigDecimal.class), ASK_SIZE("askSize", BigDecimal.class), VOLUME("volume", Integer.class), PRICE("price",
+                    BigDecimal.class), QUANTITY("quantity", Integer.class), INTERVAL("interval", String.class), MARKETDATA("marketdata",
+                        MarketData.class, 0), CANDEL("candel", Bar.class), QUOTE("quote", Quote.class), TICK("tick", Tick.class), AVE("ave",
+                            BigDecimal.class), SMA("ma", BigDecimal.class), MEDIAN("median", BigDecimal.class), STD("std",
+                                BigDecimal.class), NOW("now", Instant.class), MARKER("marker", Marker.class), FEATURES("features",
+                                    Collection.class), DISCRETE_FIELDS("discrete_fields", Collection.class,
+                                        2), CONTINOUS_FIELDS("continous_fields", Collection.class, 3), TEMPORAL_FIELDS("temporal_fields",
+                                            Collection.class, 4), CATEGORICAL_FIELDS("categorical_fields", Collection.class, 1), MIN("min",
+                                                Collection.class), MAX("max", Collection.class), PCT_CHANGE("pct_change",
+                                                    Collection.class), ABS_CHANGE("abs_change", Collection.class);
 
     private Class<?> type;
     private String field;
@@ -96,22 +97,6 @@ public interface Field<T> extends Serializable, Comparable<Field<T>> {
     public Class<?> fieldType() {
       return type;
     }
-  }
-
-  static <T> T convert(String value, Class<T> clazz) {
-
-    if (String.class.isAssignableFrom(clazz))
-      return (T) value;
-    else if (Integer.class.isAssignableFrom(clazz))
-      return (T) Integer.valueOf(value);
-    else if (BigDecimal.class.isAssignableFrom(clazz))
-      return (T) new BigDecimal(value);
-    else if (Instant.class.isAssignableFrom(clazz))
-      return (T) Instant.parse(value);
-    else if (StringUtils.isEmpty(value))
-      return null;
-
-    throw new IllegalArgumentException("Unknown type " + clazz + " for value " + value);
   }
 
   /**
@@ -200,7 +185,7 @@ public interface Field<T> extends Serializable, Comparable<Field<T>> {
     if (vals[1].equalsIgnoreCase("null"))
       return null;
 
-    return convert(vals[1], clazz);
+    return Util.convert(vals[1], clazz);
   }
 
   static Map<String, Field<?>> toMap(Set<Field<?>> fields) {
@@ -227,6 +212,10 @@ public interface Field<T> extends Serializable, Comparable<Field<T>> {
 
   default Instant getTimestamp() {
     return MarketData.parseTimestamp(getEventId());
+  }
+
+  default String getInterval() {
+    return MarketData.parseInterval(getEventId());
   }
 
   default String getStream() {

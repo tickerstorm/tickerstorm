@@ -20,7 +20,6 @@ import io.tickerstorm.common.command.Trigger;
 public class Session implements Serializable {
 
   private String stream;
-
   public final Map<String, Object> config = new HashMap<>();
 
   private EventBus commandsBus;

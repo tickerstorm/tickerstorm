@@ -21,6 +21,7 @@ import io.tickerstorm.common.command.Command;
 import io.tickerstorm.common.command.CompletionTracker;
 import io.tickerstorm.common.command.Markers;
 import io.tickerstorm.common.command.Notification;
+import io.tickerstorm.common.config.TransformerConfig;
 import io.tickerstorm.common.eventbus.Destinations;
 
 public abstract class BaseProcessor implements Processor {
@@ -33,13 +34,14 @@ public abstract class BaseProcessor implements Processor {
   @Qualifier(Destinations.COMMANDS_BUS)
   private EventBus commandsBus;
 
-  protected final Map<String, Map<String, Object>> configs = new HashMap<>();
+  public static final String TRANSFORMERS_YML_NODE = "transformers";
+  public static final String TRANSFORMER_CONFIG_KEY = "transformer";
 
+  protected final Map<String, Map<String, Object>> configs = new HashMap<>();
   protected final Logger logger = LoggerFactory.getLogger(getClass());
 
   protected Map<String, Object> getConfig(String stream) {
-
-    Map<String, Object> config = (Map) this.configs.putIfAbsent(stream, Maps.newHashMap());
+    this.configs.putIfAbsent(stream, Maps.newHashMap());
     return this.configs.get(stream);
   }
 
@@ -66,17 +68,21 @@ public abstract class BaseProcessor implements Processor {
 
     if (CompletionTracker.Session.isStart.test(command)) {
       logger.debug("Command received " + command);
-      if (command.config.containsKey("transformers")) {
 
-        List<Map<String, String>> trans = (List<Map<String, String>>) command.config.get("transformers");
+      if (command.config != null && command.config.containsKey(TRANSFORMERS_YML_NODE)) {
 
-        trans.stream().filter(m -> m.containsKey("transformer") && m.get("transformer").equalsIgnoreCase(name())).forEach(m -> {
-          getConfig(command.getStream()).putAll(m);
-        });
+        Map<String, List<Map<String, String>>> trans = (Map<String, List<Map<String, String>>>) command.config.get(TRANSFORMERS_YML_NODE);
+
+        if (trans.containsKey(name())) {
+          TransformerConfig config = new TransformerConfig(trans.get(name()));
+          getConfig(command.getStream()).put(TRANSFORMER_CONFIG_KEY, config);
+        }
+
+        // Initialize cache
+        CacheManager.getInstance(command.getStream());
+      } else {
+        getConfig(command.getStream()).put(TRANSFORMER_CONFIG_KEY, new TransformerConfig(false));
       }
-
-      // Initialize cache
-      CacheManager.getInstance(command.getStream());
 
       Notification not = new Notification(command);
       not.markers.add(Markers.SUCCESS.toString());
@@ -90,6 +96,10 @@ public abstract class BaseProcessor implements Processor {
       configs.remove(command.getStream());
     }
 
+  }
+
+  protected boolean isActive(String stream) {
+    return ((TransformerConfig) getConfig(stream).get(TRANSFORMER_CONFIG_KEY)).isActive();
   }
 
   public abstract String name();

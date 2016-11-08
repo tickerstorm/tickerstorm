@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Set;
 
-import com.google.common.base.MoreObjects;
+import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 
 @SuppressWarnings("serial")
 public class Bar extends BaseMarketData {
@@ -189,9 +189,7 @@ public class Bar extends BaseMarketData {
 
   @Override
   public String toString() {
-    String v = super.toString();
-    return MoreObjects.toStringHelper(this).addValue(v).add("interval", interval).add("open", open).add("close", close).add("high", high)
-        .add("low", low).add("volume", volume).toString();
+    return ReflectionToStringBuilder.toString(this);
   }
 
   /**
