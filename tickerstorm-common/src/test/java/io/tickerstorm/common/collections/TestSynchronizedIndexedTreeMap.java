@@ -51,6 +51,33 @@ public class TestSynchronizedIndexedTreeMap {
   }
 
   @Test
+  public void getLatest2() throws Exception {
+
+    ArrayList<Instant> insts = new ArrayList<>();
+    for (int i = 0; i < 3; i++) {
+      Instant in = Instant.now();
+      insts.add(in);
+      Thread.sleep(5);
+      c = new Bar("GOOG", "google", in, BigDecimal.ONE, BigDecimal.TEN, BigDecimal.TEN, BigDecimal.ZERO, "1m", 10000);
+      Assert.assertNull(q.put(in, new BaseField<>(c.getEventId(), "test_field-p" + i, rand.nextInt())));
+    }
+
+    Assert.assertEquals(q.size(), 3);
+    Assert.assertTrue(q.lastKey().isBefore(q.firstKey()));
+    Assert.assertEquals(q.lastKey(), insts.get(0));
+    Assert.assertEquals(q.firstKey(), insts.get(2));
+    Assert.assertTrue(insts.get(0).isBefore(insts.get(2)));
+    Assert.assertTrue(q.containsKey(insts.get(0)));
+    long start = System.currentTimeMillis();
+    Assert.assertEquals(q.get(0).getTimestamp(), insts.get(2));
+    Assert.assertEquals(q.get(2).getTimestamp(), insts.get(0));
+    
+    Assert.assertEquals(insts.get(1), q.get(insts.get(2), 2).getTimestamp());
+    Assert.assertEquals(insts.get(0), q.get(insts.get(1), 2).getTimestamp());
+    Assert.assertNull(q.get(insts.get(0), 2));
+
+  }
+  @Test
   public void testIndexOrdering() throws Exception {
 
     ArrayList<Instant> insts = new ArrayList<>();
@@ -81,7 +108,7 @@ public class TestSynchronizedIndexedTreeMap {
     Field<Integer> f = q.get(until.getTimestamp(), 10);
     Assert.assertNotNull(f);
     Assert.assertTrue(f.getTimestamp().isBefore(until.getTimestamp()));
-    Assert.assertEquals(fs.get(10), f);    
+    Assert.assertEquals(fs.get(9), f);    
     
   }
 }

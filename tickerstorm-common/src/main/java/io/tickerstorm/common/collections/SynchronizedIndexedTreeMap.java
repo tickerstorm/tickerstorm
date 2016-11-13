@@ -115,6 +115,11 @@ public class SynchronizedIndexedTreeMap<T> extends TreeMap<Instant, T> implement
   }
 
   public T get(Instant until, Integer periods) {
+    
+    T t = null;
+    
+    assert periods > 1 : "Number of periods should be more than 1";
+    
     synchronized (updated) {
       if (updated.compareAndSet(true, false)) {
         this.index.set(new ArrayList<Instant>(this.keySet()));
@@ -123,12 +128,12 @@ public class SynchronizedIndexedTreeMap<T> extends TreeMap<Instant, T> implement
 
     int in = this.index.get().indexOf(until);
 
-    if (in > -1 && this.index.get().size() >= (in + periods + 1)) {
-      Instant inst = this.index.get().get(in + periods);
-      return this.get(inst);
+    if (in > -1 && this.index.get().size() >= (in + periods)) {
+      Instant inst = this.index.get().get(in + periods - 1);
+      t = this.get(inst);
     }
 
-    return null;
+    return t;
   }
 
   @Override
