@@ -3,7 +3,6 @@ package io.tickerstorm.strategy.processor.flow;
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -11,10 +10,10 @@ import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.apache.commons.math3.stat.descriptive.SynchronizedDescriptiveStatistics;
 import org.springframework.stereotype.Component;
 
-import com.google.common.collect.Lists;
 import com.google.common.eventbus.Subscribe;
 
 import io.tickerstorm.common.cache.CacheManager;
+import io.tickerstorm.common.config.TransformerConfig;
 import io.tickerstorm.common.entity.BaseField;
 import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.strategy.processor.BaseEventProcessor;
@@ -33,34 +32,42 @@ public class BasicStatsProcessor extends BaseEventProcessor {
 
   @Subscribe
   public void handle(Collection<Field<?>> fss) {
+    fss.stream().filter(filter()).forEach(f -> {
+      handle(f);
+    });
+  }
+
+  @Subscribe
+  public void handle(Field<?> f) {
+
+    if (!filter().test(f))
+      return;
 
     long start = System.currentTimeMillis();
-
     final Set<Field<?>> fs = new HashSet<>();
-    fss.stream().filter(filter()).forEach(f -> {
 
-      List<Integer> periods = (List<Integer>) getConfig(f.getStream()).getOrDefault(METRIC_TIME_TAKEN, Lists.newArrayList(30));
+    TransformerConfig config = (TransformerConfig) getConfig(f.getStream()).get(TRANSFORMER_CONFIG_KEY);
+    Set<Integer> periods = config.findPeriod(f.getSymbol(), f.getInterval());
 
-      try {
-        for (Integer p : periods) {
+    try {
+      for (Integer p : periods) {
 
-          DescriptiveStatistics ds = cacheField(f, p);
+        DescriptiveStatistics ds = cacheField(f, p);
 
-          if (ds.getValues().length == p) {
-            fs.add(new BaseField<BigDecimal>(f, Field.Name.MAX.field() + "-p" + p,
-                new BigDecimal(ds.getMax()).setScale(4, BigDecimal.ROUND_HALF_UP)));
-            fs.add(new BaseField<BigDecimal>(f, Field.Name.MIN.field() + "-p" + p,
-                new BigDecimal(ds.getMin()).setScale(4, BigDecimal.ROUND_HALF_UP)));
-            fs.add(new BaseField<BigDecimal>(f, Field.Name.SMA.field() + "-p" + p,
-                new BigDecimal(ds.getMean()).setScale(4, BigDecimal.ROUND_HALF_UP)));
-            fs.add(new BaseField<BigDecimal>(f, Field.Name.STD.field() + "-p" + p,
-                new BigDecimal(ds.getStandardDeviation()).setScale(4, BigDecimal.ROUND_HALF_UP)));
-          }
+        if (ds.getValues().length == p) {
+          fs.add(new BaseField<BigDecimal>(f, Field.Name.MAX.field() + "-p" + p,
+              new BigDecimal(ds.getMax()).setScale(4, BigDecimal.ROUND_HALF_UP)));
+          fs.add(new BaseField<BigDecimal>(f, Field.Name.MIN.field() + "-p" + p,
+              new BigDecimal(ds.getMin()).setScale(4, BigDecimal.ROUND_HALF_UP)));
+          fs.add(new BaseField<BigDecimal>(f, Field.Name.SMA.field() + "-p" + p,
+              new BigDecimal(ds.getMean()).setScale(4, BigDecimal.ROUND_HALF_UP)));
+          fs.add(new BaseField<BigDecimal>(f, Field.Name.STD.field() + "-p" + p,
+              new BigDecimal(ds.getStandardDeviation()).setScale(4, BigDecimal.ROUND_HALF_UP)));
         }
-      } catch (Exception e) {
-        logger.error(e.getMessage(), e);
       }
-    });
+    } catch (Exception e) {
+      logger.error(e.getMessage(), e);
+    }
 
     if (!fs.isEmpty())
       publish(fs);
@@ -73,26 +80,21 @@ public class BasicStatsProcessor extends BaseEventProcessor {
 
     String key = CacheManager.buildKey(f).toString() + "-p" + period;
     SynchronizedDescriptiveStatistics q = null;
-    try {
+    Element e = CacheManager.getInstance(f.getStream()).putIfAbsent(new Element(key, new SynchronizedDescriptiveStatistics(period)));
 
-      CacheManager.getInstance(f.getStream()).putIfAbsent(new Element(key, new SynchronizedDescriptiveStatistics(period)));
+    if (e == null)
+      e = CacheManager.getInstance(f.getStream()).get(key);
 
-      CacheManager.getInstance(f.getStream()).acquireWriteLockOnKey(key);
+    q = (SynchronizedDescriptiveStatistics) e.getObjectValue();
 
-      q = (SynchronizedDescriptiveStatistics) CacheManager.getInstance(f.getStream()).get(key).getObjectValue();
+    if (f.getFieldType().isAssignableFrom(BigDecimal.class))
+      q.addValue(((BigDecimal) f.getValue()).doubleValue());
 
-      if (f.getFieldType().isAssignableFrom(BigDecimal.class))
-        q.addValue(((BigDecimal) f.getValue()).doubleValue());
-
-      if (f.getFieldType().isAssignableFrom(Integer.class))
-        q.addValue(((Integer) f.getValue()).doubleValue());
-
-    } finally {
-      CacheManager.getInstance(f.getStream()).releaseWriteLockOnKey(key);
-    }
+    if (f.getFieldType().isAssignableFrom(Integer.class))
+      q.addValue(((Integer) f.getValue()).doubleValue());
 
     return q;
-
+    
   }
 
   @Override
