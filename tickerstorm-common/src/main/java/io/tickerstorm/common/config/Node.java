@@ -26,7 +26,7 @@ public class Node<T> {
   public String toString() {
     return ReflectionToStringBuilder.toString(this);
   }
-  
+
   public Node(T data, Node<T> parent) {
     this.data = data;
     this.setParent(parent);
@@ -45,13 +45,19 @@ public class Node<T> {
 
   public boolean hasChild(T name) {
 
-    if (!strict && String.class.isAssignableFrom(name.getClass()))
-      return this.children.stream().filter(c -> ((String) c.data).equalsIgnoreCase((String) name)).count() > 0;
+    if (this.children.isEmpty())
+      return false;
 
-    return this.children.stream().filter(c -> c.data.equals(name)).count() > 0;
+    if (!strict && String.class.isAssignableFrom(name.getClass()))
+      return this.children.stream().anyMatch(c -> ((String) c.data).equalsIgnoreCase((String) name));
+
+    return this.children.stream().anyMatch(c -> c.data.equals(name));
   }
 
   public Node<T> getChild(T name) {
+
+    if (this.children.isEmpty() && !hasChild(name))
+      throw new IllegalArgumentException("Node " + parent.getData() + " has no " + name + " child node");
 
     if (!strict && String.class.isAssignableFrom(name.getClass()))
       return this.children.stream().filter(c -> ((String) c.data).equalsIgnoreCase((String) name)).collect(Collectors.toList()).get(0);
@@ -60,6 +66,9 @@ public class Node<T> {
   }
 
   public Node<T> getOtherwiseChild(T name, T otherwise) {
+
+    if (this.children.isEmpty() && !hasChild(name) && !hasChild(otherwise))
+      throw new IllegalArgumentException("Node " + parent.getData() + " has no " + name + " or " + otherwise + " child node");
 
     if (!hasChild(name))
       return getChild(otherwise);
@@ -101,11 +110,11 @@ public class Node<T> {
   }
 
   public void setParent(Node<T> parent) {
-    
-    if(this.parent == null || !this.parent.equals(parent)){
-    parent.children.add(this);
-    this.strict = parent.strict;
-    this.parent = parent;
+
+    if (this.parent == null || !this.parent.equals(parent)) {
+      parent.children.add(this);
+      this.strict = parent.strict;
+      this.parent = parent;
     }
   }
 

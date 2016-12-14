@@ -56,7 +56,6 @@ public class YahooChartsDataQuery implements QueryBuilder, DataQuery {
 
   @Override
   public Map<String, String> headers() {
-    // TODO Auto-generated method stub
     return null;
   }
 

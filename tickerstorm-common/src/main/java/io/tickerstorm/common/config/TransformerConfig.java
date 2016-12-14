@@ -35,9 +35,11 @@ public class TransformerConfig {
           periodsTree.getChild(s).getChild(i).addChildren(c.periods);
         }
       }
+
     }
 
     isActive = true;
+
   }
 
   public TransformerConfig(Set<SymbolConfig> symbolConfigs) {
@@ -72,7 +74,18 @@ public class TransformerConfig {
     String key = (symbol + interval).toLowerCase();
 
     if (!periods.containsKey(key)) {
-      Set<String> vals = periodsTree.getOtherwiseChild(symbol, "*").getOtherwiseChild(interval, "*").getChildrensData();
+      Node<String> n1 = periodsTree.getOtherwiseChild(symbol, "*");
+
+      if (n1 == null)
+        throw new IllegalArgumentException("No period configuration found for symbol " + symbol + " or *");
+
+      Node<String> n2 = n1.getOtherwiseChild(interval, "*");
+
+      if (n2 == null)
+        throw new IllegalArgumentException(
+            "No period configuration found for symbol " + n1.getData() + " with interval " + interval + " or *");
+
+      Set<String> vals = n2.getChildrensData();
       Set<Integer> ints = vals.stream().map(s -> Integer.valueOf(s)).collect(Collectors.toSet());
       periods.put(key, ints);
     }

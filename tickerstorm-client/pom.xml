@@ -42,14 +42,16 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+				<version>1.4.0.RELEASE</version>
 				<executions>
 					<execution>
 						<goals>
 							<goal>repackage</goal>
 						</goals>
 						<configuration>
+							<classifier>exec</classifier>
 							<layout>JAR</layout>
-							<mainClass>io.tickerstorm.client.BacktestRunnerClientContext</mainClass>
+							<mainClass>io.tickerstorm.client.TickerStormClientContext</mainClass>
 						</configuration>
 					</execution>
 				</executions>

@@ -2,11 +2,14 @@ package io.tickerstorm.data;
 
 import javax.annotation.PreDestroy;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.jms.core.JmsTemplate;
@@ -21,10 +24,15 @@ import io.tickerstorm.common.eventbus.EventBusToJMSBridge;
 import io.tickerstorm.common.eventbus.JMSToEventBusBridge;
 
 @Configuration
+@ComponentScan(basePackages = {"io.tickerstorm.client"})
+@PropertySource({"classpath:default.properties"})
 @Import({EventBusContext.class, JmsEventBusContext.class})
 public class IntegrationTestContext implements ApplicationListener<ContextRefreshedEvent> {
 
   public static final String SERVICE = "integration-test";
+
+  @Autowired
+  private ServiceLauncher launcher;
 
   @Bean
   public static PropertySourcesPlaceholderConfigurer buildConfig() {
@@ -33,9 +41,9 @@ public class IntegrationTestContext implements ApplicationListener<ContextRefres
 
 
   @PreDestroy
-  public void destroy() {
-    ServiceLauncher.killMarketDataService();
-    ServiceLauncher.killStrategyService();
+  public void destroy() throws Exception {
+    launcher.killMarketDataService();
+    launcher.killStrategyService();
   }
 
   // SENDERS
@@ -62,7 +70,7 @@ public class IntegrationTestContext implements ApplicationListener<ContextRefres
 
   @Override
   public void onApplicationEvent(ContextRefreshedEvent arg0) {
-    ServiceLauncher.launchMarketDataService(true, 4000, "/tmp/tickerstorm/data-service/monitor");
-    ServiceLauncher.launchStrategyService(true, 4001);
+    launcher.launchMarketDataService(true, 4000, "/tmp/tickerstorm/data-service/monitor");
+    launcher.launchStrategyService(true, 4001);
   }
 }

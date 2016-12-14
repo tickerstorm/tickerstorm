@@ -32,13 +32,15 @@ public class ModelDataEndToEndITCase extends BaseIntegrationTest {
   @Qualifier(Destinations.BROKER_MARKETDATA_BUS)
   @Autowired
   private EventBus brokderFeed;
+  
+  private String stream = "ModelDataEndToEndITCase";
 
   private ModelDataQuery q;
 
   @Override
   public void onMarketDataServiceInitialized() throws Exception {
     session = factory.newSession();
-    session.configure(new DefaultResourceLoader().getResource("classpath:yml/modeldataendtoenditcase.yml").getInputStream());
+    session.configure(new DefaultResourceLoader().getResource("classpath:yml/modeldataendtoenditcase.yml").getInputStream(), stream);
 
     Trigger delete = new Trigger(session.stream(), "delete.data");
     delete.addMarker(Markers.MARKET_DATA.toString());

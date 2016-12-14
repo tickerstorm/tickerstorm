@@ -11,8 +11,10 @@ transformers:
     interval: [1m]
     periods : [10]
   - symbol  : [TOL]
+    interval: ['*']
     periods : [20]
  basic-stats: 
-  - symbol  : []
+  - symbol  : ['*']
+    interval: ['*']
     periods : [30, 60, 90]
     

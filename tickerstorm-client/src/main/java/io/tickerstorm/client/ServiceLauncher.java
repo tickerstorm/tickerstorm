@@ -11,23 +11,25 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 
+@Service
 public class ServiceLauncher {
 
   private static final Logger logger = LoggerFactory.getLogger(ServiceLauncher.class);
 
-  private static Process marketDataShell;
-  private static Process strategyShell;
+  private Process marketDataShell;
+  private Process strategyShell;
 
   private static String DATA_SERVICE_JAR =
       "/home/kkarski/.m2/repository/io/tickerstorm/data-service/1.0.0-SNAPSHOT/data-service-1.0.0-SNAPSHOT-exec.jar";
   private static String STRATEGY_SERVICE_JAR =
       "/home/kkarski/.m2/repository/io/tickerstorm/strategy-service/1.0.0-SNAPSHOT/strategy-service-1.0.0-SNAPSHOT-exec.jar";
   
-  public static void launchMarketDataService(boolean debug, int port, final String monitorPath) {
+  public void launchMarketDataService(boolean debug, int port, final String monitorPath) {
 
     Runnable run = new Runnable() {
       @Override
@@ -63,9 +65,9 @@ public class ServiceLauncher {
           IOUtils.copy(shellIn, System.out);
 
         } catch (Exception e) {
-          // TODO: handle exception
+          logger.error(e.getMessage(), e);
         } catch (Error e) {
-          // TODO: handle exception
+          logger.error(e.getMessage(), e);
         }
       }
     };
@@ -74,7 +76,7 @@ public class ServiceLauncher {
 
   }
 
-  public static void killMarketDataService() {
+  public void killMarketDataService() {
     try {
       if (marketDataShell != null && marketDataShell.isAlive()) {
         marketDataShell.destroyForcibly();
@@ -87,7 +89,7 @@ public class ServiceLauncher {
     }
   }
 
-  public static void killStrategyService() {
+  public void killStrategyService() {
     try {
       if (strategyShell != null && strategyShell.isAlive()) {
         strategyShell.destroyForcibly();
@@ -100,7 +102,7 @@ public class ServiceLauncher {
     }
   }
 
-  public static void launchStrategyService(boolean debug, int port) {
+  public void launchStrategyService(boolean debug, int port) {
     Runnable run = new Runnable() {
       @Override
       public void run() {
@@ -132,9 +134,9 @@ public class ServiceLauncher {
           IOUtils.copy(shellIn, System.out);
 
         } catch (Exception e) {
-          // TODO: handle exception
+          logger.error(e.getMessage(), e);
         } catch (Error e) {
-          // TODO: handle exception
+          logger.error(e.getMessage(), e);
         }
       }
     };
@@ -145,12 +147,13 @@ public class ServiceLauncher {
 
   public static void main(String args[]) throws Exception {
 
-    launchMarketDataService(false, 0, "/tmp/tickerstorm/data-service/monitor");
-    launchStrategyService(false, 0);
+    ServiceLauncher launcher = new ServiceLauncher();
+    launcher.launchMarketDataService(false, 0, "/tmp/tickerstorm/data-service/monitor");
+    launcher.launchStrategyService(false, 0);
 
   }
 
-  private static boolean available(int port) {
+  private boolean available(int port) {
 
     ServerSocket ss = null;
     DatagramSocket ds = null;

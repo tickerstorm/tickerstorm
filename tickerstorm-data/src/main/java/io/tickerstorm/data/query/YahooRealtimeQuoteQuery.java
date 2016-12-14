@@ -32,7 +32,7 @@ public class YahooRealtimeQuoteQuery implements QueryBuilder, DataQuery {
 
   public String build() {
 
-    //With fields specified
+    // With fields specified
     String url = HOST + symbol + "&f=a0aa5bb2b6x";
 
     logger.info(url);
@@ -56,7 +56,6 @@ public class YahooRealtimeQuoteQuery implements QueryBuilder, DataQuery {
 
   @Override
   public Map<String, String> headers() {
-    // TODO Auto-generated method stub
     return null;
   }
 

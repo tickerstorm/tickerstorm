@@ -1,6 +1,5 @@
 package io.tickerstorm.data.query;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoField;
@@ -90,7 +89,6 @@ public class YahooHistoricalQuoteQuery implements QueryBuilder, DataQuery {
 
   @Override
   public Map<String, String> headers() {
-    // TODO Auto-generated method stub
     return null;
   }
 
