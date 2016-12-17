@@ -22,7 +22,9 @@ public class ByDestinationNameJmsResolver extends DynamicDestinationResolver {
     if (cache.containsKey(destinationName.toLowerCase()))
       return cache.get(destinationName.toLowerCase());
 
-    if (destinationName.toLowerCase().contains("queue")) {
+    if (destinationName.toLowerCase().startsWith("consumer.")) {
+      pubSubDomain = false;
+    } else if (destinationName.toLowerCase().contains("queue")) {
       pubSubDomain = false;
     } else if (destinationName.toLowerCase().contains("topic")) {
       pubSubDomain = true;
@@ -31,9 +33,9 @@ public class ByDestinationNameJmsResolver extends DynamicDestinationResolver {
     Destination d = null;
 
     if (pubSubDomain) {
-      d = resolveTopic(session, destinationName.toLowerCase());
+      d = resolveTopic(session, destinationName);
     } else {
-      d = resolveQueue(session, destinationName.toLowerCase());
+      d = resolveQueue(session, destinationName);
     }
 
     cache.put(destinationName.toLowerCase(), d);

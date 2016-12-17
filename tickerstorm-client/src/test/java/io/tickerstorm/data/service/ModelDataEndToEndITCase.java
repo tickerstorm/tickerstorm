@@ -51,9 +51,9 @@ public class ModelDataEndToEndITCase extends BaseIntegrationTest {
     delete.addMarker(Markers.MODEL_DATA.toString());
     delete.addMarker(Markers.DELETE.toString());
     session.execute(delete);
-
-    Thread.sleep(5000);
     session.start();
+    
+    Thread.sleep(10000);
   }
 
   @Test
@@ -65,29 +65,30 @@ public class ModelDataEndToEndITCase extends BaseIntegrationTest {
 
     q = new ModelDataQuery(session.stream());
     q.from = Instant.now().minus(1, ChronoUnit.DAYS);
+    q.until = Instant.now().plus(5, ChronoUnit.SECONDS);
 
-    OnEventHandler.newHandler(session.getNotificationsBus()).startCountDownOn(CompletionTracker.MarketData.isSaved(session.stream()))
-        .extendTimeoutOn(CompletionTracker.MarketData.isSaved(session.stream())).timeoutDelay(2000).whenTimedOut(() -> {
+    OnEventHandler.newHandler(session.getNotificationsBus(), "marketdata").startCountDownOn(CompletionTracker.MarketData.isSaved(session.stream()))
+        .extendTimeoutOn(CompletionTracker.MarketData.isSaved(session.stream()), 4000).whenTimedOut(() -> {
 
           triggeredMarket.set(true);
 
         }).start();
 
-    OnEventHandler.newHandler(session.getNotificationsBus()).startCountDownOn(CompletionTracker.ModelData.isSaved(session.stream()))
-        .extendTimeoutOn(CompletionTracker.ModelData.isSaved(session.stream())).timeoutDelay(2000).whenTimedOut(() -> {
+    OnEventHandler.newHandler(session.getNotificationsBus(),"modeldata").startCountDownOn(CompletionTracker.ModelData.isSaved(session.stream()))
+        .extendTimeoutOn(CompletionTracker.ModelData.isSaved(session.stream()), 4000).whenTimedOut(() -> {
 
           triggeredModel.set(true);
           session.execute(q);
 
         }).start();
 
-    OnEventHandler.newHandler(session.getNotificationsBus()).completeWhen(q.isDone()).timeoutDelay(2000).whenComplete((n) -> {      
+    OnEventHandler.newHandler(session.getNotificationsBus(), "query").completeWhen(q.isDone()).mustCompleteWithin(15000).whenComplete((n) -> {      
       triggeredRetro.set(true);
     }).whenTimedOut(() -> {
       org.testng.Assert.fail();
     }).start();
 
-    TestDataFactory.buildCandles(10, "goog", session.stream(), BigDecimal.ONE).stream().forEach(c -> {
+    TestDataFactory.buildCandles(100, "goog", session.stream(), BigDecimal.ONE).stream().forEach(c -> {
       brokderFeed.post(c);
     });
 
@@ -96,6 +97,8 @@ public class ModelDataEndToEndITCase extends BaseIntegrationTest {
     }
 
     Assert.assertTrue(triggeredRetro.get());
+    Assert.assertTrue(triggeredModel.get());
+    Assert.assertTrue(triggeredMarket.get());
   }
 
 }

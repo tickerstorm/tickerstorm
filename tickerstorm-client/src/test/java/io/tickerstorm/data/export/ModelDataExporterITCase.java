@@ -54,6 +54,8 @@ public class ModelDataExporterITCase extends BaseIntegrationTest {
     session = factory.newSession();
     session.configure(new DefaultResourceLoader().getResource("classpath:yml/modeldataendtoenditcase.yml").getInputStream(), stream);
     session.start();
+    
+    Thread.sleep(5000);
   }
 
   @BeforeMethod
@@ -65,7 +67,7 @@ public class ModelDataExporterITCase extends BaseIntegrationTest {
   public void testExportToCSVFile() throws Exception {
 
     OnEventHandler.newHandler(session.getNotificationsBus()).startCountDownOn(CompletionTracker.ModelData.isSaved(session.stream()))
-        .extendTimeoutOn(CompletionTracker.ModelData.isSaved(session.stream())).timeoutDelay(2000).whenTimedOut(() -> {
+        .extendTimeoutOn(CompletionTracker.ModelData.isSaved(session.stream()), 2000).whenTimedOut(() -> {
 
           exportCommend = new ExportModelDataToCSV(session.stream());
           exportCommend.modelQuery.from = Instant.now().minus(700, ChronoUnit.DAYS);
@@ -76,7 +78,7 @@ public class ModelDataExporterITCase extends BaseIntegrationTest {
         }).start();
 
     OnEventHandler.newHandler(session.getNotificationsBus()).startCountDownOn(CompletionTracker.Ingest.someIngestStarted)
-        .completeWhen(CompletionTracker.Ingest.someIngestFinished).timeoutDelay(2000).whenComplete((n) -> {
+        .completeWhen(CompletionTracker.Ingest.someIngestFinished).mustCompleteWithin(2000).whenComplete((n) -> {
 
           HistoricalFeedQuery query = new HistoricalFeedQuery(stream, "Google", new String[] {"TOL"});
           query.from = LocalDateTime.of(2015, 6, 10, 0, 0);
@@ -90,7 +92,7 @@ public class ModelDataExporterITCase extends BaseIntegrationTest {
         }).start();
 
     OnEventHandler.newHandler(session.getNotificationsBus()).startCountDownOn(CompletionTracker.ModelData.Export.someCsvExportStarted)
-        .completeWhen(CompletionTracker.ModelData.Export.someCsvExportFinished).timeoutDelay(2000).whenComplete((n) -> {
+        .completeWhen(CompletionTracker.ModelData.Export.someCsvExportFinished).mustCompleteWithin(2000).whenComplete((n) -> {
 
           file_saved = true;
 

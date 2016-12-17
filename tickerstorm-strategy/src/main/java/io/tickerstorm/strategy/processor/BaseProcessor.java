@@ -67,7 +67,7 @@ public abstract class BaseProcessor implements Processor {
   public void onCommand(Command command) throws Exception {
 
     if (CompletionTracker.Session.isStart.test(command)) {
-      logger.debug("Command received " + command);
+      logger.info("Command received " + command);
 
       if (command.config != null && command.config.containsKey(TRANSFORMERS_YML_NODE)) {
 

@@ -30,7 +30,7 @@ import com.google.common.eventbus.Subscribe;
  * allotted time frame. The onTimeout callback is triggered if the tracker times out before
  * completion is reached.
  * 
- * The completion tracker provides some quarantees as to running time by providing two timeout
+ * The completion tracker provides some guarantees as to running time by providing two timeout
  * mechanism. First, the monitored event stream must start. If the startConditino isn't triggered
  * within the timeout time frame, the tracker will report failure. Second, it's not always possible
  * to know when a stream has completed and the only thing to do is to wait until some interval has
@@ -58,14 +58,17 @@ public class OnEventHandler implements CompletionTracker {
   private Predicate<Notification> resetCondition;
   private Predicate<Notification> timerStart;
   private Predicate<Notification> completionCondition;
+  private Predicate<Notification> failCondition;
   private long delay = 500;
   private Handler onCompletion;
   private Runnable onTimeout;
+  private Runnable onFailure;
   private ScheduledFuture<?> future;
   private ScheduledFuture<?> mustStart;
   private final AtomicBoolean done = new AtomicBoolean(false);
   private final Timeout task = new Timeout();
   private Notification not;
+  private String name = "";
 
   @FunctionalInterface
   public interface Handler {
@@ -94,13 +97,20 @@ public class OnEventHandler implements CompletionTracker {
     return handler;
   }
 
+  public static OnEventHandler newHandler(EventBus notificationBus, String name) {
+    OnEventHandler handler = new OnEventHandler(notificationBus);
+    handler.name = name;
+    return handler;
+  }
+
   public OnEventHandler startCountDownOn(Predicate<Notification> startCondition) {
     this.timerStart = startCondition;
     return this;
   }
 
-  public OnEventHandler extendTimeoutOn(Predicate<Notification> resetCondition) {
+  public OnEventHandler extendTimeoutOn(Predicate<Notification> resetCondition, long delay) {
     this.resetCondition = resetCondition;
+    this.delay = delay;
     return this;
   }
 
@@ -109,13 +119,23 @@ public class OnEventHandler implements CompletionTracker {
     return this;
   }
 
-  public OnEventHandler timeoutDelay(long delay) {
+  public OnEventHandler failedWhen(Predicate<Notification> failureCondition) {
+    this.failCondition = failureCondition;
+    return this;
+  }
+
+  public OnEventHandler mustCompleteWithin(long delay) {
     this.delay = delay;
     return this;
   }
 
   public OnEventHandler whenTimedOut(Runnable onTimeout) {
     this.onTimeout = onTimeout;
+    return this;
+  }
+
+  public OnEventHandler whenFailed(Runnable onTimeout) {
+    this.onFailure = onTimeout;
     return this;
   }
 
@@ -133,7 +153,7 @@ public class OnEventHandler implements CompletionTracker {
   public void onNotification(Notification not) {
 
     if (timerStart != null && timerStart.test(not) && future == null) {
-      logger.debug("Tracker started");
+      logger.debug("Tracker " + name + " started");
       reset();
     }
 
@@ -159,7 +179,7 @@ public class OnEventHandler implements CompletionTracker {
 
     if (completionCondition != null && completionCondition.test(not)) {
 
-      logger.debug("Tracker completed");
+      logger.debug("Tracker " + name + "completed");
 
       notificationsBus.unregister(this);
       done.compareAndSet(false, true);
@@ -175,6 +195,25 @@ public class OnEventHandler implements CompletionTracker {
         onCompletion.handle(not);
       }
     }
+
+    if (failCondition != null && failCondition.test(not)) {
+
+      logger.debug("Tracker " + name + "failed");
+
+      notificationsBus.unregister(this);
+      done.compareAndSet(false, true);
+      this.not = not;
+
+      if (future != null && !future.isCancelled())
+        future.cancel(false);
+
+      if (mustStart != null && !mustStart.isCancelled())
+        mustStart.cancel(false);
+
+      if (onFailure != null) {
+        onFailure.run();
+      }
+    }
   }
 
   private void reset() {
@@ -182,7 +221,7 @@ public class OnEventHandler implements CompletionTracker {
     if (timedOut() || isDone())
       return;
 
-    logger.debug("Tracker reset");
+    logger.debug("Tracker " + name + " reset");
 
     if (mustStart != null && !mustStart.isCancelled())
       mustStart.cancel(false);
@@ -190,7 +229,8 @@ public class OnEventHandler implements CompletionTracker {
     if (future != null && !future.isCancelled())
       future.cancel(false);
 
-    future = timer.schedule(task, delay, TimeUnit.MILLISECONDS);
+    if (!timer.isShutdown() && !timer.isTerminated())
+      future = timer.schedule(task, delay, TimeUnit.MILLISECONDS);
 
   }
 
@@ -231,7 +271,7 @@ public class OnEventHandler implements CompletionTracker {
 
     @Override
     public void run() {
-      logger.debug("Tracker timed out");
+      logger.debug("Tracker " + name + " timed out");
       notificationsBus.unregister(this);
       timedout.compareAndSet(false, true);
 

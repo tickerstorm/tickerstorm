@@ -3,6 +3,7 @@ package io.tickerstorm.common.test;
 import java.io.File;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Random;
 
@@ -20,6 +21,7 @@ public class TestDataFactory {
   public static List<Bar> buildCandles(int count, String symbol, String stream, BigDecimal open) {
 
     List<Bar> cs = Lists.newArrayList();
+    Instant inst = Instant.now();
 
     for (int i = 0; i < count; i++) {
 
@@ -29,14 +31,10 @@ public class TestDataFactory {
           BigDecimal.ROUND_HALF_UP);
       BigDecimal vol = randomRange(new BigDecimal(2321513D), new BigDecimal(4354234562D));
 
-      Bar c = new Bar(symbol, "Google", Instant.now(), open, close, high, low, Bar.MIN_1_INTERVAL, vol.intValue());
+      Bar c = new Bar(symbol, "Google", inst, open, close, high, low, Bar.MIN_1_INTERVAL, vol.intValue());
       c.stream = stream;
       cs.add(c);
-      try {
-        Thread.sleep(10);
-      } catch (Exception e) {
-        
-      }
+      inst = inst.plus(5, ChronoUnit.MILLIS);
     }
 
     return cs;

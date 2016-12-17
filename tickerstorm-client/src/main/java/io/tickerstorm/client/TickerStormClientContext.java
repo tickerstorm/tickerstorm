@@ -45,7 +45,7 @@ public class TickerStormClientContext {
   @Bean
   public JMSToEventBusBridge buildNotificationsEventBridge(@Qualifier(Destinations.NOTIFICATIONS_BUS) EventBus bus,
       @Qualifier(Destinations.REALTIME_MARKETDATA_BUS) EventBus realtimeBus) {
-    JMSToEventBusBridge bridge = new JMSToEventBusBridge( SERVICE);
+    JMSToEventBusBridge bridge = new JMSToEventBusBridge(SERVICE);
     bridge.notificationBus = bus;
     bridge.realtimeBus = realtimeBus;
     return bridge;

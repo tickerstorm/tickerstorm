@@ -89,6 +89,8 @@ public class ModelDataFeed {
 
     long startTimer = System.currentTimeMillis();
 
+
+
     Notification marker = new Notification(query);
     marker.addMarker(Markers.START.toString());
     marker.expect = count.get();
@@ -100,13 +102,16 @@ public class ModelDataFeed {
       });
     });
 
+    logger.info("Dispatching " + dtos.size() + " model data fields took " + (System.currentTimeMillis() - startTimer) + "ms");
+
+
+
+    marker = new Notification(query);
     marker = new Notification(query);
     marker.addMarker(Markers.END.toString());
     marker.expect = 0;
     notificationBus.post(marker);
 
-
-    logger.info("Dispatching " + dtos.size() + " model data fields took " + (System.currentTimeMillis() - startTimer) + "ms");
 
 
   }
