@@ -1,8 +1,5 @@
 package io.tickerstorm.common;
 
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -10,7 +7,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
-import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
 
 import io.tickerstorm.common.eventbus.Destinations;
@@ -31,7 +27,7 @@ public class EventBusContext {
    */
   @Qualifier(Destinations.REALTIME_MARKETDATA_BUS)
   @Bean
-  public EventBus buildRealtimeEventBus(@Qualifier("eventBus") Executor executor) {
+  public EventBus buildRealtimeEventBus() {
     return new EventBus(Destinations.REALTIME_MARKETDATA_BUS);
   }
   
@@ -43,7 +39,7 @@ public class EventBusContext {
    */
   @Qualifier(Destinations.BROKER_MARKETDATA_BUS)
   @Bean
-  public EventBus buildBrokerFeed(@Qualifier("eventBus") Executor executor) {
+  public EventBus buildBrokerFeed() {
     return new EventBus(Destinations.BROKER_MARKETDATA_BUS);
   }
 
@@ -56,8 +52,9 @@ public class EventBusContext {
    */
   @Qualifier(Destinations.COMMANDS_BUS)
   @Bean
-  public EventBus buildCommandsEventBus(@Qualifier("eventBus") Executor executor) {
-    return new AsyncEventBus(Destinations.COMMANDS_BUS, executor);
+  public EventBus buildCommandsEventBus() {
+    //return new AsyncEventBus(Destinations.COMMANDS_BUS, executor);
+    return new EventBus(Destinations.COMMANDS_BUS);
   }
 
   /**
@@ -69,15 +66,17 @@ public class EventBusContext {
    */
   @Qualifier(Destinations.NOTIFICATIONS_BUS)
   @Bean
-  public EventBus buildNotificaitonEventBus(@Qualifier("eventBus") Executor executor) {
-    return new AsyncEventBus(Destinations.NOTIFICATIONS_BUS, executor);
+  public EventBus buildNotificaitonEventBus() {
+    //return new AsyncEventBus(Destinations.NOTIFICATIONS_BUS, executor);
+    return new EventBus(Destinations.NOTIFICATIONS_BUS);
   }
 
 
   @Qualifier(Destinations.MODEL_DATA_BUS)
   @Bean
-  public EventBus buildModelDataEventBus(@Qualifier("eventBus") Executor executor) {
-    return new AsyncEventBus(Destinations.MODEL_DATA_BUS, executor);
+  public EventBus buildModelDataEventBus() {
+    //return new AsyncEventBus(Destinations.MODEL_DATA_BUS, executor);
+    return new EventBus(Destinations.MODEL_DATA_BUS);
   }
 
   /**
@@ -89,15 +88,16 @@ public class EventBusContext {
    */
   @Qualifier(Destinations.RETRO_MODEL_DATA_BUS)
   @Bean
-  public EventBus buildRetroModelDataEventBus(@Qualifier("eventBus") Executor executor) {
-    return new AsyncEventBus(Destinations.RETRO_MODEL_DATA_BUS, executor);
+  public EventBus buildRetroModelDataEventBus() {
+    //return new AsyncEventBus(Destinations.RETRO_MODEL_DATA_BUS, executor);
+    return new EventBus(Destinations.RETRO_MODEL_DATA_BUS);
   }
 
-  @Qualifier("eventBus")
-  @Bean
-  public Executor buildExecutorService() {
-    return Executors.newFixedThreadPool(4);
-  }
+//  @Qualifier("eventBus")
+//  @Bean
+//  public Executor buildExecutorService() {
+//    return Executors.newFixedThreadPool(4);
+//  }
 
 
 }

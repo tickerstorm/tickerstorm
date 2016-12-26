@@ -6,22 +6,23 @@ import javax.jms.JMSException;
 import javax.jms.Session;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
-import org.apache.activemq.RedeliveryPolicy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.jms.annotation.EnableJms;
-import org.springframework.jms.config.DefaultJmsListenerContainerFactory;
 import org.springframework.jms.connection.CachingConnectionFactory;
 import org.springframework.jms.core.JmsTemplate;
+import org.springframework.jms.listener.DefaultMessageListenerContainer;
 import org.springframework.util.ErrorHandler;
 
 import com.google.common.base.Throwables;
 
 import io.tickerstorm.common.eventbus.ByDestinationNameJmsResolver;
+import io.tickerstorm.common.eventbus.Destinations;
 
 @EnableJms
 @Configuration
@@ -33,30 +34,22 @@ public class JmsEventBusContext {
   @Value("${jms.transport}")
   protected String transport;
 
+  @Value("${jms.concurrency}")
+  protected String concurrency;
+
+  @Value("${jms.messagesPerTask}")
+  protected Integer messagesPerTask;
+
   @Value("${service.name}")
   protected String serviceName;
-
-  @Bean(name = "cf")
-  public ConnectionFactory buildActiveMQConnectionFactory() {
-
-    ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(transport);
-    connectionFactory.setAlwaysSessionAsync(false);
-    connectionFactory.setClientID(serviceName);
-
-    RedeliveryPolicy policy = connectionFactory.getRedeliveryPolicy();
-    policy.setInitialRedeliveryDelay(500);
-    policy.setBackOffMultiplier(2);
-    policy.setUseExponentialBackOff(true);
-    policy.setMaximumRedeliveries(2);
-
-    return connectionFactory;
-  }
 
   @Bean
   public CachingConnectionFactory buildConnectionFactoryCache() {
 
+    ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(transport);
+    connectionFactory.setAlwaysSessionAsync(false);
     // Not recommended with listener container
-    CachingConnectionFactory caching = new CachingConnectionFactory(buildActiveMQConnectionFactory());
+    CachingConnectionFactory caching = new CachingConnectionFactory(connectionFactory);
     caching.setSessionCacheSize(10);
     caching.setReconnectOnException(true);
     caching.setExceptionListener(new ExceptionListener() {
@@ -71,10 +64,12 @@ public class JmsEventBusContext {
   }
 
   @Bean
-  public DefaultJmsListenerContainerFactory jmsListenerContainerFactory() {
+  public DefaultMessageListenerContainer getJmsListenerContainer() {
 
-    DefaultJmsListenerContainerFactory factory = new DefaultJmsListenerContainerFactory();
-    factory.setConnectionFactory(buildConnectionFactoryCache());
+    ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(transport);
+    connectionFactory.setAlwaysSessionAsync(false);
+    DefaultMessageListenerContainer factory = new DefaultMessageListenerContainer();
+    factory.setConnectionFactory(connectionFactory);
     factory.setErrorHandler(new ErrorHandler() {
       @Override
       public void handleError(Throwable arg0) {
@@ -83,16 +78,20 @@ public class JmsEventBusContext {
       }
     });
 
+    factory.setClientId(serviceName);
+    factory.setDestinationName(Destinations.TOPIC_REALTIME_MARKETDATA);
     factory.setDestinationResolver(new ByDestinationNameJmsResolver());
     factory.setSessionAcknowledgeMode(Session.AUTO_ACKNOWLEDGE);
-    factory.setMaxMessagesPerTask(-1);
+    factory.setConcurrency(concurrency);
+    factory.setAutoStartup(false);
+    factory.setMaxMessagesPerTask(messagesPerTask);
 
     return factory;
   }
 
   @Bean
-  public JmsTemplate buildJmsTemplate() {
-    JmsTemplate template = new JmsTemplate(buildConnectionFactoryCache());
+  public JmsTemplate buildJmsTemplate(CachingConnectionFactory factory) {
+    JmsTemplate template = new JmsTemplate(factory);
     template.setDestinationResolver(new ByDestinationNameJmsResolver());
     template.setSessionAcknowledgeMode(Session.AUTO_ACKNOWLEDGE);
     template.setTimeToLive(2000);

@@ -24,7 +24,7 @@ public class CacheManager {
 
     if (cacheManager == null || !cacheManager.cacheExists(cache.toLowerCase())) {
       CacheConfiguration config = new CacheConfiguration().eternal(false).maxBytesLocalHeap(100, MemoryUnit.MEGABYTES)
-          .sizeOfPolicy(new SizeOfPolicyConfiguration().maxDepth(1000).maxDepthExceededBehavior(MaxDepthExceededBehavior.ABORT))
+          .sizeOfPolicy(new SizeOfPolicyConfiguration().maxDepth(1000000).maxDepthExceededBehavior(MaxDepthExceededBehavior.ABORT))
           .memoryStoreEvictionPolicy(MemoryStoreEvictionPolicy.FIFO).persistence(new PersistenceConfiguration().strategy(Strategy.NONE));
       config.setName(cache.toLowerCase());
       cacheManager = net.sf.ehcache.CacheManager.create();
@@ -39,14 +39,11 @@ public class CacheManager {
     cacheManager.removeCache(cache.toLowerCase());
   }
 
-  public static SynchronizedIndexedTreeMap<Field<?>> getFieldCache(Field<?> f) {
-    return (SynchronizedIndexedTreeMap) CacheManager.getInstance(f.getStream().toLowerCase()).get(CacheManager.buildKey(f).toString())
-        .getObjectValue();
-  }
-
   public static SynchronizedIndexedTreeMap<Field<?>> cache(Field<?> f) {
 
     final String key = CacheManager.buildKey(f).toString();
+    SynchronizedIndexedTreeMap<Field<?>> map;
+
     Element e = CacheManager.getInstance(f.getStream().toLowerCase())
         .putIfAbsent(new Element(key, new SynchronizedIndexedTreeMap<Field<?>>(Field.SORT_BY_INSTANTS, MAX_ELEMENTS_PER_SERIES)));
 
@@ -54,9 +51,11 @@ public class CacheManager {
       e = CacheManager.getInstance(f.getStream().toLowerCase()).get(key);
     }
 
-    ((SynchronizedIndexedTreeMap<Field<?>>) e.getObjectValue()).put(f.getTimestamp(), f);
-    
-    return(SynchronizedIndexedTreeMap<Field<?>>) e.getObjectValue();
+    map = (SynchronizedIndexedTreeMap<Field<?>>) e.getObjectValue();
+    map.put(f.getTimestamp(), f);
+    CacheManager.getInstance(f.getStream().toLowerCase()).put(new Element(key, map));
+
+    return map;
 
   }
 

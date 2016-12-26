@@ -1,11 +1,12 @@
 package io.tickerstorm.common.eventbus;
 
 public interface Destinations {
-
-  public static final String TOPIC_REALTIME_MARKETDATA = "topic.marketdata.realtime";
+  
+  public static final String TOPIC_COMMANDS = "VirtualTopic.commands";
+  public static final String TOPIC_REALTIME_MARKETDATA = "VirtualTopic.marketdata.realtime";
+  public static final String TOPIC_NOTIFICATIONS = "VirtualTopic.notifications";
+  
   public static final String QUEUE_REALTIME_BROKERFEED = "queue.marketdata.brokerfeed";
-  public static final String TOPIC_COMMANDS = "topic.commands";
-  public static final String TOPIC_NOTIFICATIONS = "topic.notifications";
   public static final String QUEUE_MODEL_DATA = "queue.modeldata";
   public static final String QUEUE_RETRO_MODEL_DATA = "queue.retromodeldata";
   

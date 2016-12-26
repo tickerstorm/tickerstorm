@@ -29,8 +29,6 @@ public class StrategyServiceApplication {
 
   public static final Logger logger = org.slf4j.LoggerFactory.getLogger(StrategyServiceApplication.class);
 
-  private JMSToEventBusBridge jmsBridge;
-
   public static void main(String[] args) throws Exception {
     SpringApplication.run(StrategyServiceApplication.class, args);
   }

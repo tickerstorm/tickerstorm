@@ -80,10 +80,12 @@ public class BasicStatsProcessor extends BaseEventProcessor {
 
     String key = CacheManager.buildKey(f).toString() + "-p" + period;
     SynchronizedDescriptiveStatistics q = null;
-    Element e = CacheManager.getInstance(f.getStream()).putIfAbsent(new Element(key, new SynchronizedDescriptiveStatistics(period)));
+
+    Element e =
+        CacheManager.getInstance(f.getStream().toLowerCase()).putIfAbsent(new Element(key, new SynchronizedDescriptiveStatistics(period)));
 
     if (e == null)
-      e = CacheManager.getInstance(f.getStream()).get(key);
+      e = CacheManager.getInstance(f.getStream().toLowerCase()).get(key);
 
     q = (SynchronizedDescriptiveStatistics) e.getObjectValue();
 
@@ -93,8 +95,10 @@ public class BasicStatsProcessor extends BaseEventProcessor {
     if (f.getFieldType().isAssignableFrom(Integer.class))
       q.addValue(((Integer) f.getValue()).doubleValue());
 
+    CacheManager.getInstance(f.getStream().toLowerCase()).put(new Element(key, q));
+
     return q;
-    
+
   }
 
   @Override

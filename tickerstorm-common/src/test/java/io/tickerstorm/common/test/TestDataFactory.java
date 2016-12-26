@@ -2,10 +2,10 @@ package io.tickerstorm.common.test;
 
 import java.io.File;
 import java.math.BigDecimal;
+import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.Random;
 
 import org.apache.commons.io.FileUtils;
 
@@ -15,11 +15,11 @@ import com.google.common.io.Files;
 import io.tickerstorm.common.entity.Bar;
 
 public class TestDataFactory {
-
-  private static final Random r = new Random();
+  
+  static final SecureRandom r = new SecureRandom();
 
   public static List<Bar> buildCandles(int count, String symbol, String stream, BigDecimal open) {
-
+    
     List<Bar> cs = Lists.newArrayList();
     Instant inst = Instant.now();
 
@@ -29,12 +29,12 @@ public class TestDataFactory {
       BigDecimal high = BigDecimal.valueOf(Math.max(close.doubleValue(), open.doubleValue())).multiply(BigDecimal.valueOf(1.03));
       BigDecimal low = BigDecimal.valueOf(Math.min(close.doubleValue(), open.doubleValue())).divide(BigDecimal.valueOf(1.03), 4,
           BigDecimal.ROUND_HALF_UP);
-      BigDecimal vol = randomRange(new BigDecimal(2321513D), new BigDecimal(4354234562D));
+      BigDecimal vol = randomRange(new BigDecimal(23215D), new BigDecimal(43542345D));
 
       Bar c = new Bar(symbol, "Google", inst, open, close, high, low, Bar.MIN_1_INTERVAL, vol.intValue());
       c.stream = stream;
       cs.add(c);
-      inst = inst.plus(5, ChronoUnit.MILLIS);
+      inst = inst.plus(60, ChronoUnit.SECONDS);
     }
 
     return cs;
@@ -51,17 +51,17 @@ public class TestDataFactory {
   }
 
   public static BigDecimal randomRange(BigDecimal min, BigDecimal max) {
-
+    
     BigDecimal range = max.subtract(min);
     BigDecimal result = min.add(range.multiply(new BigDecimal(r.nextDouble())));
-    return result;
+    return result.abs();
 
   }
 
   public static BigDecimal randomRange(BigDecimal midPoint, Double lower, Double upper) {
 
     return randomRange(midPoint.multiply(BigDecimal.ZERO.subtract(BigDecimal.valueOf(Math.abs(lower)))),
-        BigDecimal.ONE.add(BigDecimal.valueOf(upper)));
+        BigDecimal.ONE.add(BigDecimal.valueOf(upper))).abs();
 
   }
 }

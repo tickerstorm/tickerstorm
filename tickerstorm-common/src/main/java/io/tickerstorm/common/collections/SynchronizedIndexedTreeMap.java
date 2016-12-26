@@ -24,7 +24,6 @@ public class SynchronizedIndexedTreeMap<T> extends TreeMap<Instant, T> implement
   private final AtomicReference<List<Instant>> index = new AtomicReference<List<Instant>>();
   private final Integer maxSize;
   private final AtomicBoolean full = new AtomicBoolean(false);
-  private final AtomicBoolean updated = new AtomicBoolean(false);
 
   public SynchronizedIndexedTreeMap(Comparator<Instant> comp, Integer size) {
     super(comp);
@@ -36,42 +35,42 @@ public class SynchronizedIndexedTreeMap<T> extends TreeMap<Instant, T> implement
   }
 
   @Override
-  public T put(Instant key, T value) {
-    synchronized (full) {
+  public synchronized T put(Instant key, T value) {
+
+    if (full.get()) {
+      pollFirstEntry();
+    }
+
+    T t = super.put(key, value);
+    full.set(size() == (maxSize - 1));
+    this.index.set(new ArrayList<Instant>(this.keySet()));
+    return t;
+
+  }
+
+  @Override
+  public synchronized void putAll(Map<? extends Instant, ? extends T> map) {
+
+    for (Map.Entry e : map.entrySet()) {
       if (full.get()) {
         pollFirstEntry();
       }
-
-      updated.set(true);
-      T t = super.put(key, value);
-      full.set(size() == maxSize);
-      return t;
-    }
-  }
-
-  @Override
-  public void putAll(Map<? extends Instant, ? extends T> map) {
-    synchronized (full) {
-      for (Map.Entry e : map.entrySet()) {
-        if (full.get()) {
-          pollFirstEntry();
-        }
-        updated.set(true);
-        super.put((Instant) e.getKey(), (T) e.getValue());
-        full.set(size() == maxSize);
-      }
-
-    }
-  }
-
-  @Override
-  public java.util.Map.Entry<Instant, T> pollLastEntry() {
-    synchronized (full) {
-      Map.Entry<Instant, T> p = super.pollFirstEntry();
+      super.put((Instant) e.getKey(), (T) e.getValue());
       full.set(size() == (maxSize - 1));
-      updated.set(true);
-      return p;
+      this.index.set(new ArrayList<Instant>(this.keySet()));
     }
+
+
+  }
+
+  @Override
+  public synchronized java.util.Map.Entry<Instant, T> pollLastEntry() {
+
+    Map.Entry<Instant, T> p = super.pollFirstEntry();
+    full.set(size() == (maxSize - 1));
+    this.index.set(new ArrayList<Instant>(this.keySet()));
+    return p;
+
   }
 
   @Override
@@ -84,47 +83,30 @@ public class SynchronizedIndexedTreeMap<T> extends TreeMap<Instant, T> implement
     throw new UnsupportedOperationException();
   }
 
-  public T get(Integer i) {
-    synchronized (updated) {
-      if (updated.compareAndSet(true, false)) {
-        this.index.set(new ArrayList<Instant>(this.keySet()));
-      }
-    }
+  public synchronized T get(Integer i) {
 
     Instant key = this.index.get().get(i);
     return get(key);
 
   }
 
-  public List<T> subList(Instant until, Integer periods) {
-
-    synchronized (updated) {
-      if (updated.compareAndSet(true, false)) {
-        this.index.set(new ArrayList<Instant>(this.keySet()));
-      }
-    }
+  public synchronized List<T> subList(Instant until, Integer periods) {
 
     int in = this.index.get().indexOf(until);
 
-    if (in > -1 && this.index.get().size() >= (in + periods + 1)) {
-      Instant inst = this.index.get().get(in + periods);
+    if (in > -1 && this.index.get().size() >= (in + periods)) {
+      Instant inst = this.index.get().get(in + periods - 1);
       return Lists.newArrayList(this.subMap(until, true, inst, true).values());
     }
 
     return null;
   }
 
-  public T get(Instant until, Integer periods) {
-    
+  public synchronized T get(Instant until, Integer periods) {
+
     T t = null;
-    
+
     assert periods > 1 : "Number of periods should be more than 1";
-    
-    synchronized (updated) {
-      if (updated.compareAndSet(true, false)) {
-        this.index.set(new ArrayList<Instant>(this.keySet()));
-      }
-    }
 
     int in = this.index.get().indexOf(until);
 
@@ -137,13 +119,13 @@ public class SynchronizedIndexedTreeMap<T> extends TreeMap<Instant, T> implement
   }
 
   @Override
-  public java.util.Map.Entry<Instant, T> pollFirstEntry() {
-    synchronized (full) {
-      Map.Entry<Instant, T> m = super.pollLastEntry();
-      full.set(size() == maxSize);
-      updated.set(true);
-      return m;
-    }
+  public synchronized java.util.Map.Entry<Instant, T> pollFirstEntry() {
+
+    Map.Entry<Instant, T> m = super.pollLastEntry();
+    full.set(size() == (maxSize - 1));
+    this.index.set(new ArrayList<Instant>(this.keySet()));
+    return m;
+
   }
 
   @Override
