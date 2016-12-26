@@ -1,7 +1,5 @@
 package io.tickerstorm.data;
 
-import java.util.concurrent.Executor;
-
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
@@ -14,7 +12,6 @@ import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.data.cassandra.repository.config.EnableCassandraRepositories;
 import org.springframework.jms.core.JmsTemplate;
 
-import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
 
 import io.tickerstorm.common.EventBusContext;
@@ -54,9 +51,10 @@ public class MarketDataApplication {
 
   @Qualifier(Destinations.HISTORICL_MARKETDATA_BUS)
   @Bean
-  public EventBus buildEventBus(@Qualifier("eventBus") Executor executor) {
-    AsyncEventBus historical = new AsyncEventBus(Destinations.HISTORICL_MARKETDATA_BUS, executor);
-    return historical;
+  public EventBus buildEventBus() {
+    // return new AsyncEventBus(Destinations.HISTORICL_MARKETDATA_BUS, executor);
+    return new EventBus(Destinations.HISTORICL_MARKETDATA_BUS);
+
   }
 
   // SENDERS
