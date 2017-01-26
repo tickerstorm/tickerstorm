@@ -1,123 +1,170 @@
+/*
+ * Copyright (c) 2017, Tickerstorm and/or its affiliates. All rights reserved.
+ *
+ *   Redistribution and use in source and binary forms, with or without
+ *   modification, are permitted provided that the following conditions
+ *   are met:
+ *
+ *     - Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *     - Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in the
+ *       documentation and/or other materials provided with the distribution.
+ *
+ *     - Neither the name of Tickerstorm or the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ *   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+ *   IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+ *   THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ *   PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ *   CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ *   EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ *   PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ *   PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ *   LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ *   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ *   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
+
 package io.tickerstorm.data.dao;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
-
+import com.google.common.eventbus.EventBus;
+import io.tickerstorm.common.command.CompletionTracker;
+import io.tickerstorm.common.command.OnEventHandler;
+import io.tickerstorm.common.entity.Bar;
+import io.tickerstorm.common.eventbus.Destinations;
+import io.tickerstorm.data.TestMarketDataServiceConfig;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Date;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.cassandra.core.CassandraOperations;
-import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
-import org.testng.Assert;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit4.SpringRunner;
 
-import com.google.common.eventbus.EventBus;
-import com.google.common.eventbus.Subscribe;
+@RunWith(SpringRunner.class)
+@SpringBootTest(classes = {TestMarketDataServiceConfig.class})
+public class MarketDataCassandraSinkITCase {
 
-import io.tickerstorm.common.entity.Bar;
-import io.tickerstorm.common.entity.MarketData;
-import io.tickerstorm.common.eventbus.Destinations;
-import io.tickerstorm.data.TestMarketDataServiceConfig;
+  private final static Logger logger = LoggerFactory.getLogger(MarketDataCassandraSinkITCase.class);
 
-@DirtiesContext
-@ContextConfiguration(classes = {TestMarketDataServiceConfig.class})
-public class MarketDataCassandraSinkITCase extends AbstractTestNGSpringContextTests {
-
-  @Autowired
-  private CassandraOperations session;
-
-  @Qualifier(Destinations.BROKER_MARKETDATA_BUS)
+  @Qualifier(Destinations.HISTORICL_MARKETDATA_BUS)
   @Autowired
   private EventBus historicalBus;
 
-  @Qualifier(Destinations.REALTIME_MARKETDATA_BUS)
+  @Qualifier(Destinations.NOTIFICATIONS_BUS)
   @Autowired
-  private EventBus realtimeBus;
+  private EventBus notificationsBus;
 
   @Autowired
   private MarketDataDao dao;
 
-  private RealtimeBusListener listener;
+  private String stream = "MarketDataCassandraSinkITCase".toLowerCase();
 
-  @BeforeMethod
-  public void cleanup() {
-    listener = new RealtimeBusListener();
-    realtimeBus.register(listener);
-    dao.deleteByStream("MarketDataCassandraSinkITCase".toLowerCase());
+  @Before
+  public void setup() throws Exception {
+    logger.info("@Before");
+    dao.deleteByStream(stream);
+    Thread.sleep(3000);
+  }
+
+  @After
+  public void cleanup() throws Exception {
+    logger.info("@After");
+    dao.deleteByStream(stream);
   }
 
   @Test
   public void storeCandle() throws Exception {
 
-    Bar c = new Bar();
+    final Bar c = new Bar();
     c.high = BigDecimal.TEN;
     c.low = BigDecimal.ONE;
     c.interval = Bar.MIN_10_INTERVAL;
     c.open = BigDecimal.ZERO;
+    c.close = new BigDecimal("34.435");
     c.timestamp = Instant.now();
     c.volume = 10;
     c.symbol = "AAPL";
-    c.stream = "MarketDataCassandraSinkITCase".toLowerCase();
+    c.stream = stream;
     historicalBus.post(c);
 
-    Thread.sleep(5000);
+    logger.info("@Test");
 
-    long count = dao.count("MarketDataCassandraSinkITCase".toLowerCase());
+    final AtomicBoolean done = new AtomicBoolean(false);
 
-    assertEquals(count, 1);
-    Assert.assertEquals(listener.count, 1);
+    OnEventHandler.newHandler(notificationsBus, "marketdata")
+        .startCountDownOn(CompletionTracker.MarketData.isSaved(stream))
+        .extendTimeoutOn(CompletionTracker.MarketData.isSaved(stream), 100)
+        .completeWhen(CompletionTracker.MarketData.isSaved(stream))
+        .whenTimedOut(() -> {
 
-    Stream<MarketDataDto> result = dao.findAll(c.stream);
+          Assert.fail("No market data persisted");
 
-    result.forEach(dto -> {
+        }).whenComplete((n) -> {
 
-      assertEquals(dto.close, c.close);
-      assertEquals(dto.low, c.low);
-      assertEquals(dto.high, c.high);
-      assertEquals(dto.open, c.open);
-      assertEquals(dto.volume, new BigDecimal(c.volume));
-      assertEquals(dto.primarykey.stream, c.stream.toLowerCase());
-      assertEquals(dto.primarykey.interval, c.interval);
-      assertEquals(dto.primarykey.timestamp, Date.from(c.timestamp));
-      assertEquals(dto.primarykey.symbol, c.symbol.toLowerCase());
-      assertNotNull(dto.primarykey.date);
+      logger.info("@Verifying");
 
-      Bar d = (Bar) dto.toMarketData(c.stream);
+      long count = dao.count(c.stream);
 
-      assertEquals(d.close, c.close);
-      assertEquals(d.low, c.low);
-      assertEquals(d.high, c.high);
-      assertEquals(d.open, c.open);
-      assertEquals(d.volume, c.volume);
-      assertEquals(d.stream, c.stream.toLowerCase());
-      assertEquals(d.interval, c.interval);
+      Assert.assertEquals(count, 1);
 
-      assertTrue(d.timestamp.compareTo(c.timestamp) == 0);
-      assertNotNull(d.timestamp);
-      assertNotNull(c.timestamp);
-      assertEquals(d.symbol, c.symbol.toLowerCase());
+      Stream<MarketDataDto> result = dao.findAll(c.stream);
+      List<MarketDataDto> rs = result.collect(Collectors.toList());
 
-    });
+      Assert.assertEquals(rs.size(), 1);
 
-  }
+      for (MarketDataDto dto : rs) {
 
-  public class RealtimeBusListener {
+        Assert.assertEquals(dto.primarykey.stream, c.stream);
+        Assert.assertEquals(dto.close, c.close);
+        Assert.assertEquals(dto.low, c.low);
+        Assert.assertEquals(dto.high, c.high);
+        Assert.assertEquals(dto.open, c.open);
+        Assert.assertEquals(dto.volume, new BigDecimal(c.volume));
+        Assert.assertEquals(dto.primarykey.interval, c.interval);
+        Assert.assertEquals(dto.primarykey.timestamp, Date.from(c.timestamp));
+        Assert.assertEquals(dto.primarykey.symbol, c.symbol.toLowerCase());
+        Assert.assertNotNull(dto.primarykey.date);
 
-    public int count = 0;
+        Bar d = (Bar) dto.toMarketData(c.stream);
 
-    @Subscribe
-    public void onMarketData(MarketData md) {
-      count++;
+        Assert.assertEquals(d.stream, c.stream);
+        Assert.assertEquals(d.close, c.close);
+        Assert.assertEquals(d.low, c.low);
+        Assert.assertEquals(d.high, c.high);
+        Assert.assertEquals(d.open, c.open);
+        Assert.assertEquals(d.volume, c.volume);
+        Assert.assertEquals(d.interval, c.interval);
+        Assert.assertTrue(d.timestamp.compareTo(c.timestamp) == 0);
+        Assert.assertNotNull(d.timestamp);
+        Assert.assertNotNull(c.timestamp);
+        Assert.assertEquals(d.symbol, c.symbol.toLowerCase());
+
+      }
+
+      done.set(true);
+
+    }).start();
+
+    while (!done.get()) {
+      Thread.sleep(2000);
     }
 
   }
-
 }

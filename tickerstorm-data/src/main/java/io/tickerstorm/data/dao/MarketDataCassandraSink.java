@@ -1,31 +1,53 @@
+/*
+ * Copyright (c) 2017, Tickerstorm and/or its affiliates. All rights reserved.
+ *
+ *   Redistribution and use in source and binary forms, with or without
+ *   modification, are permitted provided that the following conditions
+ *   are met:
+ *
+ *     - Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *     - Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in the
+ *       documentation and/or other materials provided with the distribution.
+ *
+ *     - Neither the name of Tickerstorm or the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ *   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+ *   IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+ *   THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ *   PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ *   CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ *   EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ *   PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ *   PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ *   LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ *   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ *   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
+
 package io.tickerstorm.data.dao;
 
-import java.util.ArrayList;
+import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
+import io.tickerstorm.common.command.Markers;
+import io.tickerstorm.common.command.Notification;
+import io.tickerstorm.common.entity.MarketData;
+import io.tickerstorm.common.eventbus.Destinations;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Repository;
-
-import com.datastax.driver.core.exceptions.InvalidTypeException;
-import com.google.common.base.Joiner;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.eventbus.EventBus;
-import com.google.common.eventbus.Subscribe;
-
-import io.tickerstorm.common.command.Markers;
-import io.tickerstorm.common.command.Notification;
-import io.tickerstorm.common.entity.MarketData;
-import io.tickerstorm.common.eventbus.Destinations;
 
 @DependsOn(value = {"cassandraSetup"})
 @Repository
@@ -45,6 +67,9 @@ public class MarketDataCassandraSink extends BaseCassandraSink<MarketDataDto> {
   @Qualifier(Destinations.NOTIFICATIONS_BUS)
   @Autowired
   private EventBus notificationsBus;
+
+  @Autowired
+  private MarketDataDao dao;
 
   @PreDestroy
   public void destroy() {
@@ -67,60 +92,29 @@ public class MarketDataCassandraSink extends BaseCassandraSink<MarketDataDto> {
 
     if (null == data || data.isEmpty())
       return;
-
-    List<List<?>> rows = new ArrayList<>();
-
     try {
-      synchronized (data) {
 
+      synchronized (data) {
         logger.debug(
             "Persisting " + data.size() + " records, " + count.addAndGet(data.size()) + " total saved and " + received.get() + " received");
 
-        String insert = "INSERT INTO " + keyspace + ".marketdata "
-            + "(symbol, date, type, source, interval, timestamp, hour, min, ask, asksize, bid, bidsize, close, high, low, open, price, properties, quantity, volume) "
-            + "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);";
-
-        data.stream().forEach(r -> {
-          rows.add(Lists.newArrayList(r.primarykey.symbol, r.primarykey.date, r.primarykey.type, r.primarykey.stream, r.primarykey.interval,
-              r.primarykey.timestamp, r.primarykey.hour, r.primarykey.min, r.ask, r.askSize, r.bid, r.bidSize, r.close, r.high, r.low,
-              r.open, r.price, r.properties, r.quantity, r.volume));
-        });
-
-        session.ingest(insert, rows);
-
-        Map<String, Integer> streamCounts = countEntries(data);
-
-        for (Entry<String, Integer> e : streamCounts.entrySet()) {
-          Notification marker = new Notification(e.getKey());
-          marker.addMarker(Markers.MARKET_DATA.toString());
-          marker.addMarker(Markers.SAVE.toString());
-          marker.addMarker(Markers.SUCCESS.toString());
-          marker.expect = e.getValue();
-          notificationsBus.post(marker);
-        }
       }
 
-    } catch (InvalidTypeException e) {
+      dao.ingest(data);
 
-      for (List<?> md : rows) {
-        logger.debug(Joiner.on(", ").skipNulls().join(md.iterator()));
+      Map<String, Integer> streamCounts = dao.countEntries(data);
+
+      for (Entry<String, Integer> e : streamCounts.entrySet()) {
+        Notification marker = new Notification(e.getKey());
+        marker.addMarker(Markers.MARKET_DATA.toString());
+        marker.addMarker(Markers.SAVE.toString());
+        marker.addMarker(Markers.SUCCESS.toString());
+        marker.expect = e.getValue();
+        notificationsBus.post(marker);
       }
-
-      logger.error(e.getMessage(), e);
     } catch (Exception e) {
       logger.error(e.getMessage(), e);
     }
-  }
-
-  private Map<String, Integer> countEntries(Collection<MarketDataDto> data) {
-    Map<String, Integer> streamCounts = Maps.newHashMap();
-    for (MarketDataDto dto : data) {
-      Integer count = streamCounts.putIfAbsent(dto.primarykey.stream, 1);
-
-      if (count != null)
-        streamCounts.replace(dto.primarykey.stream, count++);
-    }
-    return streamCounts;
   }
 
 }
