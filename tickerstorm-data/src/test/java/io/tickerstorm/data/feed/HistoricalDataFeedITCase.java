@@ -1,27 +1,44 @@
+/*
+ * Copyright (c) 2017, Tickerstorm and/or its affiliates. All rights reserved.
+ *
+ *   Redistribution and use in source and binary forms, with or without
+ *   modification, are permitted provided that the following conditions
+ *   are met:
+ *
+ *     - Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *     - Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in the
+ *       documentation and/or other materials provided with the distribution.
+ *
+ *     - Neither the name of Tickerstorm or the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ *   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+ *   IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+ *   THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ *   PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ *   CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ *   EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ *   PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ *   PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ *   LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ *   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ *   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
+
 package io.tickerstorm.data.feed;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
-
-import java.io.File;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import org.apache.commons.io.FileUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.cassandra.core.CassandraOperations;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import com.google.common.io.Files;
-
 import io.tickerstorm.common.command.HistoricalFeedQuery;
 import io.tickerstorm.common.command.Markers;
 import io.tickerstorm.common.command.Notification;
@@ -29,9 +46,24 @@ import io.tickerstorm.common.data.Locations;
 import io.tickerstorm.common.entity.Bar;
 import io.tickerstorm.common.eventbus.Destinations;
 import io.tickerstorm.data.TestMarketDataServiceConfig;
+import java.io.File;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.apache.commons.io.FileUtils;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.cassandra.core.CassandraOperations;
+import org.springframework.test.context.junit4.SpringRunner;
 
-@ContextConfiguration(classes = {TestMarketDataServiceConfig.class})
-public class HistoricalDataFeedITCase extends AbstractTestNGSpringContextTests {
+@RunWith(SpringRunner.class)
+@SpringBootTest(classes = {TestMarketDataServiceConfig.class})
+public class HistoricalDataFeedITCase {
 
   @Qualifier(Destinations.REALTIME_MARKETDATA_BUS)
   @Autowired
@@ -54,7 +86,7 @@ public class HistoricalDataFeedITCase extends AbstractTestNGSpringContextTests {
   AtomicInteger count = new AtomicInteger(0);
   int expCount = 778;
 
-  @BeforeClass
+  @Before
   public void dataSetup() throws Exception {
     HistoricalDataFeedVerifier verifier = new HistoricalDataFeedVerifier();
     realtimeBus.register(verifier);
@@ -64,6 +96,11 @@ public class HistoricalDataFeedITCase extends AbstractTestNGSpringContextTests {
     FileUtils.forceMkdir(new File(Locations.FILE_DROP_LOCATION + "/Google"));
     Files.copy(new File("./src/test/resources/data/Google/TOL.csv"), new File(Locations.FILE_DROP_LOCATION + "/Google/TOL.csv"));
     Thread.sleep(10000);
+
+  }
+
+  @After
+  public void cleanup() {
     FileUtils.deleteQuietly(new File(Locations.FILE_DROP_LOCATION + "/Google/TOL.csv"));
   }
 
@@ -72,7 +109,7 @@ public class HistoricalDataFeedITCase extends AbstractTestNGSpringContextTests {
 
     assertEquals(count.get(), 0L);
 
-    HistoricalFeedQuery query = new HistoricalFeedQuery("google", "google", new String[] {"TOL"});
+    HistoricalFeedQuery query = new HistoricalFeedQuery("google", "google", "TOL");
     query.from = LocalDateTime.of(2015, 6, 10, 0, 0);
     query.until = LocalDateTime.of(2015, 6, 11, 0, 0);
     query.periods.add(Bar.MIN_1_INTERVAL);
@@ -87,8 +124,8 @@ public class HistoricalDataFeedITCase extends AbstractTestNGSpringContextTests {
     assertNotNull(end);
     assertEquals(start.id, query.id);
     assertEquals(end.id, query.id);
-    assertEquals(start.expect, Integer.valueOf(expCount));
-    assertEquals(end.expect, Integer.valueOf(0));
+    assertEquals(Integer.valueOf(expCount), start.expect);
+    assertEquals(Integer.valueOf(0), end.expect);
 
   }
 
@@ -99,11 +136,15 @@ public class HistoricalDataFeedITCase extends AbstractTestNGSpringContextTests {
     @Subscribe
     public void onNotification(Notification md) {
 
-      if (md.getMarkers().contains(Markers.QUERY.toString()) && md.getMarkers().contains(Markers.START.toString()))
-        start = (Notification) md;
+      if (md.getMarkers().contains(Markers.QUERY.toString()) && md.getMarkers()
+          .contains(Markers.START.toString())) {
+        start = md;
+      }
 
-      if (md.getMarkers().contains(Markers.QUERY.toString()) && md.getMarkers().contains(Markers.END.toString()))
-        end = (Notification) md;
+      if (md.getMarkers().contains(Markers.QUERY.toString()) && md.getMarkers()
+          .contains(Markers.END.toString())) {
+        end = md;
+      }
 
     }
 
