@@ -1,5 +1,6 @@
 package io.tickerstorm.common.collections;
 
+import com.google.common.collect.Lists;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -11,12 +12,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 
-import com.google.common.collect.Lists;
-
 /**
  * Ordered TimeSeries of elements in natural order with newest first (index 0) and oldest last
  * (index n).
- * 
+ * @Author Krzysztof Karski
  */
 @SuppressWarnings("serial")
 public class SynchronizedIndexedTreeMap<T> extends TreeMap<Instant, T> implements Iterable<T> {
@@ -102,16 +101,16 @@ public class SynchronizedIndexedTreeMap<T> extends TreeMap<Instant, T> implement
     return null;
   }
 
-  public synchronized T get(Instant until, Integer periods) {
+  public synchronized T get(Instant from, Integer periods) {
 
     T t = null;
 
     assert periods > 1 : "Number of periods should be more than 1";
 
-    int in = this.index.get().indexOf(until);
+    int in = this.index.get().indexOf(from);
 
     if (in > -1 && this.index.get().size() >= (in + periods)) {
-      Instant inst = this.index.get().get(in + periods - 1);
+      Instant inst = this.index.get().get(in + (periods - 1));
       t = this.get(inst);
     }
 
