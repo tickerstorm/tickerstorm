@@ -1,25 +1,39 @@
+/*
+ * Copyright (c) 2017, Tickerstorm and/or its affiliates. All rights reserved.
+ *
+ *   Redistribution and use in source and binary forms, with or without
+ *   modification, are permitted provided that the following conditions
+ *   are met:
+ *
+ *     - Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *     - Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in the
+ *       documentation and/or other materials provided with the distribution.
+ *
+ *     - Neither the name of Tickerstorm or the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ *   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+ *   IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+ *   THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ *   PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ *   CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ *   EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ *   PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ *   PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ *   LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ *   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ *   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
+
 package io.tickerstorm.strategy.processor;
 
-import java.math.BigDecimal;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
-import org.springframework.boot.actuate.metrics.GaugeService;
-import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
+import com.google.common.collect.Sets;
 import com.google.common.eventbus.EventBus;
-
 import io.tickerstorm.common.cache.CacheManager;
 import io.tickerstorm.common.config.SymbolConfig;
 import io.tickerstorm.common.config.TransformerConfig;
@@ -28,6 +42,22 @@ import io.tickerstorm.common.entity.BaseField;
 import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.test.TestDataFactory;
 import io.tickerstorm.strategy.processor.flow.NumericChangeProcessor;
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
+import org.springframework.boot.actuate.metrics.GaugeService;
 
 public class TestNumericChangeProcessor {
 
@@ -41,7 +71,7 @@ public class TestNumericChangeProcessor {
 
   private final String stream = "TestNumericChangeBolt".toLowerCase();
 
-  @BeforeMethod
+  @Before
   public void init() throws Exception {
     MockitoAnnotations.initMocks(this);
     bolt = new NumericChangeProcessor();
@@ -55,14 +85,14 @@ public class TestNumericChangeProcessor {
     config.periods.add("2");
 
     bolt.getConfig(stream).put(BaseProcessor.TRANSFORMER_CONFIG_KEY,
-        new TransformerConfig(com.google.common.collect.Sets.newHashSet(config)));
+        new TransformerConfig(Sets.newHashSet(config)));
 
     bolt.gauge = service;
     Mockito.doNothing().when(service).submit(Mockito.anyString(), Mockito.anyDouble());
     CacheManager.getInstance(stream);
   }
 
-  @AfterMethod
+  @After
   public void clean() {
     Mockito.reset(bolt);
     CacheManager.getInstance(stream).removeAll();
@@ -146,7 +176,7 @@ public class TestNumericChangeProcessor {
     config.periods.add("15");
 
     bolt.getConfig(stream).put(BaseProcessor.TRANSFORMER_CONFIG_KEY,
-        new TransformerConfig(com.google.common.collect.Sets.newHashSet(config)));
+        new TransformerConfig(Sets.newHashSet(config)));
 
     // Prime cache with prior tuple's fields
     List<Bar> cs = TestDataFactory.buildCandles(20, "GOOG", stream, new BigDecimal(10.19));
