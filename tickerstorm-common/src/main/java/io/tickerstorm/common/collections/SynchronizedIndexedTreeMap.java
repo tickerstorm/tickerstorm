@@ -39,68 +39,90 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 
 /**
  * Ordered TimeSeries of elements in natural order with newest first (index 0) and oldest last
- * (index n).
+ * (index n). As new elements are added and the map fills up, the oldest element is removed to make room for younger values.
+ * Values older than the oldest will be ignored when put.
+ *
  * @Author Krzysztof Karski
  */
 @SuppressWarnings("serial")
-public class SynchronizedIndexedTreeMap<T> extends TreeMap<Instant, T> implements Iterable<T> {
+public class SynchronizedIndexedTreeMap<T> extends ConcurrentSkipListMap<Instant, T> implements Iterable<T> {
 
   private final AtomicReference<List<Instant>> index = new AtomicReference<List<Instant>>();
   private final Integer maxSize;
-  private final AtomicBoolean full = new AtomicBoolean(false);
+  private final AtomicInteger full = new AtomicInteger(0);
 
   public SynchronizedIndexedTreeMap(Comparator<Instant> comp, Integer size) {
     super(comp);
-    this.maxSize = size + 1;
+    this.maxSize = size;
   }
 
   public SynchronizedIndexedTreeMap(Integer size) {
-    this.maxSize = size + 1;
+    this.maxSize = size;
   }
 
   @Override
-  public synchronized T put(Instant key, T value) {
+  public T put(Instant key, T value) {
 
-    if (full.get()) {
-      pollFirstEntry();
+    assert value != null;
+    assert key != null;
+
+    //ignore values older than the oldest when map is full
+    if (full.get() >= maxSize && lastEntry().getKey().isAfter(key)) {
+      return value;
     }
 
-    T t = super.put(key, value);
-    full.set(size() == (maxSize - 1));
-    this.index.set(new ArrayList<Instant>(this.keySet()));
-    return t;
+    synchronized (full) {
 
-  }
+      T t = super.put(key, value);
 
-  @Override
-  public synchronized void putAll(Map<? extends Instant, ? extends T> map) {
+      //If we get an old value, replacement happened and size doesn't change.
+      if (t == null) {
 
-    for (Map.Entry e : map.entrySet()) {
-      if (full.get()) {
-        pollFirstEntry();
+        if (full.get() < maxSize) {
+
+          full.incrementAndGet();
+
+        } else if (full.get() >= maxSize) {
+
+          super.pollLastEntry();//do not use public poll since it decrements
+
+        }
+
+        this.index.set(new ArrayList<Instant>(this.keySet()));
       }
-      super.put((Instant) e.getKey(), (T) e.getValue());
-      full.set(size() == (maxSize - 1));
-      this.index.set(new ArrayList<Instant>(this.keySet()));
-    }
 
+      return t;
+    }
 
   }
 
   @Override
-  public synchronized java.util.Map.Entry<Instant, T> pollLastEntry() {
+  public void putAll(Map<? extends Instant, ? extends T> map) {
+    for (Map.Entry e : map.entrySet()) {
+      this.put((Instant) e.getKey(), (T) e.getValue());
+    }
+  }
 
-    Map.Entry<Instant, T> p = super.pollFirstEntry();
-    full.set(size() == (maxSize - 1));
-    this.index.set(new ArrayList<Instant>(this.keySet()));
-    return p;
+  @Override
+  public java.util.Map.Entry<Instant, T> pollLastEntry() {
+
+    synchronized (full) {
+      //Remove from reverse end
+      Map.Entry<Instant, T> p = super.pollLastEntry();
+      if (p != null) {
+        full.decrementAndGet();
+        this.index.set(new ArrayList<Instant>(this.keySet()));
+      }
+
+      return p;
+    }
 
   }
 
@@ -114,48 +136,62 @@ public class SynchronizedIndexedTreeMap<T> extends TreeMap<Instant, T> implement
     throw new UnsupportedOperationException();
   }
 
-  public synchronized T get(Integer i) {
+  public T get(Integer i) {
 
-    Instant key = this.index.get().get(i);
-    return get(key);
+    synchronized (full) {
+      Instant key = this.index.get().get(i);
+      return super.get(key);
+    }
 
   }
 
-  public synchronized List<T> subList(Instant until, Integer periods) {
+  public List<T> subList(Instant until, Integer periods) {
 
-    int in = this.index.get().indexOf(until);
+    ConcurrentSkipListMap<Instant, T> tm = new ConcurrentSkipListMap<Instant, T>(this);
+    List<Instant> copy = new ArrayList<Instant>(tm.keySet());
 
-    if (in > -1 && this.index.get().size() >= (in + periods)) {
-      Instant inst = this.index.get().get(in + periods - 1);
-      return Lists.newArrayList(this.subMap(until, true, inst, true).values());
+    int in = copy.indexOf(until);
+
+    if (in > -1 && copy.size() >= (in + periods)) {
+      Instant inst = copy.get(in + (periods - 1));
+      return Lists.newArrayList(tm.subMap(until, true, inst, true).values());
     }
 
     return null;
+
   }
 
-  public synchronized T get(Instant from, Integer periods) {
+  public T get(Instant from, Integer periods) {
 
     T t = null;
 
     assert periods > 1 : "Number of periods should be more than 1";
 
-    int in = this.index.get().indexOf(from);
+    ConcurrentSkipListMap<Instant, T> tm = new ConcurrentSkipListMap<Instant, T>(this);
+    List<Instant> copy = new ArrayList<Instant>(tm.keySet());
 
-    if (in > -1 && this.index.get().size() >= (in + periods)) {
-      Instant inst = this.index.get().get(in + (periods - 1));
-      t = this.get(inst);
+    int in = copy.indexOf(from);
+
+    if (in > -1 && copy.size() >= (in + periods)) {
+      Instant inst = copy.get(in + (periods - 1));
+      t = tm.get(inst);
     }
 
     return t;
+
   }
 
   @Override
-  public synchronized java.util.Map.Entry<Instant, T> pollFirstEntry() {
+  public java.util.Map.Entry<Instant, T> pollFirstEntry() {
 
-    Map.Entry<Instant, T> m = super.pollLastEntry();
-    full.set(size() == (maxSize - 1));
-    this.index.set(new ArrayList<Instant>(this.keySet()));
-    return m;
+    synchronized (full) {
+      Map.Entry<Instant, T> m = super.pollFirstEntry();
+      if (m != null) {
+        full.decrementAndGet();
+        this.index.set(new ArrayList<Instant>(this.keySet()));
+      }
+      return m;
+    }
 
   }
 
@@ -164,4 +200,17 @@ public class SynchronizedIndexedTreeMap<T> extends TreeMap<Instant, T> implement
     return this.values().iterator();
   }
 
+  @Override
+  public synchronized void clear() {
+    synchronized (full) {
+      full.set(0);
+      this.index.get().clear();
+      super.clear();
+    }
+  }
+
+  @Override
+  public int size() {
+    return full.get();
+  }
 }
