@@ -34,6 +34,7 @@ package io.tickerstorm.strategy.processor;
 
 import com.google.common.collect.Sets;
 import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
 import io.tickerstorm.common.cache.CacheManager;
 import io.tickerstorm.common.config.SymbolConfig;
 import io.tickerstorm.common.config.TransformerConfig;
@@ -49,6 +50,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -61,15 +63,12 @@ import org.springframework.boot.actuate.metrics.GaugeService;
 
 public class TestNumericChangeProcessor {
 
+  private final String stream = "TestNumericChangeBolt".toLowerCase();
   private NumericChangeProcessor bolt;
-
   @Mock
   private EventBus eventBus;
-
   @Mock
   private GaugeService service;
-
-  private final String stream = "TestNumericChangeBolt".toLowerCase();
 
   @Before
   public void init() throws Exception {
@@ -114,24 +113,18 @@ public class TestNumericChangeProcessor {
   @Test
   public void testComputeSecondDiscreteChange() throws Exception {
 
-
     Bar md = new Bar("TOL", stream, Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.TEN, Bar.MIN_1_INTERVAL,
         Integer.MAX_VALUE);
 
-
     bolt.handle(md.getFields());
-
 
     md = new Bar("TOL", stream, Instant.now().plus(5, ChronoUnit.MILLIS), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.TEN,
         Bar.MIN_1_INTERVAL, 12335253);
 
-
     bolt.handle(md.getFields());
-
 
     md = new Bar("TOL", stream, Instant.now().plus(5, ChronoUnit.MILLIS), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.TEN,
         Bar.MIN_1_INTERVAL, 11145345);
-
 
     bolt.handle(md.getFields());
 
@@ -187,11 +180,35 @@ public class TestNumericChangeProcessor {
 
     // Validate results
     ArgumentCaptor<Collection> emit = ArgumentCaptor.forClass(Collection.class);
-    Mockito.verify(bolt, Mockito.atLeast(11 * 5 + 6 * 5)).publish(emit.capture());
-    Mockito.verify(bolt, Mockito.atMost(11 * 5 + 6 * 5)).publish(emit.capture());
+    Mockito.verify(bolt, Mockito.atLeast(11 * 5)).publish(emit.capture());
+    Mockito.verify(bolt, Mockito.atMost(11 * 5)).publish(emit.capture());
 
   }
 
+//  @Test
+//  public void testNumericProcessorConcurrently() {
+//
+//    bolt.eventBus = new EventBus();
+//    final AtomicInteger counter = new AtomicInteger(0);
+//
+//    bolt.eventBus.register(new Object() {
+//      @Subscribe
+//      public void onMessage(Set<Field<?>> fs) {
+//
+//        for(Field<?> f : fs){
+//          System.out.println(f);
+//        }
+//        counter.incrementAndGet();
+//      }
+//    });
+//
+//    TestDataFactory.buildCandles(2, "goog", stream, new BigDecimal("34.53")).stream().parallel().forEach(b -> {
+//      bolt.handle(b.getFields());
+//    });
+//
+//    Assert.assertEquals(5, counter.get());
+//
+//  }
 
 
 }

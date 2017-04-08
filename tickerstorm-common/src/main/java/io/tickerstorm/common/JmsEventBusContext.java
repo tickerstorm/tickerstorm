@@ -33,26 +33,17 @@
 package io.tickerstorm.common;
 
 import com.google.common.base.Throwables;
-import io.tickerstorm.common.eventbus.ByDestinationNameJmsResolver;
+import javax.jms.ConnectionFactory;
 import javax.jms.ExceptionListener;
 import javax.jms.JMSException;
 import org.apache.activemq.ActiveMQConnectionFactory;
-import org.apache.activemq.jms.pool.PooledConnectionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.jms.DefaultJmsListenerContainerFactoryConfigurer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.PropertySource;
-import org.springframework.jms.annotation.EnableJms;
-import org.springframework.jms.config.DefaultJmsListenerContainerFactory;
-import org.springframework.jms.connection.CachingConnectionFactory;
-import org.springframework.jms.core.JmsTemplate;
-import org.springframework.jms.support.destination.DynamicDestinationResolver;
 
-@EnableJms
 @Configuration
 @PropertySource({"classpath:/default.properties", "classpath:/application.properties"})
 public class JmsEventBusContext {
@@ -62,47 +53,20 @@ public class JmsEventBusContext {
   @Value("${spring.activemq.broker-url}")
   protected String transport;
 
-  @Value("${spring.jms.listener.acknowledge-mode}")
-  protected String acknoledgeMode;
-
   @Value("${service.name}")
   protected String serviceName;
 
-  @Primary
   @Bean
-  public CachingConnectionFactory buildSenderConnectionFactory() {
-
-    ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(transport);
-    connectionFactory.setTrustAllPackages(true);
-    connectionFactory.setClientIDPrefix(serviceName);
-    connectionFactory.setUseAsyncSend(true);
-    connectionFactory.setSendAcksAsync(true);
-    connectionFactory.setAlwaysSessionAsync(true);
-    connectionFactory.setDispatchAsync(true);
-    connectionFactory.setAlwaysSyncSend(false);
-
-    // Not recommended with listener container
-    CachingConnectionFactory caching = new CachingConnectionFactory(connectionFactory);
-    caching.setSessionCacheSize(10);
-    caching.setReconnectOnException(true);
-    caching.setExceptionListener(new ExceptionListener() {
-
-      @Override
-      public void onException(JMSException exception) {
-        logger.error(Throwables.getRootCause(exception).getMessage(), Throwables.getRootCause(exception));
-
-      }
-    });
-    return caching;
-  }
-
-  @Bean
-  public PooledConnectionFactory buildReceiverConnectionFactory() {
+  public ConnectionFactory buildConnectionFactory() {
 
     ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(transport);
     connectionFactory.setTrustAllPackages(true);
     connectionFactory.setClientIDPrefix(serviceName);
     connectionFactory.setSendAcksAsync(true);
+    connectionFactory.setOptimizeAcknowledge(true);
+    connectionFactory.setAlwaysSyncSend(true);
+    connectionFactory.setConnectionIDPrefix(serviceName);
+
     connectionFactory.setExceptionListener(new ExceptionListener() {
 
       @Override
@@ -113,44 +77,7 @@ public class JmsEventBusContext {
       }
     });
 
-    // Not recommended with listener container
-    PooledConnectionFactory caching = new PooledConnectionFactory();
-    caching.setConnectionFactory(connectionFactory);
-    caching.setMaxConnections(10);
-    caching.setReconnectOnException(true);
-
-    return caching;
+    return connectionFactory;
   }
 
-  @Bean("jmsListenerContainerFactory")
-  public DefaultJmsListenerContainerFactory jmsListenerContainerFactory(
-      DefaultJmsListenerContainerFactoryConfigurer configurer,
-      PooledConnectionFactory connectionFactory) {
-
-    DefaultJmsListenerContainerFactory factory = new DefaultJmsListenerContainerFactory();
-    configurer.configure(factory, connectionFactory);
-    factory.setMaxMessagesPerTask(-1);
-    factory.setSubscriptionDurable(false);
-    return factory;
-  }
-
-  @Bean
-  public DynamicDestinationResolver buildDestinationResolver() {
-    return new ByDestinationNameJmsResolver();
-  }
-
-  @Bean
-  public JmsTemplate buildJmsTemplate(CachingConnectionFactory factory) {
-
-    JmsTemplate template = new JmsTemplate(factory);
-    template.setDestinationResolver(buildDestinationResolver());
-    template.setSessionAcknowledgeModeName(acknoledgeMode + "_ACKNOWLEDGE");
-    template.setTimeToLive(2000);
-    template.setPubSubNoLocal(true);
-    template.setDeliveryPersistent(false);
-    template.setMessageIdEnabled(false);
-    template.setMessageTimestampEnabled(false);
-
-    return template;
-  }
 }

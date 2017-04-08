@@ -30,53 +30,74 @@
  *
  */
 
-package io.tickerstorm.data;
+package io.tickerstorm.common.reactive;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
-import io.tickerstorm.common.Session;
-import io.tickerstorm.common.SessionFactory;
-import io.tickerstorm.common.eventbus.Destinations;
-import io.tickerstorm.service.HeartBeat;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Predicate;
 
-public abstract class BaseIntegrationTest {
+/**
+ * Created by kkarski on 4/7/17.
+ */
+public class ReactiveBoolean {
 
-  @Autowired
-  protected SessionFactory factory;
+  private final AtomicBoolean value = new AtomicBoolean(false);
+  private final EventBus bus;
+  private Predicate<Notification> falseCondition;
+  private Predicate<Notification> trueCondition;
 
-  @Qualifier(Destinations.NOTIFICATIONS_BUS)
-  @Autowired
-  protected EventBus notificationBus;
-  protected Session session;
-  private boolean data_service_up = false;
-
-  @org.junit.Before
-  public void init() throws Exception {
-    notificationBus.register(this);
-
-    while (!data_service_up) {
-      Thread.sleep(1000);
-    }
+  ReactiveBoolean(EventBus bus) {
+    this.bus = bus;
   }
 
-  @org.junit.After
-  public void cleanup() {
-    session.end();
-    notificationBus.unregister(this);
+  public ReactiveBoolean init(boolean val) {
+    value.set(val);
+    return this;
+  }
+
+  public ReactiveBoolean falseOn(Predicate<Notification> falseCondition) {
+    this.falseCondition = falseCondition;
+    return this;
+  }
+
+  public ReactiveBoolean trueOn(Predicate<Notification> trueCondition) {
+    this.trueCondition = trueCondition;
+    return this;
   }
 
   @Subscribe
-  public final void onHeartBeat(HeartBeat beat) throws Exception {
-    // logger.info(beat);
+  void onEvent(Notification event) {
 
-    if (beat.service.equals("data-service") && !data_service_up) {
-      data_service_up = true;
-      onMarketDataServiceInitialized();
+    if (falseCondition != null && falseCondition.test(event)) {
+      this.value.set(false);
+    } else if (falseCondition != null && !falseCondition.test(event) && trueCondition == null) {
+      this.value.set(true);
+    }
+
+    if (trueCondition != null && trueCondition.test(event)) {
+      this.value.set(true);
+    } else if (trueCondition != null && !trueCondition.test(event) && falseCondition == null) {
+      this.value.set(false);
     }
   }
 
-  public abstract void onMarketDataServiceInitialized() throws Exception;
+  public ReactiveBoolean start() {
+    this.bus.register(this);
+    return this;
+  }
 
+  public ReactiveBoolean pause() {
+    this.bus.unregister(this);
+    return this;
+  }
+
+  public boolean value() {
+    return this.value.get();
+  }
+
+  @Override
+  public String toString() {
+    return String.valueOf(value());
+  }
 }

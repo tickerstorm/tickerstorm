@@ -38,7 +38,7 @@ import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import io.tickerstorm.common.cache.CacheManager;
 import io.tickerstorm.common.command.Markers;
-import io.tickerstorm.common.command.Notification;
+import io.tickerstorm.common.reactive.Notification;
 import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.entity.MarketData;
 import io.tickerstorm.common.eventbus.Destinations;

@@ -41,7 +41,7 @@ import com.google.common.eventbus.Subscribe;
 import com.google.common.io.Files;
 import io.tickerstorm.common.command.HistoricalFeedQuery;
 import io.tickerstorm.common.command.Markers;
-import io.tickerstorm.common.command.Notification;
+import io.tickerstorm.common.reactive.Notification;
 import io.tickerstorm.common.data.Locations;
 import io.tickerstorm.common.entity.Bar;
 import io.tickerstorm.common.eventbus.Destinations;

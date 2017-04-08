@@ -49,11 +49,14 @@ import java.io.File;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageListener;
 import javax.jms.ObjectMessage;
-import javax.jms.Session;
+import org.apache.activemq.ActiveMQConnection;
+import org.apache.activemq.ActiveMQConnectionFactory;
+import org.apache.activemq.ActiveMQMessageConsumer;
+import org.apache.activemq.ActiveMQMessageProducer;
+import org.apache.activemq.ActiveMQSession;
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Before;
@@ -64,9 +67,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.cassandra.core.CassandraOperations;
-import org.springframework.jms.core.JmsTemplate;
-import org.springframework.jms.core.MessageCreator;
-import org.springframework.jms.listener.DefaultMessageListenerContainer;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
@@ -77,17 +77,18 @@ public class HistoricalJmsDataFeedITCase implements MessageListener {
   @Autowired
   private EventBus notificationBus;
 
-  @Autowired
-  private JmsTemplate jmsTemplate;
-
   private final String stream = "HistoricalJmsDataFeedITCase".toLowerCase();
 
   @Value("${service.name:data-service}")
   private String SERVICE;
 
-  @Qualifier("realtime")
   @Autowired
-  private DefaultMessageListenerContainer container;
+  private ActiveMQConnectionFactory factory;
+
+  private ActiveMQConnection connection;
+  private ActiveMQMessageProducer producer;
+  private ActiveMQMessageConsumer consumer;
+  private ActiveMQSession session2;
 
   @Autowired
   private CassandraOperations session;
@@ -104,19 +105,24 @@ public class HistoricalJmsDataFeedITCase implements MessageListener {
     Thread.sleep(3000);
     verified = false;
 
-    if (!container.isRunning()) {
-      container.setMessageListener(this);
-      container.start();
-    }
+    connection = (ActiveMQConnection) factory.createConnection();
+    ActiveMQSession session = (ActiveMQSession) connection.createSession(false, ActiveMQSession.AUTO_ACKNOWLEDGE);
+    session2 = (ActiveMQSession) connection.createSession(false, ActiveMQSession.AUTO_ACKNOWLEDGE);
+    consumer = (ActiveMQMessageConsumer) session.createConsumer(session.createTopic(Destinations.TOPIC_REALTIME_MARKETDATA), this);
+    producer = (ActiveMQMessageProducer) session2.createProducer(session2.createTopic(Destinations.TOPIC_COMMANDS));
+    consumer.setMessageListener(this);
+    connection.start();
   }
 
   @After
-  public void cleanup() {
+  public void cleanup() throws Exception {
     FileUtils.deleteQuietly(new File(Locations.FILE_DROP_LOCATION + "/Google/TOL.csv"));
 
-    if (container.isRunning()) {
-      container.shutdown();
-    }
+    consumer.close();
+    producer.close();
+    session2.close();
+    connection.close();
+
   }
 
   @Test
@@ -130,15 +136,7 @@ public class HistoricalJmsDataFeedITCase implements MessageListener {
     query.periods.add(Bar.MIN_1_INTERVAL);
     query.zone = ZoneOffset.ofHours(-7);
 
-    jmsTemplate.send(Destinations.TOPIC_COMMANDS, new MessageCreator() {
-
-      @Override
-      public Message createMessage(Session session) throws JMSException {
-
-        Message m = session.createObjectMessage(query);
-        return m;
-      }
-    });
+    producer.send(session2.createObjectMessage(query));
 
     Thread.sleep(3000);
     assertEquals(count.get(), expCount);

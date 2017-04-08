@@ -35,76 +35,69 @@ package io.tickerstorm.common.eventbus;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import java.io.Serializable;
-import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import javax.jms.Connection;
+import javax.jms.ConnectionFactory;
 import javax.jms.DeliveryMode;
+import javax.jms.Destination;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageProducer;
+import javax.jms.ObjectMessage;
 import javax.jms.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.jms.connection.CachingConnectionFactory;
-import org.springframework.jms.core.JmsTemplate;
-import org.springframework.jms.support.destination.DestinationResolver;
 
 public class EventBusToJMSBridge {
 
   private static final Logger logger = LoggerFactory.getLogger(EventBusToJMSBridge.class);
-
-  public EventBusToJMSBridge(EventBus eventBus, String destination, JmsTemplate template, String source) {
-    this.bus = eventBus;
-    this.destination = destination;
-    this.template = template;
-    this.source = source;
-    this.expiration = 0;
-
-    if (destination.contains("topic"))
-      template.setPubSubDomain(true);
-  }
-
-  public EventBusToJMSBridge(EventBus eventBus, String destination, JmsTemplate template, String source, long expiration) {
-    this.bus = eventBus;
-    this.destination = destination;
-    this.template = template;
-    this.source = source;
-    this.expiration = expiration;
-
-    if (destination.contains("topic"))
-      template.setPubSubDomain(true);
-  }
-
   private final EventBus bus;
-  private final JmsTemplate template;
+  private final ConnectionFactory factory;
+  private final Session session;
+  private final Connection connection;
+  private final MessageProducer producer;
   private final String destination;
   private final String source;
-  private final long expiration;
+  private long expiration = 0;
 
-  @PostConstruct
-  public void init() {
-    if (bus != null)
-      bus.register(this);
+  public EventBusToJMSBridge(EventBus eventBus, String destination, ConnectionFactory factory, String source) throws Exception {
+
+    this.bus = eventBus;
+    this.destination = destination;
+    this.factory = factory;
+    this.source = source;
+
+    this.bus.register(this);
+
+    connection = factory.createConnection();
+    session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+    Destination dest = ByDestinationNameJmsResolver.resolveDestinationName(session, destination);
+    producer = session.createProducer(dest);
+    producer.setDeliveryMode(DeliveryMode.NON_PERSISTENT);
+    connection.start();
+
+  }
+
+  public EventBusToJMSBridge(EventBus eventBus, String destination, ConnectionFactory factory, String source, long expiration) throws Exception {
+    this(eventBus, destination, factory, source);
+    this.expiration = expiration;
   }
 
   @PreDestroy
-  public void destroy() {
-    if (bus != null)
+  public void destroy() throws Exception {
+    if (bus != null) {
       bus.unregister(this);
+    }
+
+    producer.close();
+    session.close();
+    connection.close();
   }
 
   @Subscribe
   public void onEvent(Serializable data) {
 
     try {
-
-      CachingConnectionFactory factory = (CachingConnectionFactory) template.getConnectionFactory();
-      Session session = factory.createConnection()
-          .createSession(false, template.getSessionAcknowledgeMode());
-      DestinationResolver resolver = template.getDestinationResolver();
-
-      MessageProducer producer = session
-          .createProducer(resolver.resolveDestinationName(session, destination, true));
-      producer.setDeliveryMode(DeliveryMode.NON_PERSISTENT);
 
       Message m = session.createObjectMessage(data);
       m.setStringProperty("source", source);
@@ -115,27 +108,12 @@ public class EventBusToJMSBridge {
 
       producer.send(m);
 
+      logger.trace(source + " sent " + ((ObjectMessage) m).getObject().toString() + " to destination " + destination);
+
     } catch (JMSException e) {
       Throwable ex = com.google.common.base.Throwables.getRootCause(e);
       logger.error(ex.getMessage(), ex);
     }
-
-    // template.send(destination, new MessageCreator() {
-    //
-    // @Override
-    // public Message createMessage(Session session) throws JMSException {
-    // logger.trace(
-    // "Dispatching " + data.toString() + " to destination " + destination + " from service " +
-    // source + ", " + bus.identifier());
-    // Message m = session.createObjectMessage(data);
-    // m.setStringProperty("source", source);
-    //
-    // if (expiration > 0)
-    // m.setJMSExpiration(expiration);
-    //
-    // return m;
-    // }
-    // });
   }
 
 }

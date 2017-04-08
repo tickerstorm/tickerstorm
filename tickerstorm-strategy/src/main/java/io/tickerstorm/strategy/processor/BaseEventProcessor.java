@@ -24,7 +24,7 @@ public abstract class BaseEventProcessor extends BaseProcessor {
 
   @Autowired
   @Qualifier(Destinations.REALTIME_MARKETDATA_BUS)
-  private EventBus realtimeBus;
+  protected EventBus realtimeBus;
 
   @PreDestroy
   @Override

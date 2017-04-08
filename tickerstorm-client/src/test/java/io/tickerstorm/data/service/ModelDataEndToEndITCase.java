@@ -33,10 +33,10 @@
 package io.tickerstorm.data.service;
 
 import com.google.common.eventbus.EventBus;
-import io.tickerstorm.common.command.CompletionTracker;
+import io.tickerstorm.common.reactive.CompletionTracker;
 import io.tickerstorm.common.command.Markers;
 import io.tickerstorm.common.command.ModelDataQuery;
-import io.tickerstorm.common.command.OnEventHandler;
+import io.tickerstorm.common.reactive.Observer;
 import io.tickerstorm.common.command.Trigger;
 import io.tickerstorm.common.eventbus.Destinations;
 import io.tickerstorm.common.test.TestDataFactory;
@@ -97,25 +97,27 @@ public class ModelDataEndToEndITCase extends BaseIntegrationTest {
     q.from = Instant.now().minus(1, ChronoUnit.DAYS);
     q.until = Instant.now().plus(5, ChronoUnit.SECONDS);
 
-    OnEventHandler.newHandler(session.getNotificationsBus(), "marketdata")
+    Observer.observe(session.getNotificationsBus(), "marketdata")
         .startCountDownOn(CompletionTracker.MarketData.isSaved(session.stream()))
-        .extendTimeoutOn(CompletionTracker.MarketData.isSaved(session.stream()), 4000).whenTimedOut(() -> {
+        .extendTimeoutOn(CompletionTracker.MarketData.isSaved(session.stream()), 1000).whenTimedOut(() -> {
 
-          triggeredMarket.set(true);
+      triggeredMarket.set(true);
 
-        }).start();
+    }).start();
 
-    OnEventHandler.newHandler(session.getNotificationsBus(), "modeldata")
+    Observer.observe(session.getNotificationsBus(), "modeldata")
         .startCountDownOn(CompletionTracker.ModelData.isSaved(session.stream()))
-        .extendTimeoutOn(CompletionTracker.ModelData.isSaved(session.stream()), 4000).whenTimedOut(() -> {
+        .extendTimeoutOn(CompletionTracker.ModelData.isSaved(session.stream()), 1000).whenTimedOut(() -> {
 
-          triggeredModel.set(true);
-          session.execute(q);
+      triggeredModel.set(true);
+      session.execute(q);
 
-        }).start();
+    }).start();
 
-    OnEventHandler.newHandler(session.getNotificationsBus(), "query").completeWhen(q.isDone())
-        .mustCompleteWithin(15000)
+    Observer.observe(session.getNotificationsBus(), "query")
+        .startCountDownOn(q.started())
+        .completeWhen(q.isDone())
+        .mustCompleteWithin(5000)
         .whenComplete((n) -> {
           triggeredRetro.set(true);
         }).whenTimedOut(() -> {

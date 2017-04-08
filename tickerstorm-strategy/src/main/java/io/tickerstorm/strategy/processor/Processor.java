@@ -1,7 +1,7 @@
 package io.tickerstorm.strategy.processor;
 
 import io.tickerstorm.common.command.Command;
-import io.tickerstorm.common.command.Notification;
+import io.tickerstorm.common.reactive.Notification;
 
 public interface Processor {
 

@@ -32,7 +32,7 @@ import com.google.common.io.Files;
 import io.tickerstorm.common.cache.CacheManager;
 import io.tickerstorm.common.command.ExportModelDataToCSV;
 import io.tickerstorm.common.command.Markers;
-import io.tickerstorm.common.command.Notification;
+import io.tickerstorm.common.reactive.Notification;
 import io.tickerstorm.common.eventbus.Destinations;
 import io.tickerstorm.data.dao.ModelDataDao;
 import io.tickerstorm.data.dao.ModelDataDto;

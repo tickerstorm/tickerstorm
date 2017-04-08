@@ -37,7 +37,7 @@ import static org.junit.Assert.assertEquals;
 import com.google.common.collect.Sets;
 import com.google.common.eventbus.EventBus;
 import io.tickerstorm.common.command.Markers;
-import io.tickerstorm.common.command.Notification;
+import io.tickerstorm.common.reactive.Notification;
 import io.tickerstorm.common.entity.Bar;
 import io.tickerstorm.common.entity.BaseField;
 import io.tickerstorm.common.entity.Field;

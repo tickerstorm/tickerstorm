@@ -39,7 +39,7 @@ import com.google.common.eventbus.Subscribe;
 import io.tickerstorm.common.command.Command;
 import io.tickerstorm.common.command.HistoricalFeedQuery;
 import io.tickerstorm.common.command.Markers;
-import io.tickerstorm.common.command.Notification;
+import io.tickerstorm.common.reactive.Notification;
 import io.tickerstorm.common.entity.Bar;
 import io.tickerstorm.common.eventbus.Destinations;
 import io.tickerstorm.data.dao.MarketDataDao;

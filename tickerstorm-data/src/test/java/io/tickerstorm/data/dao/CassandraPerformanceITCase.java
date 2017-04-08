@@ -35,7 +35,7 @@ package io.tickerstorm.data.dao;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import io.tickerstorm.common.command.Markers;
-import io.tickerstorm.common.command.Notification;
+import io.tickerstorm.common.reactive.Notification;
 import io.tickerstorm.common.entity.Bar;
 import io.tickerstorm.common.entity.BaseField;
 import io.tickerstorm.common.entity.Field;

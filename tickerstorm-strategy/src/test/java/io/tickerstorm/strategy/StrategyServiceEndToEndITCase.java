@@ -114,11 +114,12 @@ public class StrategyServiceEndToEndITCase {
   @Test
   public void testStrategyServiceEndToEnd() throws Exception {
 
-    start = System.currentTimeMillis();
+
     TestDataFactory.buildCandles(100, "goog", session.stream(), BigDecimal.ONE).stream().forEach(c -> {
       realtimeBus.post(c);
     });
 
+    start = System.currentTimeMillis();
     while (counter.get() < 11950) {
       Thread.sleep(500);
       time = System.currentTimeMillis() - start;
@@ -126,8 +127,8 @@ public class StrategyServiceEndToEndITCase {
 
     Assert.assertEquals(11950, counter.get());
 
-    if ((time / 1000) > 5) {
-      Assert.fail("Test slowed down below 31s. Took " + time);
+    if ((time / 1000) > 3) {
+      Assert.fail("Test slowed down below 3s. Took " + time);
     }
 
   }
@@ -141,19 +142,18 @@ public class StrategyServiceEndToEndITCase {
   private class ModelDataListener {
 
     @Subscribe
-    public synchronized void onMessage(Field<?> f) {
-      int last = counter.getAndIncrement();
-      if ((last % 1000) == 0) {
-        logger.info("Model data count: " + last);
+    public void onMessage(Field<?> f) {
+      if ((counter.incrementAndGet() % 1000) == 0) {
+        logger.info("Model data count: " + counter.get());
         logger.info("Strategy took " + ((System.currentTimeMillis() - start) / 1000) + "s");
       }
     }
 
     @Subscribe
-    public synchronized void onMessage(Collection<Field<?>> f) {
-      int last = counter.getAndAdd(f.size());
-      if ((last % 10) == 0) {
-        logger.info("Model data count: " + last);
+    public void onMessage(Collection<Field<?>> f) {
+
+      if ((counter.addAndGet(f.size()) % 10) == 0) {
+        logger.info("Model data count: " + counter.get());
         logger.info("Strategy took " + ((System.currentTimeMillis() - start) / 1000) + "s");
       }
     }

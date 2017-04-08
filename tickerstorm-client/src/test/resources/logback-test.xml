@@ -17,7 +17,7 @@
 	<logger name="org.apache.http" level="ERROR" additivity="false">
 		<appender-ref ref="consoleAppender" />
 	</logger>
-	<logger name="io.tickerstorm" level="DEBUG" additivity="false">
+	<logger name="io.tickerstorm" level="INFO" additivity="false">
 		<appender-ref ref="consoleAppender" />
 	</logger>
 </configuration>

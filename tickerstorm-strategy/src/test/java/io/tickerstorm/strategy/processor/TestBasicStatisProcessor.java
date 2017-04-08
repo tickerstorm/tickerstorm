@@ -33,12 +33,14 @@
 package io.tickerstorm.strategy.processor;
 
 import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
 import io.tickerstorm.common.cache.CacheManager;
 import io.tickerstorm.common.config.SymbolConfig;
 import io.tickerstorm.common.config.TransformerConfig;
 import io.tickerstorm.common.entity.Bar;
 import io.tickerstorm.common.entity.BaseField;
 import io.tickerstorm.common.entity.Field;
+import io.tickerstorm.common.test.TestDataFactory;
 import io.tickerstorm.strategy.processor.flow.BasicStatsProcessor;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -46,6 +48,9 @@ import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.apache.commons.math3.stat.descriptive.ComparableDescriptiveStatistics;
+import org.apache.commons.math3.stat.descriptive.SynchronizedDescriptiveStatistics;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -58,6 +63,8 @@ import org.springframework.boot.actuate.metrics.GaugeService;
 
 public class TestBasicStatisProcessor {
 
+  private final String stream = "TestBasicStatisProcessor".toLowerCase();
+
   private BasicStatsProcessor bolt;
 
   @Mock
@@ -65,8 +72,6 @@ public class TestBasicStatisProcessor {
 
   @Mock
   private GaugeService service;
-
-  private final String stream = "TestBasicStatisProcessor".toLowerCase();
 
   @Before
   public void init() throws Exception {
@@ -111,24 +116,18 @@ public class TestBasicStatisProcessor {
   @Test
   public void testComputeSecondDiscreteChange() throws Exception {
 
-
     Bar md1 = new Bar("TOL", stream, Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.TEN, Bar.MIN_1_INTERVAL,
         Integer.MAX_VALUE);
 
-
     bolt.handle(md1.getFields());
-
 
     Bar md2 = new Bar("TOL", stream, Instant.now().plus(5, ChronoUnit.MILLIS), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.TEN,
         Bar.MIN_1_INTERVAL, 12335253);
 
-
     bolt.handle(md2.getFields());
-
 
     Bar md3 = new Bar("TOL", stream, Instant.now().plus(5, ChronoUnit.MILLIS), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.TEN,
         Bar.MIN_1_INTERVAL, 11145345);
-
 
     bolt.handle(md3.getFields());
 
@@ -154,11 +153,89 @@ public class TestBasicStatisProcessor {
     System.out.println(f2);
     System.out.println(f3);
     System.out.println(f4);
-    
+
     Assert.assertTrue(args.contains(f1));
     Assert.assertTrue(args.contains(f2));
     Assert.assertTrue(args.contains(f3));
     Assert.assertTrue(args.contains(f4));
 
   }
+
+  @Test
+  public void testBasicStatsProcessorConcurrently() {
+
+    bolt.eventBus = new EventBus();
+    final AtomicInteger counter = new AtomicInteger(0);
+
+    bolt.eventBus.register(new Object() {
+      @Subscribe
+      public void onMessage(Set<Field<?>> fs) {
+
+        counter.incrementAndGet();
+      }
+    });
+
+    TestDataFactory.buildCandles(2, "goog", stream, new BigDecimal("34.53")).stream().parallel().forEach(b -> {
+      bolt.handle(b.getFields());
+    });
+
+    Assert.assertEquals(5, counter.get());
+
+  }
+
+  @Test
+  public void compareDescriptiveStatistics() {
+
+    SynchronizedDescriptiveStatistics d = new SynchronizedDescriptiveStatistics(2);
+    SynchronizedDescriptiveStatistics d2 = new SynchronizedDescriptiveStatistics(2);
+    SynchronizedDescriptiveStatistics d3 = new SynchronizedDescriptiveStatistics(3);
+    SynchronizedDescriptiveStatistics d4 = new SynchronizedDescriptiveStatistics(2);
+    ComparableDescriptiveStatistics d5 = new ComparableDescriptiveStatistics(2);
+    ComparableDescriptiveStatistics d6 = new ComparableDescriptiveStatistics(3);
+    ComparableDescriptiveStatistics d7 = new ComparableDescriptiveStatistics(3);
+
+    d.addValue(3d);
+    d2.addValue(2d);
+    d3.addValue(2d);
+    d4.addValue(3d);
+    d5.addValue(3d);
+    d6.addValue(3d);
+    d7.addValue(3d);
+
+    Assert.assertEquals(d, d);
+    Assert.assertEquals(d5, d);
+    Assert.assertNotEquals(d5, d6);
+    Assert.assertEquals(d7, d6);
+
+    Assert.assertNotEquals(d, d2);
+    Assert.assertNotEquals(d2, d3);
+
+  }
+
+//  @Test
+//  public void testCacheReplaceCompare() {
+//
+//    CacheManager.getInstance("test1").putIfAbsent(new Element("p1", new ComparableDescriptiveStatistics(2)));
+//    final Element e1 = CacheManager.getInstance("test1").get("p1");
+//    Element e2 = CacheManager.getInstance("test1").get("p1");
+//
+//    ComparableDescriptiveStatistics q1 = (ComparableDescriptiveStatistics) e1.getObjectValue();
+//    ComparableDescriptiveStatistics q2 = (ComparableDescriptiveStatistics) e2.getObjectValue();
+//
+//    q1.addValue(2d);
+//    q2.addValue(2d);
+//
+//    Assert.assertTrue(CacheManager.getInstance("test1").replace(e1, new Element("p1", q1)));
+//    Assert.assertFalse(CacheManager.getInstance("test1").replace(e2, new Element("p1", q2)));
+//
+//    e2 = CacheManager.getInstance("test1").get("p1");
+//    q2 = (ComparableDescriptiveStatistics) e2.getObjectValue();
+//    q2.addValue(2d);
+//
+//    Assert.assertTrue(CacheManager.getInstance("test1").replace(e2, new Element("p1", q2)));
+//
+//  }
 }
+
+
+

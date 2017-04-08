@@ -1,26 +1,19 @@
 package io.tickerstorm.common.eventbus;
 
 import java.util.HashMap;
-
 import javax.jms.Destination;
 import javax.jms.JMSException;
 import javax.jms.Session;
-
-import org.springframework.jms.support.destination.DynamicDestinationResolver;
 import org.springframework.util.Assert;
 
-public class ByDestinationNameJmsResolver extends DynamicDestinationResolver {
+public class ByDestinationNameJmsResolver {
 
-  private final HashMap<String, Destination> cache = new HashMap<String, Destination>();
-
-  @Override
-  public Destination resolveDestinationName(Session session, String destinationName, boolean pubSubDomain) throws JMSException {
+  public static Destination resolveDestinationName(Session session, String destinationName) throws JMSException {
 
     Assert.notNull(session, "Session must not be null");
     Assert.notNull(destinationName, "Destination name must not be null");
 
-    if (cache.containsKey(destinationName.toLowerCase()))
-      return cache.get(destinationName.toLowerCase());
+    boolean pubSubDomain = false;
 
     if (destinationName.toLowerCase().startsWith("consumer.")) {
       pubSubDomain = false;
@@ -33,12 +26,11 @@ public class ByDestinationNameJmsResolver extends DynamicDestinationResolver {
     Destination d = null;
 
     if (pubSubDomain) {
-      d = resolveTopic(session, destinationName);
+      d = session.createTopic(destinationName);
     } else {
-      d = resolveQueue(session, destinationName);
+      d = session.createQueue(destinationName);
     }
 
-    cache.put(destinationName.toLowerCase(), d);
     return d;
 
   }

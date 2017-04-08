@@ -1,34 +1,68 @@
-package io.tickerstorm.client;
+/*
+ * Copyright (c) 2017, Tickerstorm and/or its affiliates. All rights reserved.
+ *
+ *   Redistribution and use in source and binary forms, with or without
+ *   modification, are permitted provided that the following conditions
+ *   are met:
+ *
+ *     - Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *     - Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in the
+ *       documentation and/or other materials provided with the distribution.
+ *
+ *     - Neither the name of Tickerstorm or the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ *   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+ *   IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+ *   THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ *   PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ *   CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ *   EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ *   PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ *   PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ *   LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ *   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ *   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
 
+package io.tickerstorm.data;
+
+import com.google.common.base.Throwables;
+import com.google.common.collect.Lists;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.DatagramSocket;
 import java.net.ServerSocket;
 import java.util.List;
 import java.util.concurrent.Executors;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
 
-import com.google.common.base.Throwables;
-import com.google.common.collect.Lists;
-
-@Service
 public class ServiceLauncher {
 
   private static final Logger logger = LoggerFactory.getLogger(ServiceLauncher.class);
-
-  private Process marketDataShell;
-  private Process strategyShell;
-
   private static String DATA_SERVICE_JAR =
       "/home/kkarski/.m2/repository/io/tickerstorm/data-service/1.0.0-SNAPSHOT/data-service-1.0.0-SNAPSHOT-exec.jar";
   private static String STRATEGY_SERVICE_JAR =
       "/home/kkarski/.m2/repository/io/tickerstorm/strategy-service/1.0.0-SNAPSHOT/strategy-service-1.0.0-SNAPSHOT-exec.jar";
-  
+  private Process marketDataShell;
+  private Process strategyShell;
+
+  public static void main(String args[]) throws Exception {
+
+    ServiceLauncher launcher = new ServiceLauncher();
+    launcher.launchMarketDataService(false, 0, "/tmp/tickerstorm/data-service/monitor");
+    launcher.launchStrategyService(false, 0);
+
+  }
+
   public void launchMarketDataService(boolean debug, int port, final String monitorPath) {
 
     Runnable run = new Runnable() {
@@ -142,14 +176,6 @@ public class ServiceLauncher {
     };
 
     Executors.newSingleThreadExecutor().execute(run);
-
-  }
-
-  public static void main(String args[]) throws Exception {
-
-    ServiceLauncher launcher = new ServiceLauncher();
-    launcher.launchMarketDataService(false, 0, "/tmp/tickerstorm/data-service/monitor");
-    launcher.launchStrategyService(false, 0);
 
   }
 

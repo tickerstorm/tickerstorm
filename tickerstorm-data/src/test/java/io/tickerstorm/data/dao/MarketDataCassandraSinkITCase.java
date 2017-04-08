@@ -33,8 +33,8 @@
 package io.tickerstorm.data.dao;
 
 import com.google.common.eventbus.EventBus;
-import io.tickerstorm.common.command.CompletionTracker;
-import io.tickerstorm.common.command.OnEventHandler;
+import io.tickerstorm.common.reactive.CompletionTracker;
+import io.tickerstorm.common.reactive.Observer;
 import io.tickerstorm.common.entity.Bar;
 import io.tickerstorm.common.eventbus.Destinations;
 import io.tickerstorm.data.TestMarketDataServiceConfig;
@@ -108,9 +108,8 @@ public class MarketDataCassandraSinkITCase {
 
     final AtomicBoolean done = new AtomicBoolean(false);
 
-    OnEventHandler.newHandler(notificationsBus, "marketdata")
+    Observer.observe(notificationsBus, "marketdata")
         .startCountDownOn(CompletionTracker.MarketData.isSaved(stream))
-        .extendTimeoutOn(CompletionTracker.MarketData.isSaved(stream), 100)
         .completeWhen(CompletionTracker.MarketData.isSaved(stream))
         .whenTimedOut(() -> {
 

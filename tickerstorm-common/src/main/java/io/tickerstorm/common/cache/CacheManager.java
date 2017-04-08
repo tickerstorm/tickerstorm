@@ -53,7 +53,7 @@ public class CacheManager {
 
     map = (SynchronizedIndexedTreeMap<Field<?>>) e.getObjectValue();
     map.put(f.getTimestamp(), f);
-    CacheManager.getInstance(f.getStream().toLowerCase()).put(new Element(key, map));
+    CacheManager.getInstance(f.getStream().toLowerCase()).replace(e, new Element(key, map));
 
     return map;
 

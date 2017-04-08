@@ -1,5 +1,6 @@
 package io.tickerstorm.common.command;
 
+import io.tickerstorm.common.reactive.Notification;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.HashMap;

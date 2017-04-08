@@ -18,27 +18,24 @@ import com.google.common.eventbus.Subscribe;
 
 import io.tickerstorm.common.cache.CacheManager;
 import io.tickerstorm.common.command.Command;
-import io.tickerstorm.common.command.CompletionTracker;
+import io.tickerstorm.common.reactive.CompletionTracker;
 import io.tickerstorm.common.command.Markers;
-import io.tickerstorm.common.command.Notification;
+import io.tickerstorm.common.reactive.Notification;
 import io.tickerstorm.common.config.TransformerConfig;
 import io.tickerstorm.common.eventbus.Destinations;
 
 public abstract class BaseProcessor implements Processor {
 
+  public static final String TRANSFORMERS_YML_NODE = "transformers";
+  public static final String TRANSFORMER_CONFIG_KEY = "transformer";
+  protected final Map<String, Map<String, Object>> configs = new HashMap<>();
+  protected final Logger logger = LoggerFactory.getLogger(getClass());
   @Qualifier(Destinations.NOTIFICATIONS_BUS)
   @Autowired
-  private EventBus notificationsBus;
-
+  protected EventBus notificationsBus;
   @Autowired
   @Qualifier(Destinations.COMMANDS_BUS)
   private EventBus commandsBus;
-
-  public static final String TRANSFORMERS_YML_NODE = "transformers";
-  public static final String TRANSFORMER_CONFIG_KEY = "transformer";
-
-  protected final Map<String, Map<String, Object>> configs = new HashMap<>();
-  protected final Logger logger = LoggerFactory.getLogger(getClass());
 
   protected Map<String, Object> getConfig(String stream) {
     this.configs.putIfAbsent(stream, Maps.newHashMap());
@@ -67,7 +64,7 @@ public abstract class BaseProcessor implements Processor {
   public void onCommand(Command command) throws Exception {
 
     if (CompletionTracker.Session.isStart.test(command)) {
-      logger.info("Command received " + command);
+      logger.debug("Command received " + command);
 
       if (command.config != null && command.config.containsKey(TRANSFORMERS_YML_NODE)) {
 
@@ -99,7 +96,7 @@ public abstract class BaseProcessor implements Processor {
   }
 
   protected boolean isActive(String stream) {
-    return ((TransformerConfig) getConfig(stream).get(TRANSFORMER_CONFIG_KEY)).isActive();
+    return getConfig(stream).get(TRANSFORMER_CONFIG_KEY) != null && ((TransformerConfig) getConfig(stream).get(TRANSFORMER_CONFIG_KEY)).isActive();
   }
 
   public abstract String name();

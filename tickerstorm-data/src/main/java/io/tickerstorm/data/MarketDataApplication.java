@@ -32,40 +32,66 @@
 
 package io.tickerstorm.data;
 
+import com.google.common.base.Throwables;
+import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.SubscriberExceptionContext;
+import com.google.common.eventbus.SubscriberExceptionHandler;
 import io.tickerstorm.common.EventBusContext;
-import io.tickerstorm.common.JmsEventBusContext;
 import io.tickerstorm.common.entity.MarketData;
 import io.tickerstorm.common.eventbus.Destinations;
 import io.tickerstorm.common.eventbus.EventBusToEventBusBridge;
 import io.tickerstorm.common.eventbus.EventBusToJMSBridge;
-import io.tickerstorm.common.eventbus.JMSToEventBusBridge;
+import io.tickerstorm.common.eventbus.JmsToEventBusBridge;
 import io.tickerstorm.data.dao.MarketDataDao;
 import io.tickerstorm.data.dao.ModelDataDao;
 import io.tickerstorm.service.HeartBeatGenerator;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import javax.jms.ConnectionFactory;
+import javax.jms.ExceptionListener;
+import javax.jms.JMSException;
+import org.apache.activemq.ActiveMQConnectionFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
+import org.springframework.boot.actuate.metrics.GaugeService;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.ImportResource;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.data.cassandra.repository.config.EnableCassandraRepositories;
-import org.springframework.jms.core.JmsTemplate;
 
 @SpringBootApplication(scanBasePackages = {"io.tickerstorm.data"})
 @EnableCassandraRepositories(basePackageClasses = {MarketDataDao.class, ModelDataDao.class})
 @ImportResource(value = {"classpath:/META-INF/spring/cassandra-beans.xml"})
 @PropertySource({"classpath:/default.properties"})
-@Import({EventBusContext.class, JmsEventBusContext.class})
+@Import({EventBusContext.class})
 public class MarketDataApplication {
+
+  private static final Logger logger = LoggerFactory.getLogger(MarketDataApplication.class);
+
+  @Value("${spring.activemq.broker-url}")
+  protected String transport;
 
   @Value("${service.name:data-service}")
   private String SERVICE;
 
+  @Autowired
+  private GaugeService gauge;
+
   public static void main(String[] args) throws Exception {
     SpringApplication.run(MarketDataApplication.class, args);
+  }
+
+  @Qualifier("eventBus")
+  @Bean
+  public Executor buildExecutorService() {
+    return Executors.newFixedThreadPool(4);
   }
 
   @Bean
@@ -81,35 +107,70 @@ public class MarketDataApplication {
 
   }
 
+  @Qualifier(Destinations.MODEL_DATA_BUS)
+  @Bean
+  public EventBus buildModelDataEventBus(Executor executor) {
+    return new AsyncEventBus(executor, new SubscriberExceptionHandler() {
+
+      @Override
+      public void handleException(Throwable exception, SubscriberExceptionContext context) {
+        Throwable e = Throwables.getRootCause(exception);
+        logger.error(e.getMessage(), e);
+      }
+    });
+  }
+
+  //JMS
+
+  @Bean
+  public ConnectionFactory buildConnectionFactory() {
+
+    ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(transport);
+    connectionFactory.setTrustAllPackages(true);
+    connectionFactory.setClientIDPrefix(SERVICE);
+    connectionFactory.setSendAcksAsync(true);
+    connectionFactory.setOptimizeAcknowledge(true);
+    connectionFactory.setAlwaysSyncSend(true);
+    connectionFactory.setConnectionIDPrefix(SERVICE);
+
+    connectionFactory.setExceptionListener(new ExceptionListener() {
+
+      @Override
+      public void onException(JMSException exception) {
+        logger.error(Throwables.getRootCause(exception).getMessage(),
+            Throwables.getRootCause(exception));
+
+      }
+    });
+
+    return connectionFactory;
+  }
+
   // SENDERS
   @Qualifier(Destinations.REALTIME_MARKETDATA_BUS)
   @Bean
   public EventBusToJMSBridge buildRealtimeJmsBridge(@Qualifier(Destinations.REALTIME_MARKETDATA_BUS) EventBus eventbus,
-      JmsTemplate template) {
+      ConnectionFactory template) throws Exception {
     return new EventBusToJMSBridge(eventbus, Destinations.TOPIC_REALTIME_MARKETDATA, template, SERVICE);
   }
 
   @Qualifier(Destinations.RETRO_MODEL_DATA_BUS)
   @Bean
   public EventBusToJMSBridge buildRetroModelDataJmsBridge(@Qualifier(Destinations.RETRO_MODEL_DATA_BUS) EventBus eventbus,
-      JmsTemplate template) {
+      ConnectionFactory template) throws Exception {
     return new EventBusToJMSBridge(eventbus, Destinations.QUEUE_RETRO_MODEL_DATA, template, SERVICE);
   }
 
   @Qualifier(Destinations.NOTIFICATIONS_BUS)
   @Bean
   public EventBusToJMSBridge buildNotificationsJmsBridge(@Qualifier(Destinations.NOTIFICATIONS_BUS) EventBus eventbus,
-      JmsTemplate template) {
+      ConnectionFactory template) throws Exception {
     return new EventBusToJMSBridge(eventbus, Destinations.TOPIC_NOTIFICATIONS, template, SERVICE, 5000);
   }
 
   /**
    * Enable market realtime data from broker to be directly streamed to internal realtime market
    * data bus so that models can act upon live data
-   * 
-   * @param source
-   * @param listener
-   * @return
    */
   @Qualifier(Destinations.BROKER_MARKETDATA_BUS)
   @Bean
@@ -121,14 +182,23 @@ public class MarketDataApplication {
     return bridge;
   }
 
-  // RECEIVERS
+  //CONSUMERS
   @Bean
-  public JMSToEventBusBridge buildQueryEventBridge(@Qualifier(Destinations.MODEL_DATA_BUS) EventBus modelDataBus,
-      @Qualifier(Destinations.COMMANDS_BUS) EventBus commandBus, @Qualifier(Destinations.BROKER_MARKETDATA_BUS) EventBus brokerFeedBus) {
-    JMSToEventBusBridge bridge = new JMSToEventBusBridge(SERVICE);
-    bridge.modelDataBus = modelDataBus;
-    bridge.commandsBus = commandBus;
-    bridge.brokerFeedBus = brokerFeedBus;
-    return bridge;
+  public JmsToEventBusBridge buildModelDataJmsBridge(@Qualifier(Destinations.MODEL_DATA_BUS) EventBus modelDataBus, ConnectionFactory factory)
+      throws Exception {
+    return new JmsToEventBusBridge(factory, modelDataBus, Destinations.QUEUE_MODEL_DATA);
   }
+
+  @Bean
+  public JmsToEventBusBridge buildCommandJmsBridge(@Qualifier(Destinations.COMMANDS_BUS) EventBus modelDataBus, ConnectionFactory factory)
+      throws Exception {
+    return new JmsToEventBusBridge(factory, modelDataBus, Destinations.TOPIC_COMMANDS, -1, 3000);
+  }
+
+  @Bean
+  public JmsToEventBusBridge buildBrokerDataJmsBridge(@Qualifier(Destinations.BROKER_MARKETDATA_BUS) EventBus modelDataBus, ConnectionFactory factory)
+      throws Exception {
+    return new JmsToEventBusBridge(factory, modelDataBus, Destinations.QUEUE_REALTIME_BROKERFEED);
+  }
+
 }

@@ -20,7 +20,7 @@ import com.google.common.eventbus.Subscribe;
 import io.tickerstorm.common.command.Command;
 import io.tickerstorm.common.command.Markers;
 import io.tickerstorm.common.command.ModelDataQuery;
-import io.tickerstorm.common.command.Notification;
+import io.tickerstorm.common.reactive.Notification;
 import io.tickerstorm.common.eventbus.Destinations;
 import io.tickerstorm.data.dao.ModelDataDao;
 import io.tickerstorm.data.dao.ModelDataDto;
@@ -104,9 +104,6 @@ public class ModelDataFeed {
 
     logger.info("Dispatching " + dtos.size() + " model data fields took " + (System.currentTimeMillis() - startTimer) + "ms");
 
-
-
-    marker = new Notification(query);
     marker = new Notification(query);
     marker.addMarker(Markers.END.toString());
     marker.expect = 0;

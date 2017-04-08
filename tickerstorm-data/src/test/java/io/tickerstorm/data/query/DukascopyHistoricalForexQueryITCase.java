@@ -51,6 +51,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
@@ -74,10 +76,10 @@ public class DukascopyHistoricalForexQueryITCase extends BaseDataQueryITCase {
   @Test
   public void parseGloabForext() throws Exception {
 
-    Files.copy(new File("./src/test/resources/data/Dukascopy/AUDCAD_Candlestick_1_m_BID_01.06.2015-06.06.2015.csv"),
-        new File(Locations.FILE_DROP_LOCATION + "/Dukascopy/AUDCAD_Candlestick_1_m_BID_01.06.2015-06.06.2015.csv"));
+    Files.copy(new ClassPathResource("/data/Dukascopy/AUDCAD_Candlestick_1_m_BID_01.06.2015-06.06.2015.csv").getFile(),
+        new FileSystemResource(Locations.FILE_DROP_LOCATION + "/Dukascopy/AUDCAD_Candlestick_1_m_BID_01.06.2015-06.06.2015.csv").getFile());
 
-    Thread.sleep(16000);
+    Thread.sleep(13000);
 
     Long daoCount = dao.count("Dukascopy");
     Assert.assertEquals(daoCount, new Long(52860));

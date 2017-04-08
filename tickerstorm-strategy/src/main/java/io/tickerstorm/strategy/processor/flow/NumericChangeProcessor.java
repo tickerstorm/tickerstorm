@@ -55,7 +55,7 @@ public class NumericChangeProcessor extends BaseEventProcessor {
 
   private Predicate<Field<?>> filter() {
     return p -> (BigDecimal.class.isAssignableFrom(p.getFieldType()) || Integer.class.isAssignableFrom(p.getFieldType()))
-        && !p.getName().contains(Field.Name.ABS_CHANGE.field()) && !p.getName().contains(Field.Name.PCT_CHANGE.field()) && !p.isNull();
+        && !p.getName().contains(Field.Name.ABS_CHANGE.field()) && !p.getName().contains(Field.Name.PCT_CHANGE.field()) && !p.isNull() && isActive(p.getStream());
   }
 
   @Subscribe
@@ -69,8 +69,9 @@ public class NumericChangeProcessor extends BaseEventProcessor {
   @Subscribe
   public void handle(Field<?> f) {
 
-    if (!filter().test(f))
+    if (!filter().test(f)) {
       return;
+    }
 
     long start = System.currentTimeMillis();
 
@@ -106,12 +107,12 @@ public class NumericChangeProcessor extends BaseEventProcessor {
 
         fs.add(new BaseField<>(f, Field.Name.ABS_CHANGE.field() + "-p" + p, absDiff.setScale(4, BigDecimal.ROUND_HALF_UP)));
         logger.trace("Computation took :" + (System.currentTimeMillis() - start3) + "ms");
-
-        if (!fs.isEmpty()) {
-          publish(fs);
-          logger.trace("Numberic Change Processor took :" + (System.currentTimeMillis() - start) + "ms to compute " + fs.size());
-        }
       }
+    }
+
+    if (!fs.isEmpty()) {
+      publish(fs);
+      logger.trace("Numberic Change Processor took :" + (System.currentTimeMillis() - start) + "ms to compute " + fs.size());
     }
 
     gauge.submit(METRIC_TIME_TAKEN, (System.currentTimeMillis() - start));

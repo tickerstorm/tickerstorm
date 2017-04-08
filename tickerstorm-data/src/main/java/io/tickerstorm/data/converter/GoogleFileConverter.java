@@ -26,7 +26,7 @@ import com.google.common.eventbus.EventBus;
 import com.google.common.io.Files;
 
 import io.tickerstorm.common.command.Markers;
-import io.tickerstorm.common.command.Notification;
+import io.tickerstorm.common.reactive.Notification;
 import io.tickerstorm.common.data.converter.BaseFileConverter;
 import io.tickerstorm.common.data.converter.DataConverter;
 import io.tickerstorm.common.data.converter.DataQuery;

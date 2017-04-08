@@ -51,7 +51,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {TestBacktestRunnerClientContext.class})
-public class TestSubmitToH2OITCase {
+public class NotTestSubmitToH2OITCase {
 
   @Qualifier(Destinations.NOTIFICATIONS_BUS)
   @Autowired

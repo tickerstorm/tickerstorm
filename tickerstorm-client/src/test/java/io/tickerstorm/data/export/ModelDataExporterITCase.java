@@ -34,14 +34,15 @@ package io.tickerstorm.data.export;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
-import io.tickerstorm.common.command.CompletionTracker;
 import io.tickerstorm.common.command.ExportModelDataToCSV;
 import io.tickerstorm.common.command.HistoricalFeedQuery;
 import io.tickerstorm.common.command.Markers;
-import io.tickerstorm.common.command.Notification;
-import io.tickerstorm.common.command.OnEventHandler;
 import io.tickerstorm.common.entity.Bar;
 import io.tickerstorm.common.eventbus.Destinations;
+import io.tickerstorm.common.reactive.CompletionTracker;
+import io.tickerstorm.common.reactive.Notification;
+import io.tickerstorm.common.reactive.Observer;
+import io.tickerstorm.common.reactive.ReactiveBoolean;
 import io.tickerstorm.common.test.TestDataFactory;
 import io.tickerstorm.data.BaseIntegrationTest;
 import io.tickerstorm.data.IntegrationTestContext;
@@ -51,6 +52,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -68,14 +70,10 @@ import org.springframework.test.context.junit4.SpringRunner;
 public class ModelDataExporterITCase extends BaseIntegrationTest {
 
   private final static Logger logger = LoggerFactory.getLogger(ModelDataExporterITCase.class);
-
-  private ExportModelDataToCSV exportCommend;
-
-  private String stream = "ModelDataExporterITCase";
-
   private final String location = "/tmp/testfile.csv";
-
-  private boolean file_saved = false;
+  private ExportModelDataToCSV exportCommend;
+  private String stream = "ModelDataExporterITCase";
+  private AtomicBoolean file_saved = new AtomicBoolean(false);
 
   @Qualifier(Destinations.BROKER_MARKETDATA_BUS)
   @Autowired
@@ -96,51 +94,55 @@ public class ModelDataExporterITCase extends BaseIntegrationTest {
 
   @Before
   public void setup() throws Exception {
+    super.init();
     java.nio.file.Files.deleteIfExists(new File(location).toPath());
   }
 
   @Test
   public void testExportToCSVFile() throws Exception {
 
-    OnEventHandler.newHandler(session.getNotificationsBus()).startCountDownOn(CompletionTracker.ModelData.isSaved(session.stream()))
+    exportCommend = new ExportModelDataToCSV(session.stream());
+    exportCommend.modelQuery.from = Instant.now().minus(700, ChronoUnit.DAYS);
+    exportCommend.markers.add(Markers.LOCATION.toString());
+    exportCommend.config.put(Markers.LOCATION.toString(), location);
+
+    final ReactiveBoolean fileSaved = Observer.observe(session.getNotificationsBus()).newBoolean().trueOn(exportCommend.isDone()).start();
+
+    Observer.observe(session.getNotificationsBus(), "export to csv").startCountDownOn(CompletionTracker.ModelData.isSaved(session.stream()))
         .extendTimeoutOn(CompletionTracker.ModelData.isSaved(session.stream()), 2000).whenTimedOut(() -> {
 
-          exportCommend = new ExportModelDataToCSV(session.stream());
-          exportCommend.modelQuery.from = Instant.now().minus(700, ChronoUnit.DAYS);
-          exportCommend.markers.add(Markers.LOCATION.toString());
-          exportCommend.config.put(Markers.LOCATION.toString(), location);
-          session.execute(exportCommend);
+      session.execute(exportCommend);
 
-        }).start();
+    }).start();
 
-    OnEventHandler.newHandler(session.getNotificationsBus()).startCountDownOn(CompletionTracker.Ingest.someIngestStarted)
+    Observer.observe(session.getNotificationsBus(), "query historical feed").startCountDownOn(CompletionTracker.Ingest.someIngestStarted)
         .completeWhen(CompletionTracker.Ingest.someIngestFinished).mustCompleteWithin(2000).whenComplete((n) -> {
 
       HistoricalFeedQuery query = new HistoricalFeedQuery(stream, "Google", "TOL");
-          query.from = LocalDateTime.of(2015, 6, 10, 0, 0);
-          query.until = LocalDateTime.of(2015, 6, 11, 0, 0);
-          query.periods.add(Bar.MIN_1_INTERVAL);
-          query.zone = ZoneOffset.ofHours(-7);
-          session.execute(query);
+      query.from = LocalDateTime.of(2015, 6, 10, 0, 0);
+      query.until = LocalDateTime.of(2015, 6, 11, 0, 0);
+      query.periods.add(Bar.MIN_1_INTERVAL);
+      query.zone = ZoneOffset.ofHours(-7);
+      session.execute(query);
 
-        }).whenTimedOut(() -> {
-          Assert.fail();
-        }).start();
+    }).whenTimedOut(() -> {
+      Assert.fail();
+    }).start();
 
-    OnEventHandler.newHandler(session.getNotificationsBus()).startCountDownOn(CompletionTracker.ModelData.Export.someCsvExportStarted)
-        .completeWhen(CompletionTracker.ModelData.Export.someCsvExportFinished).mustCompleteWithin(2000).whenComplete((n) -> {
-
-          file_saved = true;
-
-        }).whenTimedOut(() -> {
-          Assert.fail();
-        }).start();
+//    Observer.observe(session.getNotificationsBus(), "file saved").startCountDownOn(exportCommend.started())
+//        .completeWhen(exportCommend.isDone()).mustCompleteWithin(2000).whenComplete((n) -> {
+//
+//      file_saved.set(true);
+//
+//    }).whenTimedOut(() -> {
+//      Assert.fail();
+//    }).start();
 
     TestDataFactory.buildCandles(100, "goog", session.stream(), BigDecimal.ONE).stream().forEach(c -> {
       brokderFeed.post(c);
     });
 
-    while (!file_saved) {
+    while (!fileSaved.value()) {
       Thread.sleep(5000);
     }
 
@@ -151,7 +153,7 @@ public class ModelDataExporterITCase extends BaseIntegrationTest {
   @Subscribe
   public void onNotification(Notification not) throws Exception {
 
-    logger.info(not.toString());
+    logger.debug(not.toString());
 
   }
 

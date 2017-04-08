@@ -32,54 +32,22 @@
 
 package io.tickerstorm.data;
 
-import com.google.common.base.Throwables;
-import io.tickerstorm.common.eventbus.ByDestinationNameJmsResolver;
-import io.tickerstorm.common.eventbus.Destinations;
-import javax.jms.Session;
-import org.apache.activemq.jms.pool.PooledConnectionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Bean;
-import org.springframework.jms.listener.DefaultMessageListenerContainer;
-import org.springframework.util.ErrorHandler;
 
 @SpringBootApplication
 public class TestMarketDataServiceConfig extends MarketDataApplication {
 
+  private final static Logger logger = LoggerFactory.getLogger(TestMarketDataServiceConfig.class);
   @Value("${service.name}")
   protected String serviceName;
-
-  private final static Logger logger = LoggerFactory.getLogger(TestMarketDataServiceConfig.class);
 
   public static void main(String[] args) throws Exception {
     SpringApplication.run(TestMarketDataServiceConfig.class, args);
   }
 
-  @Qualifier("realtime")
-  @Bean
-  public DefaultMessageListenerContainer buildQueryListenerContainer(
-      PooledConnectionFactory connectionFactory) {
-
-    DefaultMessageListenerContainer container = new DefaultMessageListenerContainer();
-    container.setConnectionFactory(connectionFactory);
-    container.setDestinationName(
-        "Consumer." + serviceName + "." + Destinations.TOPIC_REALTIME_MARKETDATA);
-    container.setSessionAcknowledgeMode(Session.AUTO_ACKNOWLEDGE);
-    container.setDestinationResolver(new ByDestinationNameJmsResolver());
-    container.setMaxMessagesPerTask(-1);
-    container.setAutoStartup(false);
-    container.setErrorHandler(new ErrorHandler() {
-
-      @Override
-      public void handleError(Throwable t) {
-        logger.error(Throwables.getRootCause(t).getMessage(), t);
-      }
-    });
-
-    return container;
-  }
 }
+
