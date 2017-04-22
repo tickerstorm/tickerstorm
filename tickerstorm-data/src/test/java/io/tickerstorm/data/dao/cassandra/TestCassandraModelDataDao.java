@@ -30,7 +30,7 @@
  *
  */
 
-package io.tickerstorm.data.dao;
+package io.tickerstorm.data.dao.cassandra;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -40,6 +40,8 @@ import io.tickerstorm.common.entity.Bar;
 import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.test.TestDataFactory;
 import io.tickerstorm.data.TestMarketDataServiceConfig;
+import io.tickerstorm.data.dao.cassandra.CassandraModelDataDao;
+import io.tickerstorm.data.dao.cassandra.CassandraModelDataDto;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
@@ -55,7 +57,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {TestMarketDataServiceConfig.class})
-public class TestModelDataDao {
+public class TestCassandraModelDataDao {
 
   private final Bar c =
       new Bar("goog", "google", Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ONE, BigDecimal.ONE, "1m", 1000);
@@ -66,18 +68,18 @@ public class TestModelDataDao {
   }
 
   @Autowired
-  private ModelDataDao dao;
+  private CassandraModelDataDao dao;
 
   @Test
   public void testSelectBars() throws Exception {
 
     List<Bar> bars = TestDataFactory
         .buildCandles(5, "goog", "TestModelDataDto", new BigDecimal("34.4354"));
-    Set<ModelDataDto> dtos = ModelDataDto.convertBars(bars);
+    Set<CassandraModelDataDto> dtos = CassandraModelDataDto.convertBars(bars);
     dao.ingest(dtos);
 
     bars = TestDataFactory.buildCandles(2, "tol", "TestModelDataDto2", new BigDecimal("12.243"));
-    dtos = ModelDataDto.convertBars(bars);
+    dtos = CassandraModelDataDto.convertBars(bars);
     dao.ingest(dtos);
 
     long count = dao.count("TestModelDataDto");
@@ -86,7 +88,7 @@ public class TestModelDataDao {
     count = dao.count("TestModelDataDto2");
     org.junit.Assert.assertEquals(2, count);
 
-    Stream<ModelDataDto> dtoss = dao.findAll("TestModelDataDto");
+    Stream<CassandraModelDataDto> dtoss = dao.findAll("TestModelDataDto");
     org.junit.Assert.assertEquals(5, dtoss.count());
 
     dtoss = dao.findAll("TestModelDataDto2");
@@ -108,7 +110,7 @@ public class TestModelDataDao {
     Set<Field<?>> fields = c.getFields();
     assertEquals(fields.size(), 9);
 
-    Set<ModelDataDto> dtos = ModelDataDto.convertFields(fields);
+    Set<CassandraModelDataDto> dtos = CassandraModelDataDto.convertFields(fields);
     assertNotNull(dtos);
     assertEquals(dtos.size(), 9);
 

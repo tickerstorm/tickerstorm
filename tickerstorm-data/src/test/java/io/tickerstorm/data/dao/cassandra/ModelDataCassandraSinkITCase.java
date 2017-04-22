@@ -30,7 +30,7 @@
  *
  */
 
-package io.tickerstorm.data.dao;
+package io.tickerstorm.data.dao.cassandra;
 
 import static org.junit.Assert.assertEquals;
 
@@ -43,6 +43,8 @@ import io.tickerstorm.common.entity.BaseField;
 import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.eventbus.Destinations;
 import io.tickerstorm.data.TestMarketDataServiceConfig;
+import io.tickerstorm.data.dao.cassandra.CassandraModelDataDao;
+import io.tickerstorm.data.dao.cassandra.CassandraModelDataDto;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Date;
@@ -70,7 +72,7 @@ public class ModelDataCassandraSinkITCase {
   private EventBus modelDataBus;
 
   @Autowired
-  private ModelDataDao dao;
+  private CassandraModelDataDao dao;
 
   private final Instant instant = Instant.now();
   private final String symbol = "goog";
@@ -101,7 +103,7 @@ public class ModelDataCassandraSinkITCase {
     assertEquals(count, 1);
 
 
-    Set<ModelDataDto> dtos = new HashSet<>();
+    Set<CassandraModelDataDto> dtos = new HashSet<>();
     dao.findAll(c.stream).forEach(d -> {
       dtos.add(d);
     });
@@ -152,7 +154,7 @@ public class ModelDataCassandraSinkITCase {
     assertEquals(count, 1);
 
     Set<Field<?>> tuple = new HashSet<>();
-    Set<ModelDataDto> dtos = new HashSet<>();
+    Set<CassandraModelDataDto> dtos = new HashSet<>();
 
     dao.findAll(c.stream).forEach(d -> {
       dtos.add(d);

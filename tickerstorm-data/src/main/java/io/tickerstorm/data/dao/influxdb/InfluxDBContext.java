@@ -30,15 +30,48 @@
  *
  */
 
-package io.tickerstorm.data.dao;
+package io.tickerstorm.data.dao.influxdb;
 
-import io.tickerstorm.common.entity.MarketData;
+import java.util.concurrent.TimeUnit;
+import org.influxdb.InfluxDB;
+import org.influxdb.InfluxDBBatchListener;
+import org.influxdb.InfluxDBFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
 
 /**
- * Created by kkarski on 4/10/17.
+ * Created by kkarski on 4/12/17.
  */
-public interface MarketDataDto {
+@PropertySource({"classpath:/default.properties"})
+@Configuration
+public class InfluxDBContext {
 
-  MarketData toMarketData(String stream);
+  @Value("${influx.keyspace}")
+  private String keyspace;
+
+  @Value("${influx.host}")
+  private String host;
+
+  @Value("${influx.username}")
+  private String username;
+
+  @Value("${influx.password}")
+  private String password;
+
+  @Bean
+  public InfluxDB buildDBClient(InfluxDBBatchListener listener) {
+    InfluxDB influxDB = InfluxDBFactory.connect(host, username, password);
+    String dbName = keyspace;
+    influxDB.createDatabase(dbName);
+    influxDB.enableBatch(2000, 100, TimeUnit.MILLISECONDS, listener);
+    return influxDB;
+  }
+
+  @Bean
+  public BroadcastInfluxDBListener buildBatchListener() {
+    return new BroadcastInfluxDBListener();
+  }
 
 }

@@ -30,91 +30,98 @@
  *
  */
 
-package io.tickerstorm.data.dao;
+package io.tickerstorm.data.dao.influxdb;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import io.tickerstorm.common.command.Markers;
-import io.tickerstorm.common.reactive.Notification;
+import io.tickerstorm.common.entity.Field.Name;
 import io.tickerstorm.common.entity.MarketData;
 import io.tickerstorm.common.eventbus.Destinations;
+import io.tickerstorm.common.reactive.Notification;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import org.influxdb.InfluxDBBatchListener;
+import org.influxdb.dto.Point;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.annotation.DependsOn;
-import org.springframework.stereotype.Repository;
+import org.springframework.stereotype.Component;
 
-@DependsOn(value = {"cassandraSetup"})
-@Repository
-public class MarketDataCassandraSink extends BaseCassandraSink<MarketDataDto> {
+/**
+ * Created by kkarski on 4/12/17.
+ */
+@Component
+public class MarketDataInfluxSink {
 
-  protected static final org.slf4j.Logger logger = LoggerFactory.getLogger(MarketDataCassandraSink.class);
+  protected static final org.slf4j.Logger logger = LoggerFactory.getLogger(MarketDataInfluxSink.class);
 
-  @Override
-  protected int batchSize() {
-    return 1999;
-  }
-
+  private final InfluxDBBatchListener l = new MarketDataWriteNotification();
+  @Autowired
+  protected InfluxMarketDataDao dao;
+  @Autowired
+  private BroadcastInfluxDBListener influxListener;
   @Qualifier(Destinations.HISTORICL_MARKETDATA_BUS)
   @Autowired
   private EventBus historicalBus;
-
   @Qualifier(Destinations.NOTIFICATIONS_BUS)
   @Autowired
   private EventBus notificationsBus;
 
-  @Autowired
-  private MarketDataDao dao;
-
   @PreDestroy
   public void destroy() {
-    super.destroy();
+    influxListener.removeListener(l);
     historicalBus.unregister(this);
   }
 
   @PostConstruct
   public void init() {
-    super.init();
+    influxListener.addListener(l);
     historicalBus.register(this);
   }
 
   @Subscribe
   public void onData(MarketData md) {
-    batch(MarketDataDto.convert(md));
+    dao.persist(md);
   }
 
-  protected void persist(Collection<MarketDataDto> data) {
+  private class MarketDataWriteNotification implements InfluxDBBatchListener {
 
-    if (null == data || data.isEmpty())
-      return;
-    try {
+    @Override
+    public void onPointBatchWrite(final List<Point> points) {
 
-      synchronized (data) {
-        logger.debug(
-            "Persisting " + data.size() + " records, " + count.addAndGet(data.size()) + " total saved and " + received.get() + " received");
+      Map<String, Long> streamCounts = countEntries(points);
 
-      }
-
-      dao.ingest(data);
-
-      Map<String, Integer> streamCounts = dao.countEntries(data);
-
-      for (Entry<String, Integer> e : streamCounts.entrySet()) {
+      for (Entry<String, Long> e : streamCounts.entrySet()) {
         Notification marker = new Notification(e.getKey());
         marker.addMarker(Markers.MARKET_DATA.toString());
         marker.addMarker(Markers.SAVE.toString());
         marker.addMarker(Markers.SUCCESS.toString());
-        marker.expect = e.getValue();
+        marker.expect = e.getValue().intValue();
         notificationsBus.post(marker);
       }
-    } catch (Exception e) {
+    }
+
+    @Override
+    public void onException(List<Point> points, Throwable e) {
       logger.error(e.getMessage(), e);
     }
-  }
 
+    private Map<String, Long> countEntries(Collection<Point> data) {
+
+      return data.stream().collect(Collectors.groupingBy(p -> {
+            if (p.getTags().containsKey(Name.SOURCE.field())) {
+              return p.getTags().get(Name.SOURCE.field());
+            }
+
+            return null;
+          }
+          , Collectors.counting()));
+    }
+  }
 }

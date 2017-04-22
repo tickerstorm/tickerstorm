@@ -30,15 +30,21 @@
  *
  */
 
-package io.tickerstorm.data.dao;
+package io.tickerstorm.data.dao.influxdb;
 
-import io.tickerstorm.common.entity.MarketData;
+import java.util.concurrent.atomic.AtomicLong;
+import org.influxdb.InfluxDB;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
- * Created by kkarski on 4/10/17.
+ * Created by kkarski on 4/12/17.
  */
-public interface MarketDataDto {
+public abstract class BaseInfluxSink<T> {
 
-  MarketData toMarketData(String stream);
+  protected final AtomicLong received = new AtomicLong(0);
+  protected final AtomicLong count = new AtomicLong(0);
+
+  @Autowired
+  protected InfluxDB influx;
 
 }

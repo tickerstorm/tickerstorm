@@ -1,29 +1,25 @@
 package io.tickerstorm.data.service;
 
+import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
+import io.tickerstorm.common.command.Command;
+import io.tickerstorm.common.command.Markers;
+import io.tickerstorm.common.command.ModelDataQuery;
+import io.tickerstorm.common.eventbus.Destinations;
+import io.tickerstorm.common.reactive.Notification;
+import io.tickerstorm.data.dao.ModelDataDao;
+import io.tickerstorm.data.dao.cassandra.CassandraModelDataDto;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
-
-import com.google.common.eventbus.EventBus;
-import com.google.common.eventbus.Subscribe;
-
-import io.tickerstorm.common.command.Command;
-import io.tickerstorm.common.command.Markers;
-import io.tickerstorm.common.command.ModelDataQuery;
-import io.tickerstorm.common.reactive.Notification;
-import io.tickerstorm.common.eventbus.Destinations;
-import io.tickerstorm.data.dao.ModelDataDao;
-import io.tickerstorm.data.dao.ModelDataDto;
 
 @Repository
 public class ModelDataFeed {
@@ -79,7 +75,7 @@ public class ModelDataFeed {
 
     logger.debug("Model data feed query received " + query);
 
-    List<ModelDataDto> dtos = dao.findByStreamAndTimestampIsBetween(query.getStream(), query.from, query.until);
+    List<CassandraModelDataDto> dtos = dao.findByStreamAndTimestampIsBetween(query.getStream(), query.from, query.until);
 
     final AtomicInteger count = new AtomicInteger();
 
@@ -88,8 +84,6 @@ public class ModelDataFeed {
     });
 
     long startTimer = System.currentTimeMillis();
-
-
 
     Notification marker = new Notification(query);
     marker.addMarker(Markers.START.toString());
@@ -108,7 +102,6 @@ public class ModelDataFeed {
     marker.addMarker(Markers.END.toString());
     marker.expect = 0;
     notificationBus.post(marker);
-
 
 
   }

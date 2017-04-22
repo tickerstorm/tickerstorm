@@ -30,15 +30,54 @@
  *
  */
 
-package io.tickerstorm.data.dao;
+package io.tickerstorm.data.dao.influxdb;
 
-import io.tickerstorm.common.entity.MarketData;
+import io.tickerstorm.data.dao.ModelDataDao;
+import io.tickerstorm.data.dao.cassandra.CassandraModelDataDto;
+import java.math.BigInteger;
+import java.time.Instant;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Stream;
 
 /**
  * Created by kkarski on 4/10/17.
  */
-public interface MarketDataDto {
+public class InfluxModelDataDao implements ModelDataDao {
 
-  MarketData toMarketData(String stream);
+  @Override
+  public long count() {
+    return 0;
+  }
 
+  @Override
+  public long count(String stream) {
+    return 0;
+  }
+
+  @Override
+  public Stream<CassandraModelDataDto> findAll(String stream) {
+    return null;
+  }
+
+  @Override
+  public void ingest(Collection<CassandraModelDataDto> dtos) {
+
+  }
+
+  @Override
+  public List<CassandraModelDataDto> findByStreamAndTimestampIsBetween(String stream, Instant from, Instant until) {
+    return null;
+  }
+
+  @Override
+  public void deleteByStream(String stream) {
+
+  }
+
+  @Override
+  public Stream<CassandraModelDataDto> streamByStreamAndDateIn(String stream, Set<BigInteger> dates) {
+    return null;
+  }
 }

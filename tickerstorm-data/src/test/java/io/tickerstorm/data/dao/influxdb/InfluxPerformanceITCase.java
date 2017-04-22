@@ -30,22 +30,25 @@
  *
  */
 
-package io.tickerstorm.data.dao;
+package io.tickerstorm.data.dao.influxdb;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import io.tickerstorm.common.command.Markers;
-import io.tickerstorm.common.reactive.Notification;
 import io.tickerstorm.common.entity.Bar;
 import io.tickerstorm.common.entity.BaseField;
 import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.eventbus.Destinations;
+import io.tickerstorm.common.reactive.Notification;
 import io.tickerstorm.data.TestMarketDataServiceConfig;
+import io.tickerstorm.data.dao.ModelDataDto;
+import io.tickerstorm.data.dao.cassandra.CassandraModelDataDto;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Assert;
@@ -60,29 +63,27 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {TestMarketDataServiceConfig.class})
-public class CassandraPerformanceITCase {
+public class InfluxPerformanceITCase {
 
   private final static org.slf4j.Logger logger = LoggerFactory
-      .getLogger(CassandraPerformanceITCase.class);
-
+      .getLogger(InfluxPerformanceITCase.class);
+  private final List<ModelDataDto> dtos = new ArrayList<>();
+  private final List<Bar> cs = new ArrayList<>();
+  private final String stream = "InfluxPerformanceITCase";
   @Qualifier(Destinations.NOTIFICATIONS_BUS)
   @Autowired
   private EventBus notificationsBus;
 
   @Autowired
-  private ModelDataDao dao;
+  private InfluxMarketDataDao dao;
 
   @Qualifier(Destinations.MODEL_DATA_BUS)
   @Autowired
   private EventBus modelDataBus;
 
-  private final List<ModelDataDto> dtos = new ArrayList<>();
-  private final List<Bar> cs = new ArrayList<>();
-  private final String stream = "CassandraPerformanceITCase";
-
   @Before
   public void clean() throws Exception {
-    dao.deleteByStream(stream);
+    dao.newDelete().bySource(stream).delete();
     Thread.sleep(2000);
 
     long time = System.currentTimeMillis();
@@ -100,7 +101,7 @@ public class CassandraPerformanceITCase {
       }
 
       cs.add(c);
-      ModelDataDto dto = ModelDataDto.convert(c);
+      CassandraModelDataDto dto = CassandraModelDataDto.convert(c);
       dtos.add(dto);
 
     }
@@ -110,12 +111,12 @@ public class CassandraPerformanceITCase {
   }
 
   @Test
-  public void testPureCassandraStorage() {
+  public void testPureInfluxStorage() {
 
     long time = System.currentTimeMillis();
-    dao.ingest(dtos);
+    dao.ingest((Collection) dtos);
     logger.info(
-        "Pure cassandra storage of " + dtos.size() + " took " + (System.currentTimeMillis() - time)
+        "Pure influx storage of " + dtos.size() + " took " + (System.currentTimeMillis() - time)
             + "ms");
 
   }
@@ -125,7 +126,7 @@ public class CassandraPerformanceITCase {
 
     final AtomicInteger i = new AtomicInteger(0);
     long time = System.currentTimeMillis();
-    notificationsBus.register(new CassandraStorageEventListener(time));
+    notificationsBus.register(new InfluxStorageEventListener(time));
     cs.forEach(c -> {
       c.getFields().forEach(f -> {
         i.addAndGet(1);
@@ -138,12 +139,12 @@ public class CassandraPerformanceITCase {
 
   }
 
-  private class CassandraStorageEventListener {
+  private class InfluxStorageEventListener {
 
-    long time = 0L;
     final AtomicInteger count = new AtomicInteger(0);
+    long time = 0L;
 
-    public CassandraStorageEventListener(long start) {
+    public InfluxStorageEventListener(long start) {
       this.time = start;
     }
 

@@ -36,6 +36,8 @@ import com.google.common.collect.Sets;
 import io.tickerstorm.common.entity.Bar;
 import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.entity.MarketData;
+import io.tickerstorm.data.dao.cassandra.CassandraModelDataDto;
+import io.tickerstorm.data.dao.cassandra.ModelDataPrimaryKey;
 import java.io.Serializable;
 import java.math.BigInteger;
 import java.time.LocalDateTime;
@@ -44,83 +46,17 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.springframework.data.cassandra.mapping.Table;
 
-@Table("modeldata")
-@SuppressWarnings("serial")
-public class ModelDataDto implements Serializable {
+/**
+ * Created by kkarski on 4/10/17.
+ */
+public interface ModelDataDto extends Serializable {
 
-  public static final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("uuuuMMdd").withZone(ZoneId.of("UTC"));
+  DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("uuuuMMdd").withZone(ZoneId.of("UTC"));
 
-  @org.springframework.data.cassandra.mapping.PrimaryKey
-  public ModelDataPrimaryKey primarykey;
-  public final Set<String> fields = new HashSet<>();
 
-  public Set<Field<?>> asFields() {
 
-    Set<Field<?>> fs = new HashSet<>();
-
-    fields.stream().forEach(s -> {
-      fs.add(Field.deserialize(s));
-    });
-
-    return fs;
-
-  }
-
-  public static ModelDataDto convert(Field<?> field) {
-
-    ModelDataDto dto = new ModelDataDto();
-
-    ModelDataPrimaryKey key = new ModelDataPrimaryKey();
-    key.timestamp = Date.from(field.getTimestamp());
-    key.date = new BigInteger(dateFormatter.format(field.getTimestamp()));
-    key.stream = field.getStream().toLowerCase();
-    dto.primarykey = key;
-    dto.fields.add(field.serialize());
-
-    return dto;
-  }
-
-  public static Set<ModelDataDto> convertFields(Collection<Field<?>> fields) {
-
-    return fields.stream().map(f -> {
-      return convert(f);
-    }).collect(Collectors.toSet());
-  }
-
-  public static Set<ModelDataDto> convertBars(Collection<Bar> bars) {
-
-    Set<ModelDataDto> dtos = Sets.newHashSet();
-
-    bars.stream().map(b -> {
-      return b.getFields();
-    }).map(f -> {
-      return ModelDataDto.convertFields(f);
-    }).forEach(s -> {
-      dtos.addAll(s);
-    });
-
-    return dtos;
-  }
-
-  public static ModelDataDto convert(MarketData md) {
-
-    ModelDataDto dto = new ModelDataDto();
-    ModelDataPrimaryKey key = new ModelDataPrimaryKey();
-    key.timestamp = Date.from(md.getTimestamp());
-    LocalDateTime dt = LocalDateTime.ofInstant(md.getTimestamp(), ZoneOffset.UTC);
-    key.date = new BigInteger(dateFormatter.format(dt));
-    key.stream = md.getStream().toLowerCase();
-    dto.primarykey = key;
-    md.getFields().forEach(f -> {
-      dto.fields.add(f.serialize());
-    });
-
-    return dto;
-  }
-
+  Set<Field<?>> asFields();
 }

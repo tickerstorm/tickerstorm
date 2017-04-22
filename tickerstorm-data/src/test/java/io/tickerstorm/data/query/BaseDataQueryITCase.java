@@ -35,7 +35,7 @@ package io.tickerstorm.data.query;
 import com.google.common.eventbus.EventBus;
 import io.tickerstorm.common.eventbus.Destinations;
 import io.tickerstorm.data.converter.DataQueryClient;
-import io.tickerstorm.data.dao.MarketDataDao;
+import io.tickerstorm.data.dao.cassandra.CassandraMarketDataDao;
 import java.util.concurrent.atomic.AtomicLong;
 import org.junit.After;
 import org.junit.Before;
@@ -57,7 +57,7 @@ public abstract class BaseDataQueryITCase {
   protected EventBus notificationsBus;
 
   @Autowired
-  protected MarketDataDao dao;
+  protected CassandraMarketDataDao dao;
 
   protected Object verifier = null;
 

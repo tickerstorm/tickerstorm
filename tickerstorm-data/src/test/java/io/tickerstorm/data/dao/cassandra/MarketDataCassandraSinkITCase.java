@@ -30,14 +30,15 @@
  *
  */
 
-package io.tickerstorm.data.dao;
+package io.tickerstorm.data.dao.cassandra;
 
 import com.google.common.eventbus.EventBus;
-import io.tickerstorm.common.reactive.CompletionTracker;
-import io.tickerstorm.common.reactive.Observer;
 import io.tickerstorm.common.entity.Bar;
 import io.tickerstorm.common.eventbus.Destinations;
+import io.tickerstorm.common.reactive.CompletionTracker;
+import io.tickerstorm.common.reactive.Observer;
 import io.tickerstorm.data.TestMarketDataServiceConfig;
+import io.tickerstorm.data.dao.MarketDataDto;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Date;
@@ -72,7 +73,7 @@ public class MarketDataCassandraSinkITCase {
   private EventBus notificationsBus;
 
   @Autowired
-  private MarketDataDao dao;
+  private CassandraMarketDataDao dao;
 
   private String stream = "MarketDataCassandraSinkITCase".toLowerCase();
 
@@ -128,34 +129,35 @@ public class MarketDataCassandraSinkITCase {
 
       Assert.assertEquals(rs.size(), 1);
 
-      for (MarketDataDto dto : rs) {
+      rs.stream().map(dto -> {
+        return (CassandraMarketDataDto) dto;
+      }).forEach(dto -> {
+            Assert.assertEquals(dto.primarykey.stream, c.stream);
+            Assert.assertEquals(dto.close, c.close);
+            Assert.assertEquals(dto.low, c.low);
+            Assert.assertEquals(dto.high, c.high);
+            Assert.assertEquals(dto.open, c.open);
+            Assert.assertEquals(dto.volume, new BigDecimal(c.volume));
+            Assert.assertEquals(dto.primarykey.interval, c.interval);
+            Assert.assertEquals(dto.primarykey.timestamp, Date.from(c.timestamp));
+            Assert.assertEquals(dto.primarykey.symbol, c.symbol.toLowerCase());
+            Assert.assertNotNull(dto.primarykey.date);
 
-        Assert.assertEquals(dto.primarykey.stream, c.stream);
-        Assert.assertEquals(dto.close, c.close);
-        Assert.assertEquals(dto.low, c.low);
-        Assert.assertEquals(dto.high, c.high);
-        Assert.assertEquals(dto.open, c.open);
-        Assert.assertEquals(dto.volume, new BigDecimal(c.volume));
-        Assert.assertEquals(dto.primarykey.interval, c.interval);
-        Assert.assertEquals(dto.primarykey.timestamp, Date.from(c.timestamp));
-        Assert.assertEquals(dto.primarykey.symbol, c.symbol.toLowerCase());
-        Assert.assertNotNull(dto.primarykey.date);
+            Bar d = (Bar) dto.toMarketData(c.stream);
 
-        Bar d = (Bar) dto.toMarketData(c.stream);
-
-        Assert.assertEquals(d.stream, c.stream);
-        Assert.assertEquals(d.close, c.close);
-        Assert.assertEquals(d.low, c.low);
-        Assert.assertEquals(d.high, c.high);
-        Assert.assertEquals(d.open, c.open);
-        Assert.assertEquals(d.volume, c.volume);
-        Assert.assertEquals(d.interval, c.interval);
-        Assert.assertTrue(d.timestamp.compareTo(c.timestamp) == 0);
-        Assert.assertNotNull(d.timestamp);
-        Assert.assertNotNull(c.timestamp);
-        Assert.assertEquals(d.symbol, c.symbol.toLowerCase());
-
-      }
+            Assert.assertEquals(d.stream, c.stream);
+            Assert.assertEquals(d.close, c.close);
+            Assert.assertEquals(d.low, c.low);
+            Assert.assertEquals(d.high, c.high);
+            Assert.assertEquals(d.open, c.open);
+            Assert.assertEquals(d.volume, c.volume);
+            Assert.assertEquals(d.interval, c.interval);
+            Assert.assertTrue(d.timestamp.compareTo(c.timestamp) == 0);
+            Assert.assertNotNull(d.timestamp);
+            Assert.assertNotNull(c.timestamp);
+            Assert.assertEquals(d.symbol, c.symbol.toLowerCase());
+          }
+      );
 
       done.set(true);
 

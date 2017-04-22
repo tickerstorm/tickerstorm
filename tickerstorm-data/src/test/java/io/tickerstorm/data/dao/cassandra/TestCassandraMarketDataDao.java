@@ -1,0 +1,219 @@
+/*
+ * Copyright (c) 2017, Tickerstorm and/or its affiliates. All rights reserved.
+ *
+ *   Redistribution and use in source and binary forms, with or without
+ *   modification, are permitted provided that the following conditions
+ *   are met:
+ *
+ *     - Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *     - Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in the
+ *       documentation and/or other materials provided with the distribution.
+ *
+ *     - Neither the name of Tickerstorm or the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ *   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+ *   IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+ *   THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ *   PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ *   CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ *   EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ *   PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ *   PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ *   LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ *   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ *   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
+
+package io.tickerstorm.data.dao.cassandra;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
+import io.tickerstorm.common.entity.Bar;
+import io.tickerstorm.common.entity.Quote;
+import io.tickerstorm.common.entity.Tick;
+import io.tickerstorm.common.test.TestDataFactory;
+import io.tickerstorm.data.TestMarketDataServiceConfig;
+import io.tickerstorm.data.dao.MarketDataDto;
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.stream.Stream;
+import org.junit.After;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit4.SpringRunner;
+
+@RunWith(SpringRunner.class)
+@SpringBootTest(classes = {TestMarketDataServiceConfig.class})
+public class TestCassandraMarketDataDao {
+
+  @Autowired
+  private CassandraModelDataDao dao;
+
+  @After
+  public void cleanup() {
+    dao.deleteByStream("TestMarketDataDto");
+    dao.deleteByStream("TestMarketDataDto2");
+  }
+
+  @Test
+  public void convertCandle() {
+
+    Bar c = new Bar();
+    c.close = BigDecimal.TEN;
+    c.open = BigDecimal.TEN;
+    c.low = BigDecimal.TEN;
+    c.high = BigDecimal.TEN;
+    c.stream = "test";
+    c.symbol = "AAPL";
+    c.interval = Bar.EOD;
+    c.timestamp = Instant.now();
+    c.volume = 0;
+
+    CassandraMarketDataDto dto = CassandraMarketDataDto.convert(c);
+
+    assertEquals(dto.close, c.close);
+    assertEquals(dto.low, c.low);
+    assertEquals(dto.high, c.high);
+    assertEquals(dto.open, c.open);
+    assertEquals(dto.volume, BigDecimal.valueOf(c.volume));
+    assertEquals(dto.primarykey.stream, c.stream);
+    assertEquals(dto.primarykey.interval, c.interval.toLowerCase());
+    assertEquals(dto.primarykey.timestamp, Date.from(c.timestamp));
+    assertEquals(dto.primarykey.symbol, c.symbol.toLowerCase());
+    assertNotNull(dto.primarykey.date);
+
+    Bar d = (Bar) dto.toMarketData(c.stream);
+
+    assertEquals(d.close, c.close);
+    assertEquals(d.low, c.low);
+    assertEquals(d.high, c.high);
+    assertEquals(d.open, c.open);
+    assertEquals(d.volume, c.volume);
+    assertEquals(d.stream, c.stream.toLowerCase());
+    assertEquals(d.interval, c.interval.toLowerCase());
+
+    // assertEquals(d.timestamp, c.timestamp); not working
+    assertNotNull(d.timestamp);
+    assertNotNull(c.timestamp);
+    assertEquals(d.symbol, c.symbol.toLowerCase());
+
+  }
+
+  @Test
+  public void testSelectBars() throws Exception {
+
+    List<Bar> bars = TestDataFactory
+        .buildCandles(5, "goog", "TestMarketDataDto", new BigDecimal("34.4354"));
+    List<MarketDataDto> dtos = (List) CassandraMarketDataDto.convert(bars);
+    dao.ingest((Collection) dtos);
+
+    bars = TestDataFactory.buildCandles(2, "tol", "TestMarketDataDto2", new BigDecimal("12.243"));
+    dtos = (List) CassandraMarketDataDto.convert(bars);
+    dao.ingest((Collection) dtos);
+
+    Thread.sleep(1000);
+
+    long count = dao.count("TestMarketDataDto");
+    org.junit.Assert.assertEquals(5, count);
+
+    count = dao.count("TestMarketDataDto2");
+    org.junit.Assert.assertEquals(2, count);
+
+    Stream<MarketDataDto> dtoss = (Stream) dao.findAll("TestMarketDataDto");
+    org.junit.Assert.assertEquals(5, dtoss.count());
+
+    dtoss = (Stream) dao.findAll("TestMarketDataDto2");
+    org.junit.Assert.assertEquals(2, dtoss.count());
+
+    dao.deleteByStream("TestMarketDataDto");
+
+    count = dao.count("TestMarketDataDto");
+    org.junit.Assert.assertEquals(0, count);
+
+    count = dao.count("TestMarketDataDto2");
+    org.junit.Assert.assertEquals(2, count);
+
+  }
+
+  /**
+   * Not currently supported
+   */
+  // @Test
+  public void convertQuote() {
+
+    Quote c = new Quote("AAPL", "test", Instant.now());
+    c.ask = BigDecimal.TEN;
+    c.bid = BigDecimal.TEN;
+    c.askSize = 0;
+    c.bidSize = 0;
+
+    CassandraMarketDataDto dto = CassandraMarketDataDto.convert(c);
+
+    assertEquals(dto.ask, c.ask);
+    assertEquals(dto.bid, c.bid);
+    assertEquals(dto.askSize, BigDecimal.valueOf(c.askSize));
+    assertEquals(dto.bidSize, BigDecimal.valueOf(c.bidSize));
+    assertEquals(dto.primarykey.stream, c.stream.toLowerCase());
+    assertEquals(dto.primarykey.timestamp, Date.from(c.timestamp));
+    assertEquals(dto.primarykey.symbol, c.symbol.toLowerCase());
+    assertNotNull(dto.primarykey.date);
+
+    Quote d = (Quote) dto.toMarketData("Default");
+
+    assertEquals(d.ask, c.ask);
+    assertEquals(d.bid, c.bid);
+    assertEquals(d.askSize, c.askSize);
+    assertEquals(d.bidSize, c.bidSize);
+    assertEquals(d.stream, c.stream.toLowerCase());
+
+    // assertEquals(d.timestamp, c.timestamp); not working
+    assertNotNull(d.timestamp);
+    assertNotNull(c.timestamp);
+    assertEquals(d.symbol, c.symbol.toLowerCase());
+
+  }
+
+  /**
+   * Not currently supported
+   */
+  // @Test
+  public void convertTick() {
+
+    Tick c = new Tick("AAPL", "test", Instant.now());
+    c.price = BigDecimal.TEN;
+    c.quantity = BigDecimal.TEN;
+    CassandraMarketDataDto dto = CassandraMarketDataDto.convert(c);
+
+    assertEquals(dto.price, c.price);
+    assertEquals(dto.quantity, c.quantity);
+    assertEquals(dto.primarykey.stream, c.stream);
+    assertEquals(dto.primarykey.timestamp, Date.from(c.timestamp));
+    assertEquals(dto.primarykey.symbol, c.symbol.toLowerCase());
+    assertNotNull(dto.primarykey.date);
+
+    Tick d = (Tick) dto.toMarketData("Default");
+
+    assertEquals(d.price, c.price);
+    assertEquals(d.quantity, c.quantity);
+    assertEquals(d.stream, c.stream.toLowerCase());
+
+    // assertEquals(d.timestamp, c.timestamp); not working
+    assertNotNull(d.timestamp);
+    assertNotNull(c.timestamp);
+    assertEquals(d.symbol, c.symbol.toLowerCase());
+
+  }
+
+}

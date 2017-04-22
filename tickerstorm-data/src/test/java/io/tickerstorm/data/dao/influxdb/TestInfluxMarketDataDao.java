@@ -30,22 +30,26 @@
  *
  */
 
-package io.tickerstorm.data.dao;
+package io.tickerstorm.data.dao.influxdb;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import io.tickerstorm.common.entity.Bar;
+import io.tickerstorm.common.entity.Field.Name;
+import io.tickerstorm.common.entity.MarketData;
 import io.tickerstorm.common.entity.Quote;
 import io.tickerstorm.common.entity.Tick;
 import io.tickerstorm.common.test.TestDataFactory;
 import io.tickerstorm.data.TestMarketDataServiceConfig;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
-import java.util.stream.Stream;
+import org.influxdb.dto.Point;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,16 +58,16 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {TestMarketDataServiceConfig.class})
-public class TestMarketDataDao {
-
-  @After
-  public void cleanup() {
-    dao.deleteByStream("TestMarketDataDto");
-    dao.deleteByStream("TestMarketDataDto2");
-  }
+public class TestInfluxMarketDataDao {
 
   @Autowired
-  private MarketDataDao dao;
+  private InfluxMarketDataDao dao;
+
+  @Before
+  public void cleanup() {
+    dao.newDelete().bySource("TestMarketDataDto").delete();
+    dao.newDelete().bySource("TestMarketDataDto2").delete();
+  }
 
   @Test
   public void convertCandle() {
@@ -75,24 +79,24 @@ public class TestMarketDataDao {
     c.high = BigDecimal.TEN;
     c.stream = "test";
     c.symbol = "AAPL";
-    c.interval = Bar.EOD;
+    c.interval = Bar.MIN_1_INTERVAL;
     c.timestamp = Instant.now();
     c.volume = 0;
 
-    MarketDataDto dto = MarketDataDto.convert(c);
+    InfluxMarketDataDto dto = InfluxMarketDataDto.convert(c);
+    Point p = dto.getPoint();
 
-    assertEquals(dto.close, c.close);
-    assertEquals(dto.low, c.low);
-    assertEquals(dto.high, c.high);
-    assertEquals(dto.open, c.open);
-    assertEquals(dto.volume, BigDecimal.valueOf(c.volume));
-    assertEquals(dto.primarykey.stream, c.stream);
-    assertEquals(dto.primarykey.interval, c.interval.toLowerCase());
-    assertEquals(dto.primarykey.timestamp, Date.from(c.timestamp));
-    assertEquals(dto.primarykey.symbol, c.symbol.toLowerCase());
-    assertNotNull(dto.primarykey.date);
+    assertEquals(p.getFields().get(Name.CLOSE.field()), c.close.doubleValue());
+    assertEquals(p.getFields().get(Name.LOW.field()), c.low.doubleValue());
+    assertEquals(p.getFields().get(Name.HIGH.field()), c.high.doubleValue());
+    assertEquals(p.getFields().get(Name.OPEN.field()), c.open.doubleValue());
+    assertEquals(p.getFields().get(Name.VOLUME.field()), BigDecimal.valueOf(c.volume).intValue());
+    assertEquals(p.getTags().get(Name.SOURCE.field()), c.stream);
+    assertEquals(p.getTags().get(Name.INTERVAL.field()), c.interval.toLowerCase());
+    assertEquals(p.getTime(), Long.valueOf(c.timestamp.toEpochMilli()));
+    assertEquals(p.getMeasurement(), c.symbol.toLowerCase());
 
-    Bar d = (Bar) dto.toMarketData(c.stream);
+    Bar d = (Bar) dto.toMarketData();
 
     assertEquals(d.close, c.close);
     assertEquals(d.low, c.low);
@@ -105,44 +109,45 @@ public class TestMarketDataDao {
     // assertEquals(d.timestamp, c.timestamp); not working
     assertNotNull(d.timestamp);
     assertNotNull(c.timestamp);
-    assertEquals(d.symbol, c.symbol.toLowerCase());
+    assertEquals(d.symbol, c.symbol);
 
   }
 
   @Test
   public void testSelectBars() throws Exception {
 
-    List<Bar> bars = TestDataFactory
-        .buildCandles(5, "goog", "TestMarketDataDto", new BigDecimal("34.4354"));
-    List<MarketDataDto> dtos = MarketDataDto.convert(bars);
-    dao.ingest(dtos);
+    List<Bar> bars = TestDataFactory.buildCandles(5, "goog", "TestMarketDataDto", new BigDecimal("34.4354"));
+    dao.ingest((Collection) bars);
 
     bars = TestDataFactory.buildCandles(2, "tol", "TestMarketDataDto2", new BigDecimal("12.243"));
-    dtos = MarketDataDto.convert(bars);
-    dao.ingest(dtos);
+    dao.ingest((Collection) bars);
 
     Thread.sleep(1000);
 
-    long count = dao.count("TestMarketDataDto");
+    long count = dao.newCount(Bar.TYPE).bySource("TestMarketDataDto").count();
     org.junit.Assert.assertEquals(5, count);
 
-    count = dao.count("TestMarketDataDto2");
+    count = dao.newCount(Bar.TYPE).bySource("TestMarketDataDto2").count();
     org.junit.Assert.assertEquals(2, count);
 
-    Stream<MarketDataDto> dtoss = dao.findAll("TestMarketDataDto");
-    org.junit.Assert.assertEquals(5, dtoss.count());
+    List<MarketData> dtoss = dao.findAll("TestMarketDataDto");
+    org.junit.Assert.assertEquals(5, dtoss.size());
 
     dtoss = dao.findAll("TestMarketDataDto2");
-    org.junit.Assert.assertEquals(2, dtoss.count());
+    org.junit.Assert.assertEquals(2, dtoss.size());
 
-    dao.deleteByStream("TestMarketDataDto");
+    dao.newDelete().bySource("TestMarketDataDto").delete();
 
-    count = dao.count("TestMarketDataDto");
+    count = dao.newCount(Bar.TYPE).bySource("TestMarketDataDto").count();
     org.junit.Assert.assertEquals(0, count);
 
-    count = dao.count("TestMarketDataDto2");
+    count = dao.newCount(Bar.TYPE).bySource("TestMarketDataDto2").count();
     org.junit.Assert.assertEquals(2, count);
 
+    dao.newDelete().bySource("TestMarketDataDto2").delete();
+
+    count = dao.newCount(Bar.TYPE).bySource("TestMarketDataDto2").count();
+    org.junit.Assert.assertEquals(0, count);
   }
 
   /**
@@ -157,18 +162,18 @@ public class TestMarketDataDao {
     c.askSize = 0;
     c.bidSize = 0;
 
-    MarketDataDto dto = MarketDataDto.convert(c);
+    InfluxMarketDataDto dto = InfluxMarketDataDto.convert(c);
+    Point p = dto.getPoint();
 
-    assertEquals(dto.ask, c.ask);
-    assertEquals(dto.bid, c.bid);
-    assertEquals(dto.askSize, BigDecimal.valueOf(c.askSize));
-    assertEquals(dto.bidSize, BigDecimal.valueOf(c.bidSize));
-    assertEquals(dto.primarykey.stream, c.stream.toLowerCase());
-    assertEquals(dto.primarykey.timestamp, Date.from(c.timestamp));
-    assertEquals(dto.primarykey.symbol, c.symbol.toLowerCase());
-    assertNotNull(dto.primarykey.date);
+    assertEquals(p.getFields().get(Name.ASK.field()), c.ask);
+    assertEquals(p.getFields().get(Name.BID.field()), c.bid);
+    assertEquals(p.getFields().get(Name.ASK_SIZE.field()), c.askSize);
+    assertEquals(p.getFields().get(Name.BID_SIZE.field()), c.bidSize);
+    assertEquals(p.getTags().get(Name.SOURCE.field()), c.stream);
+    assertEquals(p.getTime(), Date.from(c.timestamp));
+    assertEquals(p.getMeasurement(), c.symbol.toLowerCase());
 
-    Quote d = (Quote) dto.toMarketData("Default");
+    Quote d = (Quote) dto.toMarketData();
 
     assertEquals(d.ask, c.ask);
     assertEquals(d.bid, c.bid);
@@ -192,16 +197,16 @@ public class TestMarketDataDao {
     Tick c = new Tick("AAPL", "test", Instant.now());
     c.price = BigDecimal.TEN;
     c.quantity = BigDecimal.TEN;
-    MarketDataDto dto = MarketDataDto.convert(c);
+    InfluxMarketDataDto dto = InfluxMarketDataDto.convert(c);
+    Point p = dto.getPoint();
 
-    assertEquals(dto.price, c.price);
-    assertEquals(dto.quantity, c.quantity);
-    assertEquals(dto.primarykey.stream, c.stream);
-    assertEquals(dto.primarykey.timestamp, Date.from(c.timestamp));
-    assertEquals(dto.primarykey.symbol, c.symbol.toLowerCase());
-    assertNotNull(dto.primarykey.date);
+    assertEquals(p.getFields().get(Name.PRICE.field()), c.price);
+    assertEquals(p.getFields().get(Name.QUANTITY.field()), c.quantity);
+    assertEquals(p.getTags().get(Name.SOURCE.field()), c.stream);
+    assertEquals(p.getTime(), Date.from(c.timestamp));
+    assertEquals(p.getMeasurement(), c.symbol.toLowerCase());
 
-    Tick d = (Tick) dto.toMarketData("Default");
+    Tick d = (Tick) dto.toMarketData();
 
     assertEquals(d.price, c.price);
     assertEquals(d.quantity, c.quantity);

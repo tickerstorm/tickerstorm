@@ -34,8 +34,8 @@ import io.tickerstorm.common.command.ExportModelDataToCSV;
 import io.tickerstorm.common.command.Markers;
 import io.tickerstorm.common.reactive.Notification;
 import io.tickerstorm.common.eventbus.Destinations;
-import io.tickerstorm.data.dao.ModelDataDao;
-import io.tickerstorm.data.dao.ModelDataDto;
+import io.tickerstorm.data.dao.cassandra.CassandraModelDataDao;
+import io.tickerstorm.data.dao.cassandra.CassandraModelDataDto;
 import net.sf.ehcache.Element;
 
 @Service
@@ -54,7 +54,7 @@ public class ModelDataExporter {
   private EventBus notificationBus;
 
   @Autowired
-  private ModelDataDao cassandraDao;
+  private CassandraModelDataDao cassandraDao;
 
   @PostConstruct
   private void init() {
@@ -104,7 +104,7 @@ public class ModelDataExporter {
       mapWriter.writeHeader(header);
       Map<String, Object> row = new HashMap<>();
 
-      Stream<ModelDataDto> dtos = cassandraDao
+      Stream<CassandraModelDataDto> dtos = cassandraDao
           .findByStreamAndTimestampIsBetween(command.modelQuery.getStream(), command.modelQuery.from, command.modelQuery.until).stream();
 
       dtos.forEach(d -> {

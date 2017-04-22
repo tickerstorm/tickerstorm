@@ -44,6 +44,8 @@ import io.tickerstorm.common.entity.Bar;
 import io.tickerstorm.common.eventbus.Destinations;
 import io.tickerstorm.data.dao.MarketDataDao;
 import io.tickerstorm.data.dao.MarketDataDto;
+import io.tickerstorm.data.dao.cassandra.CassandraMarketDataDao;
+import io.tickerstorm.data.dao.cassandra.CassandraMarketDataDto;
 import java.math.BigInteger;
 import java.time.Instant;
 import java.time.ZoneId;

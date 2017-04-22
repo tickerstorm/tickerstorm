@@ -30,15 +30,52 @@
  *
  */
 
-package io.tickerstorm.data.dao;
+package io.tickerstorm.data.dao.influxdb;
 
-import io.tickerstorm.common.entity.MarketData;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import org.influxdb.InfluxDBBatchListener;
+import org.influxdb.dto.Point;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * Created by kkarski on 4/10/17.
+ * Created by kkarski on 4/17/17.
  */
-public interface MarketDataDto {
+public class BroadcastInfluxDBListener implements InfluxDBBatchListener {
 
-  MarketData toMarketData(String stream);
+  private static final Logger logger = LoggerFactory.getLogger(BroadcastInfluxDBListener.class);
 
+  private final List<InfluxDBBatchListener> listeners = new CopyOnWriteArrayList<>();
+
+  @Override
+  public void onPointBatchWrite(List<Point> points) {
+
+    for (InfluxDBBatchListener l : this.listeners) {
+      try {
+        l.onPointBatchWrite(points);
+      } catch (Exception e) {
+        logger.error(e.getMessage(), e);
+      }
+    }
+  }
+
+  @Override
+  public void onException(List<Point> points, Throwable e) {
+    for (InfluxDBBatchListener l : this.listeners) {
+      try {
+        l.onException(points, e);
+      } catch (Exception ex) {
+        logger.error(ex.getMessage(), ex);
+      }
+    }
+  }
+
+  public void addListener(InfluxDBBatchListener listener) {
+    this.listeners.add(listener);
+  }
+
+  public void removeListener(InfluxDBBatchListener listener) {
+    this.listeners.remove(listener);
+  }
 }

@@ -43,8 +43,9 @@ import io.tickerstorm.common.eventbus.Destinations;
 import io.tickerstorm.common.eventbus.EventBusToEventBusBridge;
 import io.tickerstorm.common.eventbus.EventBusToJMSBridge;
 import io.tickerstorm.common.eventbus.JmsToEventBusBridge;
-import io.tickerstorm.data.dao.MarketDataDao;
-import io.tickerstorm.data.dao.ModelDataDao;
+import io.tickerstorm.data.dao.cassandra.CassandraMarketDataDao;
+import io.tickerstorm.data.dao.cassandra.CassandraModelDataDao;
+import io.tickerstorm.data.dao.influxdb.InfluxDBContext;
 import io.tickerstorm.service.HeartBeatGenerator;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -67,10 +68,10 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.data.cassandra.repository.config.EnableCassandraRepositories;
 
 @SpringBootApplication(scanBasePackages = {"io.tickerstorm.data"})
-@EnableCassandraRepositories(basePackageClasses = {MarketDataDao.class, ModelDataDao.class})
+@EnableCassandraRepositories(basePackageClasses = {CassandraMarketDataDao.class, CassandraModelDataDao.class})
 @ImportResource(value = {"classpath:/META-INF/spring/cassandra-beans.xml"})
 @PropertySource({"classpath:/default.properties"})
-@Import({EventBusContext.class})
+@Import({EventBusContext.class, InfluxDBContext.class})
 public class MarketDataApplication {
 
   private static final Logger logger = LoggerFactory.getLogger(MarketDataApplication.class);
@@ -101,10 +102,15 @@ public class MarketDataApplication {
 
   @Qualifier(Destinations.HISTORICL_MARKETDATA_BUS)
   @Bean
-  public EventBus buildHistoricalEventBus() {
-    // return new AsyncEventBus(Destinations.HISTORICL_MARKETDATA_BUS, executor);
-    return new EventBus(Destinations.HISTORICL_MARKETDATA_BUS);
+  public EventBus buildHistoricalEventBus(Executor executor) {
+    return new AsyncEventBus(executor, new SubscriberExceptionHandler() {
 
+      @Override
+      public void handleException(Throwable exception, SubscriberExceptionContext context) {
+        Throwable e = Throwables.getRootCause(exception);
+        logger.error(e.getMessage(), e);
+      }
+    });
   }
 
   @Qualifier(Destinations.MODEL_DATA_BUS)

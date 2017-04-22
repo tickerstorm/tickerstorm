@@ -30,15 +30,31 @@
  *
  */
 
-package io.tickerstorm.data.dao;
+package io.tickerstorm.data.dao.influxdb;
 
-import io.tickerstorm.common.entity.MarketData;
+import io.tickerstorm.common.entity.Field;
+import io.tickerstorm.data.dao.ModelDataDto;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Created by kkarski on 4/10/17.
  */
-public interface MarketDataDto {
+public class InfluxModelDataDto implements ModelDataDto {
 
-  MarketData toMarketData(String stream);
+  public final Set<String> fields = new HashSet<>();
 
+  
+  @Override
+  public Set<Field<?>> asFields() {
+
+    Set<Field<?>> fs = new HashSet<>();
+
+    fields.stream().forEach(s -> {
+      fs.add(Field.deserialize(s));
+    });
+
+    return fs;
+
+  }
 }

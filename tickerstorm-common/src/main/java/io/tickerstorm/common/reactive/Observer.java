@@ -174,7 +174,7 @@ public class Observer implements CompletionTracker {
   @Subscribe
   public void onNotification(Notification not) {
 
-    if (timerStart != null && timerStart.test(not) && future == null && !this.started.get()) {
+    if (timerStart != null && timerStart.test(not) && !this.started.get()) {
       logger.info("Tracker " + name + " started");
       this.started.set(true);
       reset();
@@ -209,6 +209,7 @@ public class Observer implements CompletionTracker {
       } catch (IllegalArgumentException e) {
         //ignore if not registered
       }
+
       done.compareAndSet(false, true);
       this.not = not;
 
