@@ -160,6 +160,36 @@
       </build>
     </profile>
   </profiles>
+  <distributionManagement>
+    <repository>
+      <id>tickerstorm-releases</id>
+      <name>tickerstorm-releases</name>
+      <url>https://tickerstorm.jfrog.io/tickerstorm/libs-release</url>
+    </repository>
+    <snapshotRepository>
+      <id>tickerstorm-snapshots</id>
+      <name>tickerstorm-snapshots</name>
+      <url>https://tickerstorm.jfrog.io/tickerstorm/libs-snapshot</url>
+    </snapshotRepository>
+  </distributionManagement>
+  <repositories>
+    <repository>
+      <id>tickerstorm-releases</id>
+      <name>TickerStorm Releases</name>
+      <url>https://tickerstorm.jfrog.io/tickerstorm/libs-release</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+    </repository>
+    <repository>
+      <id>tickerstorm-snapshots</id>
+      <name>TickerStorm Releases</name>
+      <url>https://tickerstorm.jfrog.io/tickerstorm/libs-snapshot</url>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
   <parent>
     <groupId>com.appcrossings</groupId>
     <artifactId>appcrossings-parent</artifactId>
