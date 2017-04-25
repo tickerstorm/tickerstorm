@@ -1,0 +1,25 @@
+language: java
+
+jdk:
+  - oraclejdk8
+
+build:
+  pre_ci:
+    - mvn clean
+
+  ci:
+    - mkdir -p shippable/testresults
+    - mkdir -p shippable/codecoverage
+    - shippable_retry mvn install -Pshippable
+
+  on_success:
+    - docker build -f ./tickerstorm-data/Dockerfile -t dockerhub.com/tickerstorm/tickerstorm-data:latest ./tickerstorm-data/
+    - docker build -f ./tickerstorm-strategy/Dockerfile -t dockerhub.com/tickerstorm/tickerstorm-strategy:latest ./tickerstorm-strategy/
+
+  integrations:
+    hub:
+      - integrationName: DockerHub
+        type: docker
+        branches:
+          only:
+          - master
