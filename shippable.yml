@@ -2,14 +2,18 @@ language: java
 
 jdk:
   - oraclejdk8
+  
+env:
+  - secure: Omi+96lGrBhUmvhAqrwheC1xovWLa4AioiVyiuoOJ/lLXsbwTRPrsV/0bLkwteK8txFepLJQZmdeLlMd1Q4SCJ+8zm8uP9FbLnj44lmKSAMb1aTcKHKwHM3jQADKmYuZ6txMh8goyrk72IlsSRXdnpsVDJme9Ix+CwL+f51678l4iL8FXSCNMco5hqJ+06HH3AaegWNPnusH/a/pOy+g3+zFlFefOoAUfSKE4JeX5QNw1PbJFO0S21bcFoXp9KjHHrlVObfxKf+pJL7t8nxQnvJ7fuKJw/F+eqXA14drtiIAR9klIcAqwdfsfGidZMPUoqGhgTtJG71IjlDoBQYb2w==
 
 build:
   ci:
     - mkdir -p shippable/testresults
     - mkdir -p shippable/codecoverage
-    - shippable_retry mvn clean install -Pshippable
+    - shippable_retry mvn clean install -Pshippable -Daws.accessKeyId=$awsAccessKeyId -Daws.secretKey=$awsSecretKey
 
   on_success:
+    - mvn deploy -Dmaven.install.skip=true -Daws.accessKeyId=$awsAccessKeyId -Daws.secretKey=$awsSecretKeys
     - docker build -f ./tickerstorm-data/Dockerfile -t dockerhub.com/tickerstorm/tickerstorm-data:latest ./tickerstorm-data/
     - docker build -f ./tickerstorm-strategy/Dockerfile -t dockerhub.com/tickerstorm/tickerstorm-strategy:latest ./tickerstorm-strategy/
 
