@@ -160,49 +160,10 @@
       </build>
     </profile>
   </profiles>
-  <build>
-    <extensions>
-      <extension>
-        <groupId>org.springframework.build</groupId>
-        <artifactId>aws-maven</artifactId>
-        <version>5.0.0.RELEASE</version>
-      </extension>
-    </extensions>
-  </build>
-  <distributionManagement>
-    <repository>
-      <id>aws-release</id>
-      <name>AWS Release Repository</name>
-      <url>s3://maven.appcrossings.net/release</url>
-    </repository>
-    <snapshotRepository>
-      <id>aws-snapshot</id>
-      <name>AWS Snapshot Repository</name>
-      <url>s3://maven.appcrossings.net/snapshot</url>
-    </snapshotRepository>
-  </distributionManagement>
-  <repositories>
-    <repository>
-      <id>aws-release</id>
-      <name>AWS Release Repository</name>
-      <url>s3://maven.appcrossings.net/release</url>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-    </repository>
-    <repository>
-      <id>aws-snapshot</id>
-      <name>AWS Snapshot Repository</name>
-      <url>s3://maven.appcrossings.net/snapshot</url>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-    </repository>
-  </repositories>
   <parent>
     <groupId>com.appcrossings</groupId>
     <artifactId>appcrossings-parent</artifactId>
-    <version>1.0.5</version>
+    <version>1.0.6</version>
   </parent>
   <properties>
     <project.version>1.0.0-SNAPSHOT</project.version>

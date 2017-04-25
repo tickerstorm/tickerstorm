@@ -10,6 +10,7 @@ build:
   ci:
     - mkdir -p shippable/testresults
     - mkdir -p shippable/codecoverage
+    - shippable_retry mvn clean install -N -Pshippable -Daws.accessKeyId=$awsAccessKeyId -Daws.secretKey=$awsSecretKey
     - shippable_retry mvn clean install -Pshippable -Daws.accessKeyId=$awsAccessKeyId -Daws.secretKey=$awsSecretKey
 
   on_success:
