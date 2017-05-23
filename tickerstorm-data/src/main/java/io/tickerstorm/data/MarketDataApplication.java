@@ -43,8 +43,6 @@ import io.tickerstorm.common.eventbus.Destinations;
 import io.tickerstorm.common.eventbus.EventBusToEventBusBridge;
 import io.tickerstorm.common.eventbus.EventBusToJMSBridge;
 import io.tickerstorm.common.eventbus.JmsToEventBusBridge;
-import io.tickerstorm.data.dao.cassandra.CassandraMarketDataDao;
-import io.tickerstorm.data.dao.cassandra.CassandraModelDataDao;
 import io.tickerstorm.data.dao.influxdb.InfluxDBContext;
 import io.tickerstorm.service.HeartBeatGenerator;
 import java.util.concurrent.Executor;
@@ -63,13 +61,9 @@ import org.springframework.boot.actuate.metrics.GaugeService;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
-import org.springframework.context.annotation.ImportResource;
 import org.springframework.context.annotation.PropertySource;
-import org.springframework.data.cassandra.repository.config.EnableCassandraRepositories;
 
 @SpringBootApplication(scanBasePackages = {"io.tickerstorm.data"})
-@EnableCassandraRepositories(basePackageClasses = {CassandraMarketDataDao.class, CassandraModelDataDao.class})
-@ImportResource(value = {"classpath:/META-INF/spring/cassandra-beans.xml"})
 @PropertySource({"classpath:/default.properties"})
 @Import({EventBusContext.class, InfluxDBContext.class})
 public class MarketDataApplication {

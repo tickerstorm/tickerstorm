@@ -44,23 +44,23 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 
 public class TestDataFactory {
-  
+
   static final SecureRandom r = new SecureRandom();
 
   public static List<Bar> buildCandles(int count, String symbol, String stream, BigDecimal open) {
-    
+
     List<Bar> cs = Lists.newArrayList();
     Instant inst = Instant.now().minus(count + 1, ChronoUnit.MINUTES);
 
     for (int i = 0; i < count; i++) {
 
       BigDecimal close = randomRange(open, 0.03, 0.03);
+      open = randomRange(open, 0.03, 0.03);
       BigDecimal high = BigDecimal.valueOf(Math.max(close.doubleValue(), open.doubleValue())).multiply(BigDecimal.valueOf(1.03));
-      BigDecimal low = BigDecimal.valueOf(Math.min(close.doubleValue(), open.doubleValue())).divide(BigDecimal.valueOf(1.03), 4,
-          BigDecimal.ROUND_HALF_UP);
+      BigDecimal low = BigDecimal.valueOf(Math.min(close.doubleValue(), open.doubleValue())).divide(BigDecimal.valueOf(1.03), 4, BigDecimal.ROUND_HALF_UP);
       BigDecimal vol = randomRange(new BigDecimal(23215D), new BigDecimal(43542345D));
 
-      Bar c = new Bar(symbol, "Google", inst, open, close, high, low, Bar.MIN_1_INTERVAL, vol.intValue());
+      Bar c = new Bar(symbol, "Google", inst, open, close, high, low, Bar.MIN_1_INTERVAL, vol);
       c.stream = stream;
       cs.add(c);
       inst = inst.plus(1, ChronoUnit.MINUTES);
@@ -80,7 +80,7 @@ public class TestDataFactory {
   }
 
   public static BigDecimal randomRange(BigDecimal min, BigDecimal max) {
-    
+
     BigDecimal range = max.subtract(min);
     BigDecimal result = min.add(range.multiply(new BigDecimal(r.nextDouble())));
     return result.abs();

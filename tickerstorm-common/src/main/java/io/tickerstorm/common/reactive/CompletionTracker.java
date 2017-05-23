@@ -59,6 +59,16 @@ public interface CompletionTracker {
 
   public interface ModelData {
 
+    public static Predicate<Notification> someModelDataQueryEnded =
+        (n -> n.is(Markers.MODEL_DATA.toString()) && n.is(Markers.QUERY.toString()) && n.is(Markers.END.toString()));
+    public static Predicate<Notification> someModelDataQueryStarted =
+        (n -> n.is(Markers.MODEL_DATA.toString()) && n.is(Markers.QUERY.toString()) && n.is(Markers.START.toString()));
+
+    public static Predicate<Notification> isSaved(String stream) {
+      return (n -> stream.equalsIgnoreCase(n.stream) && n.is(Markers.MODEL_DATA.toString()) && n.is(Markers.SAVE.toString())
+          && n.is(Markers.SUCCESS.toString()));
+    }
+
     public interface Export {
 
       public static Predicate<Notification> someCsvExportStarted = (f -> f.is(Markers.FILE.toString()) && f.is(Markers.EXPORT.toString())
@@ -66,23 +76,16 @@ public interface CompletionTracker {
 
       public static Predicate<Notification> someCsvExportFinished = (f -> f.is(Markers.FILE.toString()) && f.is(Markers.EXPORT.toString())
           && f.is(Markers.CSV.toString()) && f.is(Markers.SUCCESS.toString()));
+
+      public static Predicate<Notification> someCsvExportFailed = (f -> f.is(Markers.FILE.toString()) && f.is(Markers.EXPORT.toString())
+          && f.is(Markers.CSV.toString()) && f.is(Markers.FAILED.toString()));
     }
-
-    public static Predicate<Notification> isSaved(String stream) {
-      return (n -> stream.equalsIgnoreCase(n.stream) && n.is(Markers.MODEL_DATA.toString()) && n.is(Markers.SAVE.toString())
-          && n.is(Markers.SUCCESS.toString()));
-    }
-
-    public static Predicate<Notification> someModelDataQueryEnded =
-        (n -> n.is(Markers.MODEL_DATA.toString()) && n.is(Markers.QUERY.toString()) && n.is(Markers.END.toString()));
-
-    public static Predicate<Notification> someModelDataQueryStarted =
-        (n -> n.is(Markers.MODEL_DATA.toString()) && n.is(Markers.QUERY.toString()) && n.is(Markers.START.toString()));
 
 
   }
 
   public interface Session {
+
     public static Predicate<Command> isStart =
         (p -> p.markers.contains(Markers.SESSION.toString()) && p.markers.contains(Markers.START.toString()));
 

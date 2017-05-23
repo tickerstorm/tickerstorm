@@ -41,8 +41,6 @@ import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.eventbus.Destinations;
 import io.tickerstorm.common.reactive.Notification;
 import io.tickerstorm.data.TestMarketDataServiceConfig;
-import io.tickerstorm.data.dao.ModelDataDto;
-import io.tickerstorm.data.dao.cassandra.CassandraModelDataDto;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -50,7 +48,9 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -65,78 +65,100 @@ import org.springframework.test.context.junit4.SpringRunner;
 @SpringBootTest(classes = {TestMarketDataServiceConfig.class})
 public class InfluxPerformanceITCase {
 
-  private final static org.slf4j.Logger logger = LoggerFactory
-      .getLogger(InfluxPerformanceITCase.class);
-  private final List<ModelDataDto> dtos = new ArrayList<>();
+  private final static org.slf4j.Logger logger = LoggerFactory.getLogger(InfluxPerformanceITCase.class);
   private final List<Bar> cs = new ArrayList<>();
   private final String stream = "InfluxPerformanceITCase";
+  private final AtomicBoolean success = new AtomicBoolean(false);
   @Qualifier(Destinations.NOTIFICATIONS_BUS)
   @Autowired
   private EventBus notificationsBus;
-
   @Autowired
-  private InfluxMarketDataDao dao;
+  private InfluxModelDataDao dao;
 
   @Qualifier(Destinations.MODEL_DATA_BUS)
   @Autowired
   private EventBus modelDataBus;
 
   @Before
-  public void clean() throws Exception {
-    dao.newDelete().bySource(stream).delete();
-    Thread.sleep(2000);
+  public void init() throws Exception {
 
     long time = System.currentTimeMillis();
+    Instant n = Instant.now();
     for (int j = 0; j < 2000; j++) {
-      Bar c =
-          new Bar("Goog", stream, Instant.now().plus(1, ChronoUnit.MINUTES),
+      n = n.plus(1, ChronoUnit.MINUTES);
+      final Bar c =
+          new Bar("Goog", stream, n,
               new BigDecimal(Math.random()), new BigDecimal(Math.random()),
               new BigDecimal(Math.random()), new BigDecimal(Math.random()), "1m",
-              Double.valueOf(Math.random()).intValue());
+              new BigDecimal(Math.random()));
 
       for (int i = 0; i < 3; i++) {
         for (Field<?> f : c.getFields()) {
-          c.getFields().add(new BaseField<BigDecimal>(f, "test-field-p" + i, new BigDecimal(Math.random())));
+         // c.addField(new BaseField<BigDecimal>(f, "test-field-p" + i, new BigDecimal(Math.random())));
         }
       }
-
       cs.add(c);
-      CassandraModelDataDto dto = CassandraModelDataDto.convert(c);
-      dtos.add(dto);
 
     }
-    logger.info(
-        "Converting market data of size " + dtos.size() + " took " + (System.currentTimeMillis()
-            - time) + "ms");
+  }
+
+  @After
+  public void clean() throws Exception {
+    dao.deleteByStream(stream);
   }
 
   @Test
-  public void testPureInfluxStorage() {
+  public void testPureMarketDataInfluxStorage() throws Exception {
 
     long time = System.currentTimeMillis();
-    dao.ingest((Collection) dtos);
+    dao.ingestMarketData((Collection) cs);
+    Thread.sleep(500);
+    Assert.assertEquals(2000, dao.count(stream));
     logger.info(
-        "Pure influx storage of " + dtos.size() + " took " + (System.currentTimeMillis() - time)
+        "Pure influx storage of " + cs.size() + " took " + (System.currentTimeMillis() - time)
             + "ms");
-
   }
 
   @Test
-  public void testStoreToCassandraViaModelDataBus() throws Exception {
+  public void testPureFieldInfluxStorage() throws Exception {
 
-    final AtomicInteger i = new AtomicInteger(0);
     long time = System.currentTimeMillis();
-    notificationsBus.register(new InfluxStorageEventListener(time));
-    cs.forEach(c -> {
-      c.getFields().forEach(f -> {
-        i.addAndGet(1);
-        modelDataBus.post(f);
-      });
+    final List<Field<?>> fs = new ArrayList<>();
+    cs.stream().map(b -> {
+      return b.getFields();
+    }).forEach(s -> {
+      fs.addAll(s);
     });
 
-    logger.info("Dispatching " + i + " fields took " + (System.currentTimeMillis() - time) + "ms");
-    Thread.sleep(8000);
+    dao.ingest(fs);
+    Thread.sleep(500);
+    Assert.assertEquals(2000, dao.count(stream));
+    logger.info(
+        "Pure influx storage of " + cs.size() + " took " + (System.currentTimeMillis() - time)
+            + "ms");
+  }
 
+  @Test
+  public void testStoreToInfluxViaModelDataBus() throws Exception {
+
+    final AtomicInteger i = new AtomicInteger(0);
+    final List<Field<?>> fs = new ArrayList<>();
+    cs.stream().map(b -> {
+      return b.getFields();
+    }).forEach(s -> {
+      fs.addAll(s);
+    });
+
+    long time = System.currentTimeMillis();
+    notificationsBus.register(new InfluxStorageEventListener(time));
+    fs.stream().forEach(f -> {
+      modelDataBus.post(f);
+    });
+
+    logger.info("Dispatching " + fs.size() + " fields took " + (System.currentTimeMillis() - time) + "ms");
+    Thread.sleep(1000);
+
+    Assert.assertTrue(success.get());
   }
 
   private class InfluxStorageEventListener {
@@ -155,19 +177,19 @@ public class InfluxPerformanceITCase {
 
         Notification n = (Notification) s;
 
-        synchronized (count) {
-          if (n.markers.contains(Markers.MODEL_DATA.toString()) && n.markers.contains(Markers.SAVE.toString())) {
-            count.addAndGet(n.expect);
-          }
+        if (n.markers.contains(Markers.MODEL_DATA.toString()) && n.markers.contains(Markers.SAVE.toString())) {
+          count.addAndGet(n.expect);
         }
 
-        System.out.println("Marker " + count.get());
+        logger.info("Confirmed " + n.expect + " out of " + count.get() + " total");
 
-        if (count.get() == 18000) {
+        if (count.get() == 10000) {//While we dispatch 18000 fields, timestamp, stream, symbol and interval become tags so they don't count in points count
           long took = (n.eventTime.toEpochMilli() - time);
           logger.info("Persisting " + count.get() + " fields took " + took + "ms");
-          if (took > 2000) {
-            Assert.fail("Persisting model events took longer than 2s");
+          if (took > 700) {
+            Assert.fail("Persisting model events took longer than 700ms");
+          } else {
+            success.set(true);
           }
         }
       }

@@ -33,12 +33,12 @@
 package io.tickerstorm.data.service;
 
 import com.google.common.eventbus.EventBus;
-import io.tickerstorm.common.reactive.CompletionTracker;
 import io.tickerstorm.common.command.Markers;
 import io.tickerstorm.common.command.ModelDataQuery;
-import io.tickerstorm.common.reactive.Observer;
 import io.tickerstorm.common.command.Trigger;
 import io.tickerstorm.common.eventbus.Destinations;
+import io.tickerstorm.common.reactive.CompletionTracker;
+import io.tickerstorm.common.reactive.Observer;
 import io.tickerstorm.common.test.TestDataFactory;
 import io.tickerstorm.data.BaseIntegrationTest;
 import io.tickerstorm.data.IntegrationTestContext;
@@ -46,6 +46,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -71,6 +72,13 @@ public class ModelDataEndToEndITCase extends BaseIntegrationTest {
   public void onMarketDataServiceInitialized() throws Exception {
     session = factory.newSession();
     session.configure(new DefaultResourceLoader().getResource("classpath:yml/modeldataendtoenditcase.yml").getInputStream(), stream);
+    session.start();
+  }
+
+  @After
+  @Override
+  public void cleanup() throws Exception {
+    super.cleanup();
 
     Trigger delete = new Trigger(session.stream(), "delete.data");
     delete.addMarker(Markers.MARKET_DATA.toString());
@@ -81,9 +89,10 @@ public class ModelDataEndToEndITCase extends BaseIntegrationTest {
     delete.addMarker(Markers.MODEL_DATA.toString());
     delete.addMarker(Markers.DELETE.toString());
     session.execute(delete);
-    session.start();
 
-    Thread.sleep(10000);
+    session.end();
+
+    Thread.sleep(3000);
   }
 
   @Test
@@ -131,6 +140,8 @@ public class ModelDataEndToEndITCase extends BaseIntegrationTest {
     while (!triggeredRetro.get()) {
       Thread.sleep(2000);
     }
+
+    Thread.sleep(20000);
 
     Assert.assertTrue(triggeredRetro.get());
     Assert.assertTrue(triggeredModel.get());

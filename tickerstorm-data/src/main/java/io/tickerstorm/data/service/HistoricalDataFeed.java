@@ -32,20 +32,16 @@
 
 package io.tickerstorm.data.service;
 
-import com.datastax.driver.core.querybuilder.QueryBuilder;
-import com.datastax.driver.core.querybuilder.Select;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import io.tickerstorm.common.command.Command;
 import io.tickerstorm.common.command.HistoricalFeedQuery;
 import io.tickerstorm.common.command.Markers;
-import io.tickerstorm.common.reactive.Notification;
 import io.tickerstorm.common.entity.Bar;
+import io.tickerstorm.common.entity.MarketData;
 import io.tickerstorm.common.eventbus.Destinations;
-import io.tickerstorm.data.dao.MarketDataDao;
-import io.tickerstorm.data.dao.MarketDataDto;
-import io.tickerstorm.data.dao.cassandra.CassandraMarketDataDao;
-import io.tickerstorm.data.dao.cassandra.CassandraMarketDataDto;
+import io.tickerstorm.common.reactive.Notification;
+import io.tickerstorm.data.dao.influxdb.InfluxMarketDataDao;
 import java.math.BigInteger;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -59,8 +55,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.cassandra.core.CassandraOperations;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -84,13 +78,7 @@ public class HistoricalDataFeed {
   private EventBus queryBus;
 
   @Autowired
-  private MarketDataDao dao;
-
-  @Autowired
-  private CassandraOperations cassandra;
-
-  @Value("${cassandra.keyspace}")
-  private String keyspace;
+  private InfluxMarketDataDao dao;
 
   @PostConstruct
   public void setup() {
@@ -105,7 +93,7 @@ public class HistoricalDataFeed {
   @Subscribe
   public void onDelete(Command delete) {
     if (delete.markers.contains(Markers.MARKET_DATA.toString()) && delete.markers.contains(Markers.DELETE.toString())) {
-      dao.deleteByStream(delete.getStream());
+      dao.newDelete().bySource(delete.getStream()).delete();
       Notification notif = new Notification(delete);
       notif.markers.add(Markers.SUCCESS.toString());
       notificationBus.post(notif);
@@ -132,14 +120,9 @@ public class HistoricalDataFeed {
 
     for (String s : query.symbols) {
 
-      Select select = QueryBuilder.select().from(keyspace, "marketdata");
-      select.where(QueryBuilder.eq("symbol", s.toLowerCase())).and(QueryBuilder.in("date", dates))
-          .and(QueryBuilder.eq("type", Bar.TYPE.toLowerCase())).and(QueryBuilder.eq("source", query.source.toLowerCase()))
-          .and(QueryBuilder.eq("interval", query.periods.iterator().next()));
-
-      logger.debug("Cassandra query: " + select.toString());
       long startTimer = System.currentTimeMillis();
-      List<MarketDataDto> dtos = cassandra.select(select, MarketDataDto.class);
+      List<MarketData> dtos = dao.newSelect().bySource(query.source.toLowerCase()).bySymbol(s.toLowerCase()).byType(Bar.TYPE.toLowerCase()).between(start, end)
+          .asStream(query.getStream()).select();
       logger.info("Query took " + (System.currentTimeMillis() - startTimer) + "ms to fetch " + dtos.size() + " results.");
 
       Notification marker = new Notification(query);
@@ -148,10 +131,8 @@ public class HistoricalDataFeed {
       notificationBus.post(marker);
 
       startTimer = System.currentTimeMillis();
-      dtos.stream().map(d -> {
-        return d.toMarketData(query.getStream());
-      }).forEach(m -> {
-        realtimeBus.post(m);
+      dtos.stream().forEach(md -> {
+        realtimeBus.post(md);
       });
 
       marker = new Notification(query);

@@ -41,11 +41,12 @@ import com.google.common.eventbus.Subscribe;
 import com.google.common.io.Files;
 import io.tickerstorm.common.command.HistoricalFeedQuery;
 import io.tickerstorm.common.command.Markers;
-import io.tickerstorm.common.reactive.Notification;
 import io.tickerstorm.common.data.Locations;
 import io.tickerstorm.common.entity.Bar;
 import io.tickerstorm.common.eventbus.Destinations;
+import io.tickerstorm.common.reactive.Notification;
 import io.tickerstorm.data.TestMarketDataServiceConfig;
+import io.tickerstorm.data.dao.influxdb.InfluxMarketDataDao;
 import java.io.File;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -58,33 +59,30 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.cassandra.core.CassandraOperations;
+import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {TestMarketDataServiceConfig.class})
 public class HistoricalDataFeedITCase {
 
+  Notification start;
+  Notification end;
+  AtomicInteger count = new AtomicInteger(0);
+  int expCount = 388;
   @Qualifier(Destinations.REALTIME_MARKETDATA_BUS)
   @Autowired
   private EventBus realtimeBus;
-
   @Qualifier(Destinations.NOTIFICATIONS_BUS)
   @Autowired
   private EventBus notificationsBus;
-
   @Qualifier(Destinations.COMMANDS_BUS)
   @Autowired
   private EventBus queryBus;
-
-  Notification start;
-  Notification end;
-
   @Autowired
-  private CassandraOperations session;
+  private InfluxMarketDataDao dao;
 
-  AtomicInteger count = new AtomicInteger(0);
-  int expCount = 778;
+  private DefaultResourceLoader loader = new DefaultResourceLoader();
 
   @Before
   public void dataSetup() throws Exception {
@@ -92,10 +90,10 @@ public class HistoricalDataFeedITCase {
     realtimeBus.register(verifier);
     notificationsBus.register(verifier);
 
-    session.getSession().execute("TRUNCATE marketdata");
+    dao.newDelete().delete();
     FileUtils.forceMkdir(new File(Locations.FILE_DROP_LOCATION + "/Google"));
-    Files.copy(new File("./src/test/resources/data/Google/TOL.csv"), new File(Locations.FILE_DROP_LOCATION + "/Google/TOL.csv"));
-    Thread.sleep(10000);
+    Files.copy(loader.getResource("classpath:/data/Google/TOL.csv").getFile(), new File(Locations.FILE_DROP_LOCATION + "/Google/TOL.csv"));
+    Thread.sleep(3000);
 
   }
 
@@ -116,9 +114,9 @@ public class HistoricalDataFeedITCase {
     query.zone = ZoneOffset.ofHours(-7);
     queryBus.post(query);
 
-    Thread.sleep(10000);
+    Thread.sleep(500);
 
-    assertEquals(count.get(), expCount);
+    assertEquals(expCount, count.get());
 
     assertNotNull(start);
     assertNotNull(end);
@@ -128,7 +126,6 @@ public class HistoricalDataFeedITCase {
     assertEquals(Integer.valueOf(0), end.expect);
 
   }
-
 
 
   public class HistoricalDataFeedVerifier {

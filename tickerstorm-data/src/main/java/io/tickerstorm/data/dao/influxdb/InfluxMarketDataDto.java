@@ -46,6 +46,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.StringUtils;
 import org.influxdb.dto.Point;
 import org.influxdb.dto.QueryResult.Series;
 
@@ -70,9 +71,9 @@ public class InfluxMarketDataDto {
           .tag(Name.SOURCE.field(), data.getStream().toLowerCase())
           .tag(Name.TYPE.field(), data.getType().toLowerCase())
           .tag(Name.INTERVAL.field(), ((Bar) data).getInterval().toLowerCase())
-          .addField(Name.CLOSE.field(), ((Bar) data).close.doubleValue())
+          .addField(Name.CLOSE.field(), ((Bar) data).getClose().doubleValue())
           .addField(Name.OPEN.field(), ((Bar) data).getOpen().doubleValue())
-          .addField(Name.VOLUME.field(), ((Bar) data).getVolume())
+          .addField(Name.VOLUME.field(), ((Bar) data).getVolume().doubleValue())
           .addField(Name.HIGH.field(), ((Bar) data).getHigh().doubleValue())
           .addField(Name.LOW.field(), ((Bar) data).getLow().doubleValue())
           .addField(Name.DURATION.field(), InfluxMarketDataDto.toDuration(((Bar) data).getInterval()).get(ChronoUnit.SECONDS))
@@ -109,7 +110,7 @@ public class InfluxMarketDataDto {
 
   }
 
-  InfluxMarketDataDto(Series series, int i) {
+  InfluxMarketDataDto(Series series, int i, String stream) {
 
     int symbol = series.getColumns().indexOf(Name.SYMBOL.field());
     int interval = series.getColumns().indexOf(Name.INTERVAL.field());
@@ -118,6 +119,7 @@ public class InfluxMarketDataDto {
     int time = series.getColumns().indexOf("time");
     Instant timestamp = Instant.parse((String) series.getValues().get(i).get(time));
     String typeString = (String) series.getValues().get(i).get(type);
+    String str = !StringUtils.isEmpty(stream) ? stream : (String) series.getValues().get(i).get(source);
 
     if (Bar.TYPE.equals(typeString)) {
 
@@ -129,13 +131,13 @@ public class InfluxMarketDataDto {
 
       this.data = new Bar(
           (String) series.getValues().get(i).get(symbol),
-          (String) series.getValues().get(i).get(source), timestamp,
+          str, timestamp,
           BigDecimal.valueOf((Double) series.getValues().get(i).get(open)),
           BigDecimal.valueOf((Double) series.getValues().get(i).get(close)),
           BigDecimal.valueOf((Double) series.getValues().get(i).get(high)),
           BigDecimal.valueOf((Double) series.getValues().get(i).get(low)),
           (String) series.getValues().get(i).get(interval),
-          ((Double) series.getValues().get(i).get(vol)).intValue());
+          BigDecimal.valueOf((Double) series.getValues().get(i).get(vol)));
 
     } else if (Quote.TYPE.equals(typeString)) {
 
@@ -145,11 +147,11 @@ public class InfluxMarketDataDto {
       int bidSize = series.getColumns().indexOf(Name.BID_SIZE.field());
 
       this.data = new Quote((String) series.getValues().get(i).get(symbol),
-          (String) series.getValues().get(i).get(source), timestamp,
+          str, timestamp,
           BigDecimal.valueOf((Double) series.getValues().get(i).get(ask)),
-          (Integer) series.getValues().get(i).get(askSize),
+          (BigDecimal) series.getValues().get(i).get(askSize),
           BigDecimal.valueOf((Double) series.getValues().get(i).get(bid)),
-          (Integer) series.getValues().get(i).get(bidSize));
+          (BigDecimal) series.getValues().get(i).get(bidSize));
 
     } else if (Tick.TYPE.equals(typeString)) {
 
@@ -157,7 +159,8 @@ public class InfluxMarketDataDto {
       int quantity = series.getColumns().indexOf(Name.QUANTITY.field());
 
       this.data = new Tick((String) series.getValues().get(i).get(symbol),
-          (String) series.getValues().get(i).get(source), timestamp, BigDecimal.valueOf((Double) series.getValues().get(i).get(price)),
+          str, timestamp,
+          BigDecimal.valueOf((Double) series.getValues().get(i).get(price)),
           BigDecimal.valueOf((Double) series.getValues().get(i).get(quantity)));
 
     }
@@ -169,7 +172,18 @@ public class InfluxMarketDataDto {
     List<InfluxMarketDataDto> data = new ArrayList<>(series.getValues().size());
 
     for (int i = 0; i < series.getValues().size(); i++) {
-      data.add(new InfluxMarketDataDto(series, i));
+      data.add(new InfluxMarketDataDto(series, i, null));
+    }
+
+    return data;
+  }
+
+  public static List<InfluxMarketDataDto> convert(Series series, String stream) {
+
+    List<InfluxMarketDataDto> data = new ArrayList<>(series.getValues().size());
+
+    for (int i = 0; i < series.getValues().size(); i++) {
+      data.add(new InfluxMarketDataDto(series, i, stream));
     }
 
     return data;
@@ -178,7 +192,7 @@ public class InfluxMarketDataDto {
   public static List<InfluxMarketDataDto> convert(Collection<MarketData> data) {
 
     return data.stream().map(d -> {
-      return new InfluxMarketDataDto(d);
+      return convert(d);
     }).collect(Collectors.toList());
 
   }
@@ -190,7 +204,11 @@ public class InfluxMarketDataDto {
   }
 
   public static InfluxMarketDataDto convert(Series series, int i) {
-    return new InfluxMarketDataDto(series, i);
+    return new InfluxMarketDataDto(series, i, null);
+  }
+
+  public static InfluxMarketDataDto convert(Series series, int i, String stream) {
+    return new InfluxMarketDataDto(series, i, stream);
   }
 
   public static Duration toDuration(final String interval) {
@@ -204,6 +222,8 @@ public class InfluxMarketDataDto {
         return Duration.of(600, ChronoUnit.SECONDS);
       case Bar.WEEK_INTERVAL:
         return Duration.of(7, ChronoUnit.DAYS);
+      case Bar.EOD:
+        return Duration.of(1, ChronoUnit.DAYS);
     }
 
     throw new IllegalArgumentException("Unknown duration " + interval);

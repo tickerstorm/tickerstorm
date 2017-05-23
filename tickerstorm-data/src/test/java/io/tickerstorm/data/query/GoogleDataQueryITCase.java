@@ -58,6 +58,8 @@ public class GoogleDataQueryITCase extends BaseDataQueryITCase {
 
   GoogleDataQuery query;
 
+
+
   @Before
   public void setup() throws Exception {
     FileUtils.forceMkdir(new File(Locations.FILE_DROP_LOCATION + "/Google"));
@@ -68,41 +70,39 @@ public class GoogleDataQueryITCase extends BaseDataQueryITCase {
   @After
   public void tearDown() throws Exception {
     FileUtils.deleteQuietly(new File(Locations.FILE_DROP_LOCATION + "/Google/TOL.csv"));
-    dao.deleteByStream("Google");
+    mddao.newDelete().bySource("Google").delete();
     super.tearDown();
   }
 
   @Test
   public void downloadGloabForext() throws Exception {
 
-    Long daoCount = dao.count();
-    Assert.assertEquals(daoCount, new Long(0));
+    Long daoCount = mddao.newCount(Bar.TYPE.toLowerCase()).count();
+    Assert.assertEquals( new Long(0), daoCount);
 
     query = new GoogleDataQuery("TOL");
     client.query(query);
 
-    daoCount = dao.count();
+    Thread.sleep(2000);
+
+    daoCount = mddao.newCount(Bar.TYPE.toLowerCase()).count();
     assertTrue(daoCount > 0);
 
-    Thread.sleep(3000);// let things clear;
   }
 
   @Test
   public void testParseGoogleFile() throws Exception {
 
-    Long daoCount = dao.count("Google");
+    Long daoCount = mddao.newCount(Bar.TYPE.toLowerCase()).bySource("Google").count();
     Assert.assertEquals(daoCount, new Long(0));
 
-    Files.copy(new File("./src/test/resources/data/Google/TOL.csv"), new File(Locations.FILE_DROP_LOCATION + "/Google/TOL.csv"));
+    Files.copy(loader.getResource("classpath:/data/Google/TOL.csv").getFile(), new File(Locations.FILE_DROP_LOCATION + "/Google/TOL.csv"));
 
-    Thread.sleep(12000);
+    Thread.sleep(2000);
 
-    daoCount = dao.count("Google");
+    daoCount = mddao.newCount(Bar.TYPE.toLowerCase()).bySource("Google").count();
     assertEquals(count.get(), 5792);
     assertEquals(daoCount, new Long(5792));
-
-    Thread.sleep(5000);
-
   }
 
 

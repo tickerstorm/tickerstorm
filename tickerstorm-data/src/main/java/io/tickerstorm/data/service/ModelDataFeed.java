@@ -5,12 +5,13 @@ import com.google.common.eventbus.Subscribe;
 import io.tickerstorm.common.command.Command;
 import io.tickerstorm.common.command.Markers;
 import io.tickerstorm.common.command.ModelDataQuery;
+import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.eventbus.Destinations;
 import io.tickerstorm.common.reactive.Notification;
-import io.tickerstorm.data.dao.ModelDataDao;
-import io.tickerstorm.data.dao.cassandra.CassandraModelDataDto;
+import io.tickerstorm.data.dao.influxdb.InfluxModelDataDao;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -18,7 +19,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -44,10 +44,7 @@ public class ModelDataFeed {
   private EventBus modeldataBus;
 
   @Autowired
-  private ModelDataDao dao;
-
-  @Value("${cassandra.keyspace}")
-  private String keyspace;
+  private InfluxModelDataDao dao;
 
   @PostConstruct
   public void setup() {
@@ -75,13 +72,11 @@ public class ModelDataFeed {
 
     logger.debug("Model data feed query received " + query);
 
-    List<CassandraModelDataDto> dtos = dao.findByStreamAndTimestampIsBetween(query.getStream(), query.from, query.until);
+    List<Set<Field<?>>> dtos = dao.newSelect(query.getStream()).between(query.from, query.until).select();
 
     final AtomicInteger count = new AtomicInteger();
 
-    dtos.stream().forEach(d -> {
-      count.addAndGet(d.fields.size());
-    });
+    count.set(dtos.size());
 
     long startTimer = System.currentTimeMillis();
 
@@ -90,10 +85,8 @@ public class ModelDataFeed {
     marker.expect = count.get();
     notificationBus.post(marker);
 
-    dtos.stream().forEach(d -> {
-      d.asFields().stream().forEach(f -> {
-        modeldataBus.post(f);
-      });
+    dtos.stream().forEach(f -> {
+      modeldataBus.post(f);
     });
 
     logger.info("Dispatching " + dtos.size() + " model data fields took " + (System.currentTimeMillis() - startTimer) + "ms");

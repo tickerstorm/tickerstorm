@@ -30,27 +30,26 @@
  *
  */
 
-package io.tickerstorm.data.dao.cassandra;
+package io.tickerstorm.data.dao.influxdb;
 
 import static org.junit.Assert.assertEquals;
 
 import com.google.common.collect.Sets;
 import com.google.common.eventbus.EventBus;
 import io.tickerstorm.common.command.Markers;
-import io.tickerstorm.common.reactive.Notification;
 import io.tickerstorm.common.entity.Bar;
 import io.tickerstorm.common.entity.BaseField;
 import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.eventbus.Destinations;
+import io.tickerstorm.common.reactive.Notification;
 import io.tickerstorm.data.TestMarketDataServiceConfig;
-import io.tickerstorm.data.dao.cassandra.CassandraModelDataDao;
-import io.tickerstorm.data.dao.cassandra.CassandraModelDataDto;
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
@@ -65,69 +64,66 @@ import org.springframework.test.context.junit4.SpringRunner;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {TestMarketDataServiceConfig.class})
-public class ModelDataCassandraSinkITCase {
-
-  @Qualifier(Destinations.MODEL_DATA_BUS)
-  @Autowired
-  private EventBus modelDataBus;
-
-  @Autowired
-  private CassandraModelDataDao dao;
+public class InfluxModelDataSinkITCase {
 
   private final Instant instant = Instant.now();
   private final String symbol = "goog";
-  private final String stream = "ModelDataCassandraSinkITCase".toLowerCase();
+  private final String stream = "InfluxModelDataSinkITCase".toLowerCase();
+  @Qualifier(Destinations.MODEL_DATA_BUS)
+  @Autowired
+  private EventBus modelDataBus;
+  @Autowired
+  private InfluxModelDataDao dao;
   private Bar c;
 
-  @Before
+  @After
   public void cleanup() throws Exception {
     dao.deleteByStream(stream);
-    Thread.sleep(5000);
-    c = new Bar(symbol, stream, this.instant, BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ONE, BigDecimal.ONE, "1m", 1000);
+  }
+
+  @Before
+  public void init() throws Exception {
+    c = new Bar(symbol, stream, this.instant, BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ONE, BigDecimal.ONE, "1m", new BigDecimal(1000));
   }
 
   @Test
   public void test1StoreModelData() throws Exception {
 
-    BaseField<Integer> df = new BaseField<Integer>(c.getEventId(), "ave", 100);
+    BaseField<BigDecimal> df = new BaseField<BigDecimal>(c.getEventId(), "ave", new BigDecimal(100));
     BaseField<BigDecimal> cf = new BaseField<BigDecimal>(c.getEventId(), "sma", BigDecimal.TEN);
 
     modelDataBus.post(c);
     modelDataBus.post(df);
     modelDataBus.post(cf);
 
-    Thread.sleep(5000);
+    Thread.sleep(1000);
 
     long count = dao.count(stream);
 
-    assertEquals(count, 1);
+    assertEquals(1, count);
 
+    List<Set<Field<?>>> dtos = dao.findAll(c.stream);
 
-    Set<CassandraModelDataDto> dtos = new HashSet<>();
-    dao.findAll(c.stream).forEach(d -> {
-      dtos.add(d);
-    });
-
-    assertEquals(dtos.size(), 1);
+    assertEquals(1, dtos.size());
+    assertEquals(11, dtos.get(0).size());
 
     Set<Field<?>> tuple = new HashSet<>();
     tuple.addAll(c.getFields());
     tuple.add(df);
     tuple.add(cf);
 
-    Assert.assertTrue(dtos.stream().allMatch(d -> {
-
-      return (tuple.containsAll(d.asFields()));
-
+    Assert.assertTrue(dtos.get(0).stream().allMatch(t -> {
+      boolean match = tuple.contains(t);
+      return match;
     }));
 
-    dtos.stream().forEach(d -> {
+    Assert.assertTrue(tuple.containsAll(dtos));
 
-      Assert.assertNotNull(d.primarykey);
-      Assert.assertNotNull(d.primarykey.date);
-      Assert.assertNotNull(d.primarykey.timestamp);
-      Assert.assertEquals(d.primarykey.timestamp, Date.from(c.timestamp));
-      Assert.assertEquals(d.primarykey.stream, c.stream);
+    dtos.get(0).stream().forEach(f -> {
+
+      Assert.assertNotNull(f.getTimestamp());
+      Assert.assertEquals(f.getTimestamp(), c.timestamp);
+      Assert.assertEquals(f.getStream(), c.stream);
 
     });
   }
@@ -135,7 +131,7 @@ public class ModelDataCassandraSinkITCase {
   @Test
   public void test2StoreSecondSetOfFieldsModelData() throws Exception {
 
-    BaseField<Integer> df = new BaseField<Integer>(c.getEventId(), Field.Name.AVE.field() + "-p1", 102);
+    BaseField<BigDecimal> df = new BaseField<>(c.getEventId(), Field.Name.AVE.field() + "-p1", new BigDecimal(102));
     BaseField<BigDecimal> max = new BaseField<BigDecimal>(c.getEventId(), Field.Name.MAX.field() + "-p1", new BigDecimal("11.2"));
     BaseField<BigDecimal> min = new BaseField<BigDecimal>(c.getEventId(), Field.Name.MIN.field() + "-p1", new BigDecimal("1.2"));
     BaseField<BigDecimal> std = new BaseField<BigDecimal>(c.getEventId(), Field.Name.STD.field() + "-p1", new BigDecimal("19.1"));
@@ -147,37 +143,28 @@ public class ModelDataCassandraSinkITCase {
     modelDataBus.post(std);
     modelDataBus.post(sma);
 
-    Thread.sleep(5000);
+    Thread.sleep(1000);
 
     long count = dao.count(stream);
 
     assertEquals(count, 1);
 
     Set<Field<?>> tuple = new HashSet<>();
-    Set<CassandraModelDataDto> dtos = new HashSet<>();
-
-    dao.findAll(c.stream).forEach(d -> {
-      dtos.add(d);
-    });
+    List<Set<Field<?>>> dtos = dao.findAll(c.stream);
 
     tuple.addAll(Sets.newHashSet(df, max, min, std, sma));
     tuple.addAll(c.getFields());
-    tuple.add(new BaseField<Integer>(c.getEventId(), "ave", 100));
+    tuple.add(new BaseField<BigDecimal>(c.getEventId(), "ave", new BigDecimal(100)));
     tuple.add(new BaseField<BigDecimal>(c.getEventId(), "sma", BigDecimal.TEN));
 
-    Assert.assertTrue(dtos.stream().allMatch(d -> {
+    Assert.assertTrue(tuple.containsAll(dtos.get(0)));
+    Assert.assertFalse(dtos.get(0).containsAll(tuple));
 
-      return (tuple.containsAll(d.asFields()));
+    dtos.get(0).stream().forEach(f -> {
 
-    }));
-
-    dtos.stream().forEach(d -> {
-
-      Assert.assertNotNull(d.primarykey);
-      Assert.assertNotNull(d.primarykey.date);
-      Assert.assertNotNull(d.primarykey.timestamp);
-      Assert.assertEquals(d.primarykey.timestamp, Date.from(c.timestamp));
-      Assert.assertEquals(d.primarykey.stream, c.stream);
+      Assert.assertNotNull(f.getTimestamp());
+      Assert.assertEquals(f.getTimestamp(), c.timestamp);
+      Assert.assertEquals(f.getStream(), c.stream);
 
     });
 

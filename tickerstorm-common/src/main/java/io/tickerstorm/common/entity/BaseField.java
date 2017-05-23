@@ -1,6 +1,8 @@
 package io.tickerstorm.common.entity;
 
 import com.google.common.base.MoreObjects;
+import com.google.common.base.Objects;
+import java.math.BigDecimal;
 
 @SuppressWarnings("serial")
 public class BaseField<T> implements Field<T> {
@@ -9,13 +11,10 @@ public class BaseField<T> implements Field<T> {
   public final T value;
   public final Class<?> type;
   public final String eventId;
+
   /**
    * Convenience constructor when extrapolating a new field based on an existing field of the same
    * type but will a null value
-   * 
-   * @param f
-   * @param appendName
-   * @param value
    */
   public BaseField(Field<?> f, String appendName, Class<?> clazz) {
     this.field = f.getName() + "|" + appendName;
@@ -23,13 +22,10 @@ public class BaseField<T> implements Field<T> {
     this.type = clazz;
     this.eventId = f.getEventId();
   }
+
   /**
    * Convenience constructor when extrapolating a new field based on an existing field of the same
    * type
-   * 
-   * @param f
-   * @param appendName
-   * @param value
    */
   public BaseField(Field<?> f, String appendName, T value) {
     this.field = f.getName() + "|" + appendName;
@@ -37,13 +33,9 @@ public class BaseField<T> implements Field<T> {
     this.type = value.getClass();
     this.eventId = f.getEventId();
   }
-  
+
   /**
    * New field constructor
-   * 
-   * @param eventId
-   * @param field
-   * @param clazz
    */
   public BaseField(String eventId, String field, Class<?> clazz) {
     this.field = field;
@@ -52,19 +44,15 @@ public class BaseField<T> implements Field<T> {
     this.eventId = eventId;
   }
 
-
   /**
    * New field constructor
-   * 
-   * @param eventId
-   * @param field
-   * @param value
    */
   public BaseField(String eventId, String field, T value) {
     this.field = field;
 
-    if (value == null)
+    if (value == null) {
       throw new IllegalArgumentException("Value must not be null");
+    }
 
     this.value = value;
     this.type = value.getClass();
@@ -76,50 +64,39 @@ public class BaseField<T> implements Field<T> {
     this.field = field;
     this.value = value;
 
-    if (value == null)
+    if (value == null) {
       this.type = clazz;
-    else
+    } else {
       this.type = value.getClass();
+    }
 
     this.eventId = eventId;
 
   }
 
   @Override
-  public int compareTo(Field<T> o) {
-    return MarketData.parseTimestamp(o.getEventId()).compareTo(MarketData.parseTimestamp(this.getEventId()));
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof BaseField)) {
+      return false;
+    }
+    BaseField<?> baseField = (BaseField<?>) o;
+    return Objects.equal(field, baseField.field) &&
+        Objects.equal(getValue(), baseField.getValue()) &&
+        Objects.equal(type, baseField.type) &&
+        Objects.equal(getEventId(), baseField.getEventId());
   }
 
   @Override
-  public boolean equals(Object obj) {
-    if (this == obj)
-      return true;
-    if (obj == null)
-      return false;
-    if (getClass() != obj.getClass())
-      return false;
-    BaseField other = (BaseField) obj;
-    if (eventId == null) {
-      if (other.eventId != null)
-        return false;
-    } else if (!eventId.equals(other.eventId))
-      return false;
-    if (field == null) {
-      if (other.field != null)
-        return false;
-    } else if (!field.equals(other.field))
-      return false;
-    if (type == null) {
-      if (other.type != null)
-        return false;
-    } else if (!type.equals(other.type))
-      return false;
-    if (value == null) {
-      if (other.value != null)
-        return false;
-    } else if (!value.equals(other.value))
-      return false;
-    return true;
+  public int hashCode() {
+    return Objects.hashCode(field, getValue(), type, getEventId());
+  }
+
+  @Override
+  public int compareTo(Field<T> o) {
+    return MarketData.parseTimestamp(o.getEventId()).compareTo(MarketData.parseTimestamp(this.getEventId()));
   }
 
   public String getEventId() {
@@ -136,23 +113,18 @@ public class BaseField<T> implements Field<T> {
   }
 
   public T getValue() {
+
+    if (getFieldType().equals(BigDecimal.class)) {
+      return (T) ((BigDecimal) value).setScale(4, BigDecimal.ROUND_HALF_DOWN);
+    }
+
     return value;
   }
 
-  @Override
-  public int hashCode() {
-    final int prime = 31;
-    int result = 1;
-    result = prime * result + ((eventId == null) ? 0 : eventId.hashCode());
-    result = prime * result + ((field == null) ? 0 : field.hashCode());
-    result = prime * result + ((type == null) ? 0 : type.hashCode());
-    result = prime * result + ((value == null) ? 0 : value.hashCode());
-    return result;
-  }
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this).add("stream", this.getStream()).add("name", this.field).add("value", this.value)
+    return MoreObjects.toStringHelper(this).add("stream", this.getStream()).add("name", this.field).add("value", getValue())
         .add("class", this.type).add("eventId", eventId).toString();
   }
 

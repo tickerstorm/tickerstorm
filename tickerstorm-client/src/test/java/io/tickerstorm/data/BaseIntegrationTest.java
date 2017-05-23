@@ -62,7 +62,7 @@ public abstract class BaseIntegrationTest {
   }
 
   @org.junit.After
-  public void cleanup() {
+  public void cleanup() throws Exception {
     session.end();
     notificationBus.unregister(this);
   }

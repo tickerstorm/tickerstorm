@@ -71,7 +71,7 @@ public class StooqHistoricalForexQueryITCase extends BaseDataQueryITCase {
 
     Thread.sleep(27000);
 
-    Long daoCount = dao.count();
+    Long daoCount = mddao.newCount(Bar.TYPE.toLowerCase()).count();
     assertEquals(daoCount.longValue(), 62355L);
     assertEquals(count.get(), 62355L);
 
@@ -85,7 +85,7 @@ public class StooqHistoricalForexQueryITCase extends BaseDataQueryITCase {
 
     Thread.sleep(20000);
 
-    Long count = dao.count("Stooq");
+    Long count = mddao.newCount(Bar.TYPE.toLowerCase()).bySource("Stooq").count();
     assertTrue(count > 0);
 
   }

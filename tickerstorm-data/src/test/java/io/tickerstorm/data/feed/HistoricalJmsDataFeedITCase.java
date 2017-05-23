@@ -45,6 +45,7 @@ import io.tickerstorm.common.entity.Bar;
 import io.tickerstorm.common.entity.MarketData;
 import io.tickerstorm.common.eventbus.Destinations;
 import io.tickerstorm.data.TestMarketDataServiceConfig;
+import io.tickerstorm.data.dao.influxdb.InfluxMarketDataDao;
 import java.io.File;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -66,42 +67,37 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.cassandra.core.CassandraOperations;
+import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {TestMarketDataServiceConfig.class})
 public class HistoricalJmsDataFeedITCase implements MessageListener {
 
+  final AtomicInteger count = new AtomicInteger(0);
+  final long expCount = 388;
+  private final String stream = "HistoricalJmsDataFeedITCase".toLowerCase();
+  boolean verified = false;
   @Qualifier(Destinations.NOTIFICATIONS_BUS)
   @Autowired
   private EventBus notificationBus;
-
-  private final String stream = "HistoricalJmsDataFeedITCase".toLowerCase();
-
   @Value("${service.name:data-service}")
   private String SERVICE;
-
   @Autowired
   private ActiveMQConnectionFactory factory;
-
   private ActiveMQConnection connection;
   private ActiveMQMessageProducer producer;
   private ActiveMQMessageConsumer consumer;
   private ActiveMQSession session2;
-
   @Autowired
-  private CassandraOperations session;
+  private InfluxMarketDataDao dao;
 
-  boolean verified = false;
-  final AtomicInteger count = new AtomicInteger(0);
-  final long expCount = 778;
+  private DefaultResourceLoader loader = new DefaultResourceLoader();
 
   @Before
   public void dataSetup() throws Exception {
-    session.getSession().execute("TRUNCATE marketdata");
     FileUtils.forceMkdir(new File(Locations.FILE_DROP_LOCATION + "/Google"));
-    Files.copy(new File("./src/test/resources/data/Google/TOL.csv"), new File(Locations.FILE_DROP_LOCATION + "/Google/TOL.csv"));
+    Files.copy(loader.getResource("classpath:/data/Google/TOL.csv").getFile(), new File(Locations.FILE_DROP_LOCATION + "/Google/TOL.csv"));
     Thread.sleep(3000);
     verified = false;
 
@@ -138,8 +134,8 @@ public class HistoricalJmsDataFeedITCase implements MessageListener {
 
     producer.send(session2.createObjectMessage(query));
 
-    Thread.sleep(3000);
-    assertEquals(count.get(), expCount);
+    Thread.sleep(1000);
+    assertEquals(expCount, count.get());
     assertTrue(verified);
 
     System.out.print("Test time: " + (System.currentTimeMillis() - st));
@@ -154,7 +150,7 @@ public class HistoricalJmsDataFeedITCase implements MessageListener {
       MarketData md = (MarketData) ((ObjectMessage) m).getObject();
 
       assertNotNull(md.getSymbol());
-      assertEquals(md.getStream(), stream);
+      assertEquals(stream, md.getStream());
       assertNotNull(md.getTimestamp());
 
       if (Bar.class.isAssignableFrom(md.getClass())) {
@@ -183,7 +179,6 @@ public class HistoricalJmsDataFeedITCase implements MessageListener {
     }
 
   }
-
 
 
 }

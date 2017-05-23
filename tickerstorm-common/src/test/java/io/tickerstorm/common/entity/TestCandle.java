@@ -42,7 +42,7 @@ import org.junit.Test;
 public class TestCandle {
 
   private final Bar c =
-      new Bar("goog", "google", Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ONE, BigDecimal.ONE, "1m", 1000);
+      new Bar("goog", "google", Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ONE, BigDecimal.ONE, "1m", new BigDecimal(1000).setScale(4));
 
   @Test
   public void testFieldGeneration() {

@@ -101,7 +101,7 @@ public class TestNumericChangeProcessor {
   public void testComputeFirstDiscreteChange() throws Exception {
 
     Bar md = new Bar("TOL", stream, Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.TEN, Bar.MIN_1_INTERVAL,
-        Integer.MAX_VALUE);
+        new BigDecimal(Integer.MAX_VALUE));
 
     bolt.handle(md.getFields());
 
@@ -114,17 +114,17 @@ public class TestNumericChangeProcessor {
   public void testComputeSecondDiscreteChange() throws Exception {
 
     Bar md = new Bar("TOL", stream, Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.TEN, Bar.MIN_1_INTERVAL,
-        Integer.MAX_VALUE);
+        new BigDecimal(Integer.MAX_VALUE));
 
     bolt.handle(md.getFields());
 
     md = new Bar("TOL", stream, Instant.now().plus(5, ChronoUnit.MILLIS), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.TEN,
-        Bar.MIN_1_INTERVAL, 12335253);
+        Bar.MIN_1_INTERVAL, new BigDecimal(12335253));
 
     bolt.handle(md.getFields());
 
     md = new Bar("TOL", stream, Instant.now().plus(5, ChronoUnit.MILLIS), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.TEN,
-        Bar.MIN_1_INTERVAL, 11145345);
+        Bar.MIN_1_INTERVAL, new BigDecimal(11145345));
 
     bolt.handle(md.getFields());
 

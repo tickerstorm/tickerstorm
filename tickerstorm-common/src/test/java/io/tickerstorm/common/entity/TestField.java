@@ -42,7 +42,7 @@ import org.junit.Test;
 public class TestField {
 
   private final Bar c =
-      new Bar("goog", "google", Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ONE, BigDecimal.ONE, "1m", 1000);
+      new Bar("goog", "google", Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ONE, BigDecimal.ONE, "1m", new BigDecimal(1000).setScale(4));
 
   @Test
   public void testFieldParsing() {
@@ -50,7 +50,7 @@ public class TestField {
     c.setStream("TestField");
     Map<String, Field<?>> fields = c.getFieldsAsMap();
 
-    Field<Integer> vol = (Field<Integer>) fields.get(Field.Name.VOLUME.field());
+    Field<BigDecimal> vol = (Field<BigDecimal>) fields.get(Field.Name.VOLUME.field());
     assertEquals(vol.getEventId(), c.getEventId());
     assertEquals(vol.getName(), Field.Name.VOLUME.field());
     assertEquals(vol.getStream(), c.getStream());
@@ -59,7 +59,7 @@ public class TestField {
     assertEquals(Field.parseField(vol.serialize()), vol.getName());
     assertEquals(Field.parseValue(vol.serialize(), Field.Name.VOLUME.fieldType()), vol.getValue());
     assertEquals(Field.parseStream(vol.serialize()), vol.getStream());
-     assertEquals(Field.parseTimestamp(vol.serialize()), c.getTimestamp());
+    assertEquals(Field.parseTimestamp(vol.serialize()), c.getTimestamp());
     assertEquals(Field.parseEventId(vol.serialize()), vol.getEventId());
 
   }
@@ -70,30 +70,30 @@ public class TestField {
     c.setStream("TestField");
     Map<String, Field<?>> fields = c.getFieldsAsMap();
 
-    Field<Integer> vol = (Field<Integer>) fields.get(Field.Name.VOLUME.field());
+    Field<BigDecimal> vol = (Field<BigDecimal>) fields.get(Field.Name.VOLUME.field());
 
     String serial = vol.serialize();
 
-    Field<Integer> f = (Field<Integer>) Field.deserialize(serial);
+    Field<BigDecimal> f = (Field<BigDecimal>) Field.deserialize(serial);
 
     assertEquals(f.getEventId(), c.getEventId());
     assertEquals(f.getName(), Field.Name.VOLUME.field());
     assertEquals(f.getStream(), c.getStream());
     assertEquals(f.getValue(), c.getVolume());
-    assertEquals(f.getFieldType().getName(), Integer.class.getName());
+    assertEquals(f.getFieldType().getName(), BigDecimal.class.getName());
     assertEquals(f.getFieldType(), Field.Name.VOLUME.fieldType());
   }
-  
+
   @Test
-  public void testSerializeNullField(){
-    
+  public void testSerializeNullField() {
+
     c.setStream("TestField");
     Map<String, Field<?>> fields = c.getFieldsAsMap();
-    Field<Integer> vol = (Field<Integer>) fields.get(Field.Name.VOLUME.field());
-    
+    Field<BigDecimal> vol = (Field<BigDecimal>) fields.get(Field.Name.VOLUME.field());
+
     Field<Integer> nullField = new BaseField<Integer>(vol, Field.Name.MAX.field() + "-p" + 5, Integer.class);
     String serialized = nullField.serialize();
-    
+
     Field<Integer> newNullField = (Field<Integer>) Field.deserialize(serialized);
     assertEquals(nullField, newNullField);
   }

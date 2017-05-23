@@ -68,7 +68,7 @@ public class DukascopyFileConverter extends BaseFileConverter {
           String[] cols = l.split(",");
           Bar c = new Bar(currency, provider(), LocalDateTime.parse(cols[0], formatter).toInstant(ZoneOffset.UTC),
               new BigDecimal(cols[1]), new BigDecimal(cols[4]), new BigDecimal(cols[2]), new BigDecimal(cols[3]), getInterval(path),
-              new BigDecimal(cols[5]).multiply(new BigDecimal("1000000")).intValue());
+              new BigDecimal(cols[5]).multiply(new BigDecimal("1000000")));
           c.stream = provider();
 
           historical.post(c);

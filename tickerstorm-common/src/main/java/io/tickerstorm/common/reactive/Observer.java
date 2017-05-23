@@ -92,7 +92,7 @@ public class Observer implements CompletionTracker {
   private long delay = 500;
   private Handler onCompletion;
   private Runnable onTimeout;
-  private Runnable onFailure;
+  private Handler onFailure;
   private ScheduledFuture<?> future;
   private ScheduledFuture<?> mustStart;
   private Notification not;
@@ -156,8 +156,8 @@ public class Observer implements CompletionTracker {
     return this;
   }
 
-  public Observer whenFailed(Runnable onTimeout) {
-    this.onFailure = onTimeout;
+  public Observer whenFailed(Handler onFailure) {
+    this.onFailure = onFailure;
     return this;
   }
 
@@ -243,7 +243,7 @@ public class Observer implements CompletionTracker {
       }
 
       if (onFailure != null) {
-        onFailure.run();
+        onFailure.handle(not);
       }
     }
   }

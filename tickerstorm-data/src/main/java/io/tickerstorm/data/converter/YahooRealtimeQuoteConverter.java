@@ -34,7 +34,7 @@ public class YahooRealtimeQuoteConverter implements DataConverter {
     else
       return null;
 
-    c.askSize = new Integer(data[2]);
+    c.askSize = new BigDecimal(data[2]);
 
     if (!data[3].equalsIgnoreCase("N/A"))
       c.bid = new BigDecimal(data[3]);
@@ -43,7 +43,7 @@ public class YahooRealtimeQuoteConverter implements DataConverter {
     else
       return null;
 
-    c.bidSize = new Integer(data[5]);
+    c.bidSize = new BigDecimal(data[5]);
     c.stream = provider();
 
     return new Quote[] {c};

@@ -42,7 +42,7 @@ public class YahooHistoricalQuoteConverter implements DataConverter {
 
     Bar c = new Bar(dq.getSymbol(), "yahoo", LocalDate.parse(args[0], FORMATTER).atTime(0, 0).toInstant(ZoneOffset.ofHours(-7)),
         new BigDecimal(args[1]), new BigDecimal(args[1]), new BigDecimal(args[2]), new BigDecimal(args[3]), cInterval,
-        new Integer(args[5]));
+        new BigDecimal(args[5]));
     c.stream = provider();
     return new Bar[] {c};
   }

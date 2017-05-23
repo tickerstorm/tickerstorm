@@ -104,7 +104,7 @@ public class TestBasicStatisProcessor {
   public void testComputeFirstDiscreteChange() throws Exception {
 
     Bar md = new Bar("TOL", stream, Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.TEN, Bar.MIN_1_INTERVAL,
-        Integer.MAX_VALUE);
+        new BigDecimal(Integer.MAX_VALUE));
 
     bolt.handle(md.getFields());
 
@@ -117,17 +117,17 @@ public class TestBasicStatisProcessor {
   public void testComputeSecondDiscreteChange() throws Exception {
 
     Bar md1 = new Bar("TOL", stream, Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.TEN, Bar.MIN_1_INTERVAL,
-        Integer.MAX_VALUE);
+        new BigDecimal(Integer.MAX_VALUE));
 
     bolt.handle(md1.getFields());
 
     Bar md2 = new Bar("TOL", stream, Instant.now().plus(5, ChronoUnit.MILLIS), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.TEN,
-        Bar.MIN_1_INTERVAL, 12335253);
+        Bar.MIN_1_INTERVAL, new BigDecimal(12335253));
 
     bolt.handle(md2.getFields());
 
     Bar md3 = new Bar("TOL", stream, Instant.now().plus(5, ChronoUnit.MILLIS), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.TEN,
-        Bar.MIN_1_INTERVAL, 11145345);
+        Bar.MIN_1_INTERVAL, new BigDecimal(11145345));
 
     bolt.handle(md3.getFields());
 
@@ -144,10 +144,14 @@ public class TestBasicStatisProcessor {
 
     Assert.assertEquals(args.size(), 40);
 
-    BaseField<BigDecimal> f1 = new BaseField<BigDecimal>(md2.getEventId(), "volume|" + Field.Name.MAX.field() + "-p2", new BigDecimal(Integer.MAX_VALUE).setScale(4, BigDecimal.ROUND_HALF_UP));
-    BaseField<BigDecimal> f2 = new BaseField<BigDecimal>(md3.getEventId(), "volume|" + Field.Name.MIN.field() + "-p2", new BigDecimal(11145345).setScale(4, BigDecimal.ROUND_HALF_UP));
-    BaseField<BigDecimal> f3 = new BaseField<BigDecimal>(md3.getEventId(), "volume|" + Field.Name.SMA.field() + "-p2", new BigDecimal(11740299).setScale(4, BigDecimal.ROUND_HALF_UP));
-    BaseField<BigDecimal> f4 = new BaseField<BigDecimal>(md3.getEventId(), "volume|" + Field.Name.STD.field() + "-p2", new BigDecimal(841392.0158).setScale(4, BigDecimal.ROUND_HALF_UP));
+    BaseField<BigDecimal> f1 = new BaseField<BigDecimal>(md2.getEventId(), "volume|" + Field.Name.MAX.field() + "-p2",
+        new BigDecimal(Integer.MAX_VALUE).setScale(4, BigDecimal.ROUND_HALF_UP));
+    BaseField<BigDecimal> f2 = new BaseField<BigDecimal>(md3.getEventId(), "volume|" + Field.Name.MIN.field() + "-p2",
+        new BigDecimal(11145345).setScale(4, BigDecimal.ROUND_HALF_UP));
+    BaseField<BigDecimal> f3 = new BaseField<BigDecimal>(md3.getEventId(), "volume|" + Field.Name.SMA.field() + "-p2",
+        new BigDecimal(11740299).setScale(4, BigDecimal.ROUND_HALF_UP));
+    BaseField<BigDecimal> f4 = new BaseField<BigDecimal>(md3.getEventId(), "volume|" + Field.Name.STD.field() + "-p2",
+        new BigDecimal(841392.0158).setScale(4, BigDecimal.ROUND_HALF_UP));
 
     System.out.println(f1);
     System.out.println(f2);

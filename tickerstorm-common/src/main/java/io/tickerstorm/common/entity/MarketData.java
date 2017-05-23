@@ -50,14 +50,17 @@ public interface MarketData extends Event, Serializable, Comparable<MarketData> 
 
     Field<String> interval = (Field<String>) Field.findField(Field.Name.INTERVAL.field(), fields);
 
-    if (interval != null)
+    if (interval != null) {
       return Bar.TYPE;
+    }
 
-    if (Field.findField(Field.Name.ASK.field(), fields) != null)
+    if (Field.findField(Field.Name.ASK.field(), fields) != null) {
       return Quote.TYPE;
+    }
 
-    if (Field.findField(Field.Name.PRICE.field(), fields) != null)
+    if (Field.findField(Field.Name.PRICE.field(), fields) != null) {
       return Tick.TYPE;
+    }
 
     throw new IllegalArgumentException("Unknown market data type");
 
@@ -79,8 +82,9 @@ public interface MarketData extends Event, Serializable, Comparable<MarketData> 
   public static String parseInterval(String eventId) {
 
     String[] parts = MarketData.parseEventId(eventId);
-    if (parts.length == 4)
+    if (parts.length == 4) {
       return parts[3];
+    }
 
     return null;
   }
@@ -90,16 +94,22 @@ public interface MarketData extends Event, Serializable, Comparable<MarketData> 
     return Instant.ofEpochMilli(Long.valueOf(part));
   }
 
+  public static String buildEventId(String stream, String symbol, Instant timestmap) {
+    return new StringBuffer(stream).append("|").append(symbol).append("|").append(timestmap.toEpochMilli()).toString();
+  }
+
   /**
    * Format: stream|symbol|timestamp
-   * 
-   * @return
    */
   default String getEventId() {
-    return new StringBuffer(getStream()).append("|").append(getSymbol()).append("|").append(getTimestamp().toEpochMilli()).toString();
+    return buildEventId(getStream(), getSymbol(), getTimestamp());
   }
 
   public Set<Field<?>> getFields();
+
+  public void addField(Field<?> field);
+
+  public boolean removeField(String name);
 
   default Map<String, Field<?>> getFieldsAsMap() {
     return Field.toMap(getFields());

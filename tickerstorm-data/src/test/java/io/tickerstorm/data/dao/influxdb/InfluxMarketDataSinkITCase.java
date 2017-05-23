@@ -30,22 +30,19 @@
  *
  */
 
-package io.tickerstorm.data.dao.cassandra;
+package io.tickerstorm.data.dao.influxdb;
 
 import com.google.common.eventbus.EventBus;
 import io.tickerstorm.common.entity.Bar;
+import io.tickerstorm.common.entity.MarketData;
 import io.tickerstorm.common.eventbus.Destinations;
 import io.tickerstorm.common.reactive.CompletionTracker;
 import io.tickerstorm.common.reactive.Observer;
 import io.tickerstorm.data.TestMarketDataServiceConfig;
-import io.tickerstorm.data.dao.MarketDataDto;
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.Date;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -60,9 +57,9 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {TestMarketDataServiceConfig.class})
-public class MarketDataCassandraSinkITCase {
+public class InfluxMarketDataSinkITCase {
 
-  private final static Logger logger = LoggerFactory.getLogger(MarketDataCassandraSinkITCase.class);
+  private final static Logger logger = LoggerFactory.getLogger(InfluxMarketDataSinkITCase.class);
 
   @Qualifier(Destinations.HISTORICL_MARKETDATA_BUS)
   @Autowired
@@ -73,21 +70,19 @@ public class MarketDataCassandraSinkITCase {
   private EventBus notificationsBus;
 
   @Autowired
-  private CassandraMarketDataDao dao;
+  private InfluxMarketDataDao dao;
 
-  private String stream = "MarketDataCassandraSinkITCase".toLowerCase();
+  private String stream = "InfluxMarketDataSinkITCase".toLowerCase();
 
   @Before
   public void setup() throws Exception {
-    logger.info("@Before");
-    dao.deleteByStream(stream);
-    Thread.sleep(3000);
+    dao.newDelete().bySource(stream).delete();
+    Thread.sleep(100);
   }
 
   @After
   public void cleanup() throws Exception {
-    logger.info("@After");
-    dao.deleteByStream(stream);
+    dao.newDelete().bySource(stream).delete();
   }
 
   @Test
@@ -100,12 +95,10 @@ public class MarketDataCassandraSinkITCase {
     c.open = BigDecimal.ZERO;
     c.close = new BigDecimal("34.435");
     c.timestamp = Instant.now();
-    c.volume = 10;
+    c.volume = new BigDecimal(10);
     c.symbol = "AAPL";
     c.stream = stream;
     historicalBus.post(c);
-
-    logger.info("@Test");
 
     final AtomicBoolean done = new AtomicBoolean(false);
 
@@ -118,39 +111,23 @@ public class MarketDataCassandraSinkITCase {
 
         }).whenComplete((n) -> {
 
-      logger.info("@Verifying");
-
-      long count = dao.count(c.stream);
+      long count = dao.newCount(Bar.TYPE).bySource(c.stream).count();
 
       Assert.assertEquals(count, 1);
 
-      Stream<MarketDataDto> result = dao.findAll(c.stream);
-      List<MarketDataDto> rs = result.collect(Collectors.toList());
+      List<MarketData> rs = dao.findAll(c.stream);
 
       Assert.assertEquals(rs.size(), 1);
 
-      rs.stream().map(dto -> {
-        return (CassandraMarketDataDto) dto;
-      }).forEach(dto -> {
-            Assert.assertEquals(dto.primarykey.stream, c.stream);
-            Assert.assertEquals(dto.close, c.close);
-            Assert.assertEquals(dto.low, c.low);
-            Assert.assertEquals(dto.high, c.high);
-            Assert.assertEquals(dto.open, c.open);
-            Assert.assertEquals(dto.volume, new BigDecimal(c.volume));
-            Assert.assertEquals(dto.primarykey.interval, c.interval);
-            Assert.assertEquals(dto.primarykey.timestamp, Date.from(c.timestamp));
-            Assert.assertEquals(dto.primarykey.symbol, c.symbol.toLowerCase());
-            Assert.assertNotNull(dto.primarykey.date);
-
-            Bar d = (Bar) dto.toMarketData(c.stream);
-
+      rs.stream().map(md -> {
+        return (Bar) md;
+      }).forEach(d -> {
             Assert.assertEquals(d.stream, c.stream);
-            Assert.assertEquals(d.close, c.close);
-            Assert.assertEquals(d.low, c.low);
-            Assert.assertEquals(d.high, c.high);
-            Assert.assertEquals(d.open, c.open);
-            Assert.assertEquals(d.volume, c.volume);
+            Assert.assertEquals(d.close.setScale(4, BigDecimal.ROUND_HALF_DOWN), c.close.setScale(4, BigDecimal.ROUND_HALF_DOWN));
+            Assert.assertEquals(d.low.setScale(4, BigDecimal.ROUND_HALF_DOWN), c.low.setScale(4, BigDecimal.ROUND_HALF_DOWN));
+            Assert.assertEquals(d.high.setScale(4, BigDecimal.ROUND_HALF_DOWN), c.high.setScale(4, BigDecimal.ROUND_HALF_DOWN));
+            Assert.assertEquals(d.open.setScale(4, BigDecimal.ROUND_HALF_DOWN), c.open.setScale(4, BigDecimal.ROUND_HALF_DOWN));
+            Assert.assertEquals(d.volume.setScale(4, BigDecimal.ROUND_HALF_DOWN), c.volume.setScale(4, BigDecimal.ROUND_HALF_DOWN));
             Assert.assertEquals(d.interval, c.interval);
             Assert.assertTrue(d.timestamp.compareTo(c.timestamp) == 0);
             Assert.assertNotNull(d.timestamp);
@@ -164,7 +141,7 @@ public class MarketDataCassandraSinkITCase {
     }).start();
 
     while (!done.get()) {
-      Thread.sleep(2000);
+      Thread.sleep(100);
     }
 
   }

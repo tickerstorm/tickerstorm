@@ -35,13 +35,14 @@ package io.tickerstorm.data.query;
 import com.google.common.eventbus.EventBus;
 import io.tickerstorm.common.eventbus.Destinations;
 import io.tickerstorm.data.converter.DataQueryClient;
-import io.tickerstorm.data.dao.cassandra.CassandraMarketDataDao;
+import io.tickerstorm.data.dao.influxdb.InfluxMarketDataDao;
+import io.tickerstorm.data.dao.influxdb.InfluxModelDataDao;
 import java.util.concurrent.atomic.AtomicLong;
 import org.junit.After;
 import org.junit.Before;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.cassandra.core.CassandraOperations;
+import org.springframework.core.io.DefaultResourceLoader;
 
 public abstract class BaseDataQueryITCase {
 
@@ -57,26 +58,26 @@ public abstract class BaseDataQueryITCase {
   protected EventBus notificationsBus;
 
   @Autowired
-  protected CassandraMarketDataDao dao;
-
-  protected Object verifier = null;
+  protected InfluxMarketDataDao mddao;
 
   @Autowired
-  private CassandraOperations session;
+  protected InfluxModelDataDao mdao;
 
+  protected Object verifier = null;
   protected AtomicLong count = new AtomicLong(0);
+
+  protected DefaultResourceLoader loader = new DefaultResourceLoader();
 
   @Before
   public void setup() throws Exception {
-    session.getSession().execute("TRUNCATE marketdata");
+    mddao.newDelete().delete();
     bus.register(verifier);
   }
 
   @After
   public void tearDown() throws Exception {
     bus.unregister(verifier);
-    session.getSession().execute("TRUNCATE marketdata");
-    session.getSession().execute("TRUNCATE modeldata");
+    mddao.newDelete().delete();
     count.set(0);
     Thread.sleep(2000);
   }

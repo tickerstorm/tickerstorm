@@ -48,7 +48,6 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import org.influxdb.dto.Point;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -81,7 +80,7 @@ public class TestInfluxMarketDataDao {
     c.symbol = "AAPL";
     c.interval = Bar.MIN_1_INTERVAL;
     c.timestamp = Instant.now();
-    c.volume = 0;
+    c.volume = BigDecimal.ZERO;
 
     InfluxMarketDataDto dto = InfluxMarketDataDto.convert(c);
     Point p = dto.getPoint();
@@ -90,11 +89,11 @@ public class TestInfluxMarketDataDao {
     assertEquals(p.getFields().get(Name.LOW.field()), c.low.doubleValue());
     assertEquals(p.getFields().get(Name.HIGH.field()), c.high.doubleValue());
     assertEquals(p.getFields().get(Name.OPEN.field()), c.open.doubleValue());
-    assertEquals(p.getFields().get(Name.VOLUME.field()), BigDecimal.valueOf(c.volume).intValue());
+    assertEquals(p.getFields().get(Name.VOLUME.field()), c.volume.doubleValue());
     assertEquals(p.getTags().get(Name.SOURCE.field()), c.stream);
     assertEquals(p.getTags().get(Name.INTERVAL.field()), c.interval.toLowerCase());
     assertEquals(p.getTime(), Long.valueOf(c.timestamp.toEpochMilli()));
-    assertEquals(p.getMeasurement(), c.symbol.toLowerCase());
+    assertEquals(p.getTags().get(Name.SYMBOL.field()), c.symbol.toLowerCase());
 
     Bar d = (Bar) dto.toMarketData();
 
@@ -159,8 +158,8 @@ public class TestInfluxMarketDataDao {
     Quote c = new Quote("AAPL", "test", Instant.now());
     c.ask = BigDecimal.TEN;
     c.bid = BigDecimal.TEN;
-    c.askSize = 0;
-    c.bidSize = 0;
+    c.askSize = BigDecimal.ZERO;
+    c.bidSize = BigDecimal.ZERO;
 
     InfluxMarketDataDto dto = InfluxMarketDataDto.convert(c);
     Point p = dto.getPoint();
@@ -171,7 +170,7 @@ public class TestInfluxMarketDataDao {
     assertEquals(p.getFields().get(Name.BID_SIZE.field()), c.bidSize);
     assertEquals(p.getTags().get(Name.SOURCE.field()), c.stream);
     assertEquals(p.getTime(), Date.from(c.timestamp));
-    assertEquals(p.getMeasurement(), c.symbol.toLowerCase());
+    assertEquals(p.getTags().get(Name.SYMBOL.field()), c.symbol.toLowerCase());
 
     Quote d = (Quote) dto.toMarketData();
 

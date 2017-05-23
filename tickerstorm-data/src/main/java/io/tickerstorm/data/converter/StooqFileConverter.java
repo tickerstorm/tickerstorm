@@ -88,14 +88,14 @@ public class StooqFileConverter extends BaseFileConverter {
 
                 c = new Bar(symbol, provider(), LocalDateTime.parse(cols[0] + " " + cols[1], formatter).toInstant(ZoneOffset.UTC),
                     new BigDecimal(cols[2]), new BigDecimal(cols[5]), new BigDecimal(cols[3]), new BigDecimal(cols[4]), interval(path),
-                    new Integer(cols[6]));
+                    new BigDecimal(cols[6]));
                 c.stream = provider();
 
               } catch (Exception ex) {
 
                 c = new Bar(symbol, provider(), LocalDateTime.from(dayFormatter.parse(cols[0])).toInstant(ZoneOffset.of("GMT")),
                     new BigDecimal(cols[1]), new BigDecimal(cols[4]), new BigDecimal(cols[2]), new BigDecimal(cols[3]), interval(path),
-                    new Integer(cols[5]));
+                    new BigDecimal(cols[5]));
                 c.stream = provider();
 
               }

@@ -34,6 +34,7 @@ package io.tickerstorm.data.dao.influxdb;
 
 import java.util.concurrent.TimeUnit;
 import org.influxdb.InfluxDB;
+import org.influxdb.InfluxDB.LogLevel;
 import org.influxdb.InfluxDBBatchListener;
 import org.influxdb.InfluxDBFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -66,6 +67,7 @@ public class InfluxDBContext {
     String dbName = keyspace;
     influxDB.createDatabase(dbName);
     influxDB.enableBatch(2000, 100, TimeUnit.MILLISECONDS, listener);
+    //influxDB.setLogLevel(LogLevel.FULL);
     return influxDB;
   }
 

@@ -32,7 +32,6 @@
 
 package io.tickerstorm.data.dao;
 
-import io.tickerstorm.data.dao.cassandra.CassandraMarketDataDto;
 import java.util.Collection;
 import java.util.Map;
 import java.util.stream.Stream;

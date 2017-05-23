@@ -30,90 +30,104 @@
  *
  */
 
-package io.tickerstorm.data.dao.cassandra;
+package io.tickerstorm.data.dao.influxdb;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import io.tickerstorm.common.command.Markers;
+import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.entity.MarketData;
 import io.tickerstorm.common.eventbus.Destinations;
 import io.tickerstorm.common.reactive.Notification;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import org.apache.commons.lang3.StringUtils;
+import org.influxdb.InfluxDBBatchListener;
+import org.influxdb.dto.Point;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.annotation.DependsOn;
-import org.springframework.stereotype.Repository;
+import org.springframework.stereotype.Component;
 
-@DependsOn(value = {"cassandraSetup"})
-@Repository
-public class MarketDataCassandraSink extends BaseCassandraSink<CassandraMarketDataDto> {
+@Component
+public class InfluxModelDataSink {
 
-  protected static final org.slf4j.Logger logger = LoggerFactory.getLogger(MarketDataCassandraSink.class);
-  @Qualifier(Destinations.HISTORICL_MARKETDATA_BUS)
+  protected static final org.slf4j.Logger logger = LoggerFactory.getLogger(InfluxModelDataSink.class);
+  private final InfluxDBBatchListener l = new ModelDataWriteNotification();
+  @Qualifier(Destinations.MODEL_DATA_BUS)
   @Autowired
-  private EventBus historicalBus;
+  private EventBus modelDataBus;
   @Qualifier(Destinations.NOTIFICATIONS_BUS)
   @Autowired
   private EventBus notificationsBus;
   @Autowired
-  private CassandraMarketDataDao dao;
+  private BroadcastInfluxDBListener influxListener;
+  @Autowired
+  private InfluxModelDataDao dao;
 
-  @Override
-  protected int batchSize() {
-    return 1999;
+  @PostConstruct
+  public void init() {
+    influxListener.addListener(l);
+    modelDataBus.register(this);
   }
 
   @PreDestroy
   public void destroy() {
-    super.destroy();
-    historicalBus.unregister(this);
-  }
-
-  @PostConstruct
-  public void init() {
-    super.init();
-
-    historicalBus.register(this);
+    influxListener.removeListener(l);
+    modelDataBus.unregister(this);
   }
 
   @Subscribe
   public void onData(MarketData md) {
-    batch(CassandraMarketDataDto.convert(md));
+    dao.ingestMarketData(md);
   }
 
-  protected void persist(Collection<CassandraMarketDataDto> data) {
+  @Subscribe
+  public void onData(Collection<Field<?>> fs) {
+    dao.ingest(fs);
+  }
 
-    if (null == data || data.isEmpty()) {
-      return;
-    }
+  @Subscribe
+  public void onData(Field<?> f) {
+    dao.ingest(f);
+  }
 
-    try {
+  private class ModelDataWriteNotification implements InfluxDBBatchListener {
 
-      synchronized (data) {
-        logger.debug(
-            "Persisting " + data.size() + " records, " + count.addAndGet(data.size()) + " total saved and " + received.get() + " received");
+    @Override
+    public void onPointBatchWrite(final List<Point> points) {
 
-      }
+      Map<String, Long> streamCounts = countEntries(points);
 
-      dao.ingest((Collection) data);
+      for (Entry<String, Long> e : streamCounts.entrySet()) {
+        logger.debug("Persisted " + e.getValue().intValue() + " fields for stream " + e.getKey() + " out of " + points.size());
 
-      Map<String, Integer> streamCounts = dao.countEntries((Collection) data);
-
-      for (Entry<String, Integer> e : streamCounts.entrySet()) {
         Notification marker = new Notification(e.getKey());
-        marker.addMarker(Markers.MARKET_DATA.toString());
+        marker.addMarker(Markers.MODEL_DATA.toString());
         marker.addMarker(Markers.SAVE.toString());
         marker.addMarker(Markers.SUCCESS.toString());
-        marker.expect = e.getValue();
+        marker.expect = e.getValue().intValue();
         notificationsBus.post(marker);
       }
-    } catch (Exception e) {
+    }
+
+    @Override
+    public void onException(List<Point> points, Throwable e) {
       logger.error(e.getMessage(), e);
+    }
+
+    private Map<String, Long> countEntries(Collection<Point> data) {
+
+      return data.stream().filter(p -> {
+        return p.getMeasurement().toLowerCase().startsWith(InfluxModelDataDto.PREFIX);
+      }).collect(Collectors.groupingBy(p -> {
+        return StringUtils.substringAfter(p.getMeasurement(), InfluxModelDataDto.PREFIX);
+      }, Collectors.counting()));
     }
   }
 

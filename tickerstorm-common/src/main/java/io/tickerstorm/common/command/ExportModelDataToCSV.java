@@ -35,6 +35,11 @@ public class ExportModelDataToCSV extends Command {
         .and(n -> this.getStream().equalsIgnoreCase(n.getStream()) && n.id.equals(this.id));
   }
 
+  public Predicate<Notification> failed() {
+    return Export.someCsvExportFailed
+        .and(n -> this.getStream().equalsIgnoreCase(n.getStream()) && n.id.equals(this.id));
+  }
+
   @Override
   public boolean isValid() {
     return (super.validate() && this.modelQuery != null);

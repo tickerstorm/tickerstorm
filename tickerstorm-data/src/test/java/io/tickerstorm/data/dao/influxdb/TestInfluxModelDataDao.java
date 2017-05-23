@@ -30,7 +30,7 @@
  *
  */
 
-package io.tickerstorm.data.dao.cassandra;
+package io.tickerstorm.data.dao.influxdb;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -40,15 +40,13 @@ import io.tickerstorm.common.entity.Bar;
 import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.test.TestDataFactory;
 import io.tickerstorm.data.TestMarketDataServiceConfig;
-import io.tickerstorm.data.dao.cassandra.CassandraModelDataDao;
-import io.tickerstorm.data.dao.cassandra.CassandraModelDataDto;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Stream;
 import org.junit.After;
-import org.junit.Before;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,49 +55,50 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {TestMarketDataServiceConfig.class})
-public class TestCassandraModelDataDao {
+public class TestInfluxModelDataDao {
 
   private final Bar c =
-      new Bar("goog", "google", Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ONE, BigDecimal.ONE, "1m", 1000);
-
-  @Before
-  public void init() {
-    c.stream = "TestModelDataDto";
-  }
-
+      new Bar("goog", "google", Instant.now(), BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ONE, BigDecimal.ONE, "1m", new BigDecimal(1000));
   @Autowired
-  private CassandraModelDataDao dao;
+  private InfluxModelDataDao dao;
 
   @Test
   public void testSelectBars() throws Exception {
 
-    List<Bar> bars = TestDataFactory
-        .buildCandles(5, "goog", "TestModelDataDto", new BigDecimal("34.4354"));
-    Set<CassandraModelDataDto> dtos = CassandraModelDataDto.convertBars(bars);
-    dao.ingest(dtos);
+    c.stream = "TestModelDataDto";
 
-    bars = TestDataFactory.buildCandles(2, "tol", "TestModelDataDto2", new BigDecimal("12.243"));
-    dtos = CassandraModelDataDto.convertBars(bars);
-    dao.ingest(dtos);
+    List<Bar> bars = TestDataFactory.buildCandles(5, "goog", c.stream, new BigDecimal("34.4354"));
+    dao.ingestMarketData((List) bars);
 
-    long count = dao.count("TestModelDataDto");
+    bars = TestDataFactory.buildCandles(2, "tol", c.stream + 2, new BigDecimal("12.243"));
+    dao.ingestMarketData((List) bars);
+
+    Thread.sleep(500);
+
+    long count = dao.count(c.stream);
     org.junit.Assert.assertEquals(5, count);
 
-    count = dao.count("TestModelDataDto2");
+    count = dao.count(c.stream + 2);
     org.junit.Assert.assertEquals(2, count);
 
-    Stream<CassandraModelDataDto> dtoss = dao.findAll("TestModelDataDto");
-    org.junit.Assert.assertEquals(5, dtoss.count());
+    List<Set<Field<?>>> dtoss = dao.findAll(c.stream);
+    org.junit.Assert.assertEquals(45, dtoss.stream().reduce(new HashSet<Field<?>>(), (s, e) -> {
+      s.addAll(e);
+      return s;
+    }).size());
 
-    dtoss = dao.findAll("TestModelDataDto2");
-    org.junit.Assert.assertEquals(2, dtoss.count());
+    dtoss = dao.findAll(c.stream + 2);
+    org.junit.Assert.assertEquals(18, dtoss.stream().reduce(new HashSet<Field<?>>(), (s, e) -> {
+      s.addAll(e);
+      return s;
+    }).size());
 
-    dao.deleteByStream("TestModelDataDto");
+    dao.deleteByStream(c.stream);
 
-    count = dao.count("TestModelDataDto");
+    count = dao.count(c.stream);
     org.junit.Assert.assertEquals(0, count);
 
-    count = dao.count("TestModelDataDto2");
+    count = dao.count(c.stream + 2);
     org.junit.Assert.assertEquals(2, count);
 
   }
@@ -110,21 +109,30 @@ public class TestCassandraModelDataDao {
     Set<Field<?>> fields = c.getFields();
     assertEquals(fields.size(), 9);
 
-    Set<CassandraModelDataDto> dtos = CassandraModelDataDto.convertFields(fields);
+    InfluxModelDataDto dtos = InfluxModelDataDto.convert(fields);
     assertNotNull(dtos);
-    assertEquals(dtos.size(), 9);
+    assertEquals(dtos.getFields().size(), 9);
+    assertEquals(dtos.getPoints().size(), 5);
+    assertTrue(fields.containsAll(dtos.getFields()));
 
-    assertTrue(dtos.stream().allMatch(d -> {
+  }
 
-      return fields.containsAll(d.asFields());
+  @Test
+  public void testSelectHeaders() throws Exception {
+    dao.ingestMarketData(c);
 
+    Thread.sleep(200);
+    Set<String> headers = dao.newSelect(c.stream).selectHeaders(c.stream);
+
+    Assert.assertFalse(headers.isEmpty());
+    Assert.assertTrue(c.getFields().stream().allMatch(f -> {
+      return headers.contains(f.getName());
     }));
-
   }
 
   @After
   public void cleanup() throws Exception {
-    dao.deleteByStream("TestModelDataDto");
-    dao.deleteByStream("TestModelDataDto2");
+    dao.deleteByStream(c.stream);
+    dao.deleteByStream(c.stream + 2);
   }
 }

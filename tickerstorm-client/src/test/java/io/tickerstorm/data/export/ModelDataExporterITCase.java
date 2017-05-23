@@ -53,6 +53,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -98,6 +99,11 @@ public class ModelDataExporterITCase extends BaseIntegrationTest {
     java.nio.file.Files.deleteIfExists(new File(location).toPath());
   }
 
+  @After
+  public void taerdown() throws Exception {
+    //java.nio.file.Files.deleteIfExists(new File(location).toPath());
+  }
+
   @Test
   public void testExportToCSVFile() throws Exception {
 
@@ -129,14 +135,19 @@ public class ModelDataExporterITCase extends BaseIntegrationTest {
       Assert.fail();
     }).start();
 
-//    Observer.observe(session.getNotificationsBus(), "file saved").startCountDownOn(exportCommend.started())
-//        .completeWhen(exportCommend.isDone()).mustCompleteWithin(2000).whenComplete((n) -> {
-//
-//      file_saved.set(true);
-//
-//    }).whenTimedOut(() -> {
-//      Assert.fail();
-//    }).start();
+    Observer.observe(session.getNotificationsBus(), "file saved").startCountDownOn(exportCommend.started())
+        .completeWhen(exportCommend.isDone()).mustCompleteWithin(2000).whenComplete((n) -> {
+
+      file_saved.set(true);
+
+    }).failedWhen(exportCommend.failed()).whenFailed((n) -> {
+
+      logger.error(n.getProperties().get(Markers.MESSAGE.toString()));
+
+      Assert.fail();
+    }).whenTimedOut(() -> {
+      Assert.fail();
+    }).start();
 
     TestDataFactory.buildCandles(100, "goog", session.stream(), BigDecimal.ONE).stream().forEach(c -> {
       brokderFeed.post(c);

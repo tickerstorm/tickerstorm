@@ -1,15 +1,15 @@
 package io.tickerstorm.common.entity;
 
+import com.google.common.base.MoreObjects;
+import com.google.common.base.Preconditions;
+import io.tickerstorm.common.entity.Field.Name;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
 import org.apache.commons.lang3.StringUtils;
-
-import com.google.common.base.MoreObjects;
 
 @SuppressWarnings("serial")
 public abstract class BaseMarketData implements MarketData, Serializable {
@@ -19,9 +19,11 @@ public abstract class BaseMarketData implements MarketData, Serializable {
   public String stream;
   protected Map<String, Field<?>> fields = new HashMap<>();
 
-
-
   public BaseMarketData(Set<Field<?>> fs) {
+
+    Preconditions.checkArgument(fields.containsKey(Field.Name.TIMESTAMP.field()), "Timestamp is required");
+    Preconditions.checkArgument(fields.containsKey(Name.SYMBOL.field()), "Symbol is required");
+    Preconditions.checkArgument(fields.containsKey(Name.STREAM.field()), "Stream is required");
 
     for (Field<?> f : fs) {
       fields.put(f.getName(), f);
@@ -30,14 +32,24 @@ public abstract class BaseMarketData implements MarketData, Serializable {
     this.timestamp = (Instant) fields.get(Field.Name.TIMESTAMP.field()).getValue();
     this.symbol = (String) fields.get(Field.Name.SYMBOL.field()).getValue();
     this.stream = (String) fields.get(Field.Name.STREAM.field()).getValue();
+
   }
 
-  protected BaseMarketData() {}
+  protected BaseMarketData() {
+  }
 
   public BaseMarketData(String symbol, String stream, Instant timestamp) {
     this.timestamp = timestamp;
     this.symbol = symbol;
     this.stream = stream;
+  }
+
+  public void addField(Field<?> f) {
+    this.fields.put(f.getName(), f);
+  }
+
+  public boolean removeField(String name) {
+    return (this.fields.remove(name) != null);
   }
 
   /**
@@ -52,13 +64,16 @@ public abstract class BaseMarketData implements MarketData, Serializable {
   public Set<Field<?>> getFields() {
 
     Set<Field<?>> fields = new HashSet<Field<?>>();
+    fields.addAll(this.fields.values());
     fields.add(new BaseField<String>(getEventId(), Field.Name.SYMBOL.field(), symbol));
     fields.add(new BaseField<Instant>(getEventId(), Field.Name.TIMESTAMP.field(), timestamp));
 
-    if (!StringUtils.isEmpty(stream))
+    if (!StringUtils.isEmpty(stream)) {
       fields.add(new BaseField<String>(getEventId(), Field.Name.STREAM.field(), stream));
-    else
-      fields.add(new BaseField<String>(getEventId(), Field.Name.STREAM.field(), String.class));
+    } else {
+      throw new IllegalArgumentException("Market data event must have stream");
+      //fields.add(new BaseField<String>(getEventId(), Field.Name.STREAM.field(), String.class));
+    }
 
     return fields;
 
@@ -68,17 +83,24 @@ public abstract class BaseMarketData implements MarketData, Serializable {
     return stream;
   }
 
+  public void setStream(String stream) {
+    this.stream = stream;
+  }
+
   public String getSymbol() {
     return symbol;
   }
 
+  public void setSymbol(String symbol) {
+    this.symbol = symbol;
+  }
 
   public Instant getTimestamp() {
     return timestamp;
   }
 
-  public void setStream(String stream) {
-    this.stream = stream;
+  public void setTimestamp(Instant timestamp) {
+    this.timestamp = timestamp;
   }
 
   @Override
@@ -93,44 +115,44 @@ public abstract class BaseMarketData implements MarketData, Serializable {
 
   @Override
   public boolean equals(Object obj) {
-    if (this == obj)
+    if (this == obj) {
       return true;
-    if (obj == null)
+    }
+    if (obj == null) {
       return false;
-    if (getClass() != obj.getClass())
+    }
+    if (getClass() != obj.getClass()) {
       return false;
+    }
     BaseMarketData other = (BaseMarketData) obj;
     if (stream == null) {
-      if (other.stream != null)
+      if (other.stream != null) {
         return false;
-    } else if (!stream.equals(other.stream))
+      }
+    } else if (!stream.equals(other.stream)) {
       return false;
+    }
     if (symbol == null) {
-      if (other.symbol != null)
+      if (other.symbol != null) {
         return false;
-    } else if (!symbol.equals(other.symbol))
+      }
+    } else if (!symbol.equals(other.symbol)) {
       return false;
+    }
     if (timestamp == null) {
-      if (other.timestamp != null)
+      if (other.timestamp != null) {
         return false;
-    } else if (!timestamp.equals(other.timestamp))
+      }
+    } else if (!timestamp.equals(other.timestamp)) {
       return false;
+    }
     return true;
-  }
-
-  public void setSymbol(String symbol) {
-    this.symbol = symbol;
-  }
-
-  public void setTimestamp(Instant timestamp) {
-    this.timestamp = timestamp;
   }
 
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this).add("symbol", symbol).add("timestamp", timestamp).add("stream", stream).toString();
   }
-
 
 
 }

@@ -1,5 +1,6 @@
 package io.tickerstorm.common;
 
+import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
 import io.tickerstorm.common.eventbus.Destinations;
 import java.util.concurrent.Executor;
@@ -55,11 +56,10 @@ public class EventBusContext {
    */
   @Qualifier(Destinations.NOTIFICATIONS_BUS)
   @Bean
-  public EventBus buildNotificaitonEventBus() {
-    //return new AsyncEventBus(Destinations.NOTIFICATIONS_BUS, executor);
-    return new EventBus(Destinations.NOTIFICATIONS_BUS);
+  public EventBus buildNotificaitonEventBus(Executor executor) {
+    return new AsyncEventBus(Destinations.NOTIFICATIONS_BUS, executor);
+    //return new EventBus(Destinations.NOTIFICATIONS_BUS);
   }
-
 
 //  @Qualifier(Destinations.MODEL_DATA_BUS)
 //  @Bean
@@ -79,11 +79,11 @@ public class EventBusContext {
     return new EventBus(Destinations.RETRO_MODEL_DATA_BUS);
   }
 
-//  @Qualifier("eventBus")
-//  @Bean
-//  public Executor buildExecutorService() {
-//    return Executors.newFixedThreadPool(4);
-//  }
+  @Qualifier("eventBus")
+  @Bean
+  public Executor buildExecutorService() {
+    return Executors.newFixedThreadPool(4);
+  }
 
 
 }

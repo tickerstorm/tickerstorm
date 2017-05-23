@@ -69,7 +69,7 @@ public class DukascopyHistoricalForexQueryITCase extends BaseDataQueryITCase {
   @After
   public void tearDown() throws Exception {
     FileUtils.deleteQuietly(new File(Locations.FILE_DROP_LOCATION + "/Dukascopy/AUDCAD_Candlestick_1_m_BID_01.06.2015-06.06.2015.csv"));
-    dao.deleteByStream("Dukascopy");
+    mddao.newDelete().bySource("Dukascopy").delete();
     super.tearDown();
   }
 
@@ -81,7 +81,7 @@ public class DukascopyHistoricalForexQueryITCase extends BaseDataQueryITCase {
 
     Thread.sleep(8000);
 
-    Long daoCount = dao.count("Dukascopy");
+    Long daoCount = mddao.newCount(Bar.TYPE).bySource("Dukascopy").count();
     Assert.assertEquals(daoCount, new Long(52860));
     Assert.assertEquals(count.get(), 52860L);
 

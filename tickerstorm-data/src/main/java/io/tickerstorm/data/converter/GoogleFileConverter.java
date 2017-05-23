@@ -187,7 +187,7 @@ public class GoogleFileConverter extends BaseFileConverter implements FileConver
 
       Bar c = new Bar(symbol, provider(), timestamp.plus(mins, ChronoUnit.MINUTES), new BigDecimal(args[4]), new BigDecimal(args[1]),
           new BigDecimal(args[2]), new BigDecimal(args[3]), Bar.MIN_1_INTERVAL,
-          new BigDecimal(args[5]).multiply(new BigDecimal("1000")).intValue());
+          new BigDecimal(args[5]).multiply(new BigDecimal("1000")));
       
       if (historical != null)// in case being invoked standalone (i.e. tests)
         historical.post(c);

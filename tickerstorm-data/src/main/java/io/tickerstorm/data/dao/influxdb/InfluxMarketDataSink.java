@@ -57,9 +57,9 @@ import org.springframework.stereotype.Component;
  * Created by kkarski on 4/12/17.
  */
 @Component
-public class MarketDataInfluxSink {
+public class InfluxMarketDataSink {
 
-  protected static final org.slf4j.Logger logger = LoggerFactory.getLogger(MarketDataInfluxSink.class);
+  protected static final org.slf4j.Logger logger = LoggerFactory.getLogger(InfluxMarketDataSink.class);
 
   private final InfluxDBBatchListener l = new MarketDataWriteNotification();
   @Autowired
@@ -114,14 +114,11 @@ public class MarketDataInfluxSink {
 
     private Map<String, Long> countEntries(Collection<Point> data) {
 
-      return data.stream().collect(Collectors.groupingBy(p -> {
-            if (p.getTags().containsKey(Name.SOURCE.field())) {
-              return p.getTags().get(Name.SOURCE.field());
-            }
-
-            return null;
-          }
-          , Collectors.counting()));
+      return data.stream().filter(p -> {
+        return p.getMeasurement().toLowerCase().equalsIgnoreCase("marketdata") && p.getTags().containsKey(Name.SOURCE.field());
+      }).collect(Collectors.groupingBy(p -> {
+        return p.getTags().get(Name.SOURCE.field());
+      }, Collectors.counting()));
     }
   }
 }

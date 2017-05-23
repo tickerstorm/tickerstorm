@@ -107,8 +107,14 @@ public class InfluxMarketDataDao {
   public class Select {
 
     private String where = "";
+    private String stream;
 
     Select() {
+    }
+
+    public Select asStream(String stream) {
+      this.stream = stream;
+      return this;
     }
 
     public Select bySource(String source) {
@@ -153,10 +159,10 @@ public class InfluxMarketDataDao {
           symbols.append(" OR ");
         }
 
-        symbols.append("source='" + s.toLowerCase() + "'");
+        symbols.append("symbol='" + s.toLowerCase() + "'");
       });
 
-      where += "(" + symbols.toString() + ")";
+      where += symbols.toString();
 
       return this;
     }
@@ -167,7 +173,7 @@ public class InfluxMarketDataDao {
         where += " AND ";
       }
 
-      where += "time=> " + from.toEpochMilli() + " AND time=<" + to.toEpochMilli();
+      where += "time>='" + from.toString() + "' AND time<='" + to.toString() + "'";
       return this;
 
     }
@@ -178,7 +184,7 @@ public class InfluxMarketDataDao {
         where += " AND ";
       }
 
-      where += "time=<" + to.toEpochMilli();
+      where += "time<='" + to.toString() + "'";
       return this;
 
     }
@@ -189,7 +195,7 @@ public class InfluxMarketDataDao {
         where += " AND ";
       }
 
-      where += " time=> " + from.toEpochMilli();
+      where += " time>='" + from.toString() + "'";
       return this;
 
     }
@@ -207,7 +213,7 @@ public class InfluxMarketDataDao {
       if (StringUtils.isEmpty(result.getError()) && result.getResults().size() > 0 && result.getResults().get(0).getSeries() != null) {
 
         result.getResults().get(0).getSeries().stream().map(s -> {
-          return InfluxMarketDataDto.convert(s);
+          return InfluxMarketDataDto.convert(s, stream);
         }).forEach(l -> {
           l.stream().forEach(m -> {
             data.add(m.toMarketData());
@@ -228,11 +234,9 @@ public class InfluxMarketDataDao {
 
       if (type.equalsIgnoreCase(Bar.TYPE)) {
         query += "count(open)";
-      }
-      if (type.equalsIgnoreCase(Quote.TYPE)) {
+      }else if (type.equalsIgnoreCase(Quote.TYPE)) {
         query += "count(ask)";
-      }
-      if (type.equalsIgnoreCase(Tick.TYPE)) {
+      }else if (type.equalsIgnoreCase(Tick.TYPE)) {
         query += "count(price)";
       }
 
@@ -369,7 +373,9 @@ public class InfluxMarketDataDao {
 
       logger.debug("Delete result: " + result.toString());
 
-      if (result.getError() != null || result.getResults().get(0).getSeries() != null || result.getResults().get(0).getError() != null) {
+      if (!StringUtils.isEmpty(result.getResults().get(0).getError()) && result.getResults().get(0).getError().contains("not found")) {
+        //that's fine
+      } else if (result.getError() != null || result.getResults().get(0).getSeries() != null || result.getResults().get(0).getError() != null) {
         throw new RuntimeException("Delete per " + q.getCommand() + " failed");
       }
     }

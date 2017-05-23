@@ -74,7 +74,7 @@ public class TestSynchronizedIndexedTreeMap {
   @Test
   public void populate200Count() throws Exception {
 
-    final SynchronizedIndexedTreeMap<Field<Integer>> q = new SynchronizedIndexedTreeMap<Field<Integer>>(
+    final SynchronizedIndexedTreeMap<Field<BigDecimal>> q = new SynchronizedIndexedTreeMap<Field<BigDecimal>>(
         Field.SORT_BY_INSTANTS, 200);
 
     ArrayList<Instant> insts = new ArrayList<>();
@@ -83,9 +83,9 @@ public class TestSynchronizedIndexedTreeMap {
       insts.add(in);
       Thread.sleep(5);
       c = new Bar("GOOG", "google", in, BigDecimal.ONE, BigDecimal.TEN, BigDecimal.TEN,
-          BigDecimal.ZERO, "1m", 10000);
+          BigDecimal.ZERO, "1m", new BigDecimal(10000));
       Assert.assertNull(
-          q.put(in, new BaseField<>(c.getEventId(), "test_field-p" + i, rand.nextInt())));
+          q.put(in, new BaseField<>(c.getEventId(), "test_field-p" + i, new BigDecimal(rand.nextInt()))));
     }
 
     Assert.assertEquals(200, q.size());
@@ -106,12 +106,12 @@ public class TestSynchronizedIndexedTreeMap {
   @Test
   public void getXPeriods() throws Exception {
 
-    final SynchronizedIndexedTreeMap<Field<Integer>> q = new SynchronizedIndexedTreeMap<Field<Integer>>(
+    final SynchronizedIndexedTreeMap<Field<BigDecimal>> q = new SynchronizedIndexedTreeMap<Field<BigDecimal>>(
         Field.SORT_BY_INSTANTS, 200);
 
     TestDataFactory.buildCandles(200, "goog", "google", BigDecimal.ONE).stream()
         .forEach(c -> {
-          Field<Integer> f = new BaseField<>(c.getEventId(), "volume", c.volume);
+          Field<BigDecimal> f = new BaseField<>(c.getEventId(), "volume", c.volume);
           Field<?> fx = q.put(f.getTimestamp(), f);
         });
 
@@ -131,7 +131,7 @@ public class TestSynchronizedIndexedTreeMap {
   @Test
   public void getLatest2() throws Exception {
 
-    final SynchronizedIndexedTreeMap<Field<Integer>> q = new SynchronizedIndexedTreeMap<Field<Integer>>(
+    final SynchronizedIndexedTreeMap<Field<BigDecimal>> q = new SynchronizedIndexedTreeMap<Field<BigDecimal>>(
         Field.SORT_BY_INSTANTS, 200);
 
     ArrayList<Instant> insts = new ArrayList<>();
@@ -140,9 +140,9 @@ public class TestSynchronizedIndexedTreeMap {
       insts.add(in);
       Thread.sleep(5);
       c = new Bar("GOOG", "google", in, BigDecimal.ONE, BigDecimal.TEN, BigDecimal.TEN,
-          BigDecimal.ZERO, "1m", 10000);
+          BigDecimal.ZERO, "1m", new BigDecimal(10000));
       Assert.assertNull(
-          q.put(in, new BaseField<>(c.getEventId(), "test_field-p" + i, rand.nextInt())));
+          q.put(in, new BaseField<>(c.getEventId(), "test_field-p" + i, new BigDecimal(rand.nextInt()))));
     }
 
     Assert.assertEquals(q.size(), 3);
@@ -178,7 +178,7 @@ public class TestSynchronizedIndexedTreeMap {
 
     for (Instant i : insts) {
       c = new Bar("GOOG", "google", i, BigDecimal.ONE, BigDecimal.TEN, BigDecimal.TEN,
-          BigDecimal.ZERO, "1m", 10000);
+          BigDecimal.ZERO, "1m", new BigDecimal(10000));
       Assert.assertNull(q.put(i, new BaseField<Integer>(c.getEventId(), "test_field-p" + i, rand.nextInt())));
     }
 
@@ -227,7 +227,7 @@ public class TestSynchronizedIndexedTreeMap {
   @Test
   public void testMultiThreadOperations() throws Exception {
 
-    final SynchronizedIndexedTreeMap<Field<Integer>> q = new SynchronizedIndexedTreeMap<Field<Integer>>(
+    final SynchronizedIndexedTreeMap<Field<BigDecimal>> q = new SynchronizedIndexedTreeMap<Field<BigDecimal>>(
         Field.SORT_BY_INSTANTS, 200);
 
     AtomicBoolean ran1 = new AtomicBoolean(false);
@@ -240,7 +240,7 @@ public class TestSynchronizedIndexedTreeMap {
 
       TestDataFactory.buildCandles(full + 50, "goog", "google", BigDecimal.ONE).stream().parallel()
           .forEach(c -> {
-            Field<Integer> f = new BaseField<>(c.getEventId(), "volume", c.volume);
+            Field<BigDecimal> f = new BaseField<>(c.getEventId(), "volume", c.volume);
             Field<?> fx = q.put(f.getTimestamp(), f);
 
             if (fx != null) {
@@ -249,7 +249,7 @@ public class TestSynchronizedIndexedTreeMap {
               count.incrementAndGet();
             }
 
-            Entry<Instant, Field<Integer>> e = q.firstEntry();
+            Entry<Instant, Field<BigDecimal>> e = q.firstEntry();
             Assert.assertEquals(e.getKey(), e.getValue().getTimestamp());
             System.out.println(f.getTimestamp().toEpochMilli() + " - " + q.firstEntry().getValue() + "\n");
 
@@ -259,7 +259,7 @@ public class TestSynchronizedIndexedTreeMap {
       Assert.assertEquals("Q size isn't 200", q.keySet().size(), full);
       Assert.assertNotNull("Getting 50 periods returned null", q.get(q.firstKey(), 50));
 
-      for (Entry<Instant, Field<Integer>> s : q.entrySet()) {
+      for (Entry<Instant, Field<BigDecimal>> s : q.entrySet()) {
         Assert.assertEquals(s.getKey(), s.getValue().getTimestamp());
       }
 
@@ -267,7 +267,7 @@ public class TestSynchronizedIndexedTreeMap {
 
       boolean looped = false;
       Instant t = null;
-      for (Field<Integer> f : q) {
+      for (Field<BigDecimal> f : q) {
 
         if (t != null) {
           Assert.assertTrue(t.isAfter(f.getTimestamp()));
@@ -291,7 +291,7 @@ public class TestSynchronizedIndexedTreeMap {
 
         if (j > 0) {
           System.out.println(i + ", " + j);
-          Entry<Instant, Field<Integer>> e = q.firstEntry();
+          Entry<Instant, Field<BigDecimal>> e = q.firstEntry();
           Assert.assertEquals(e.getKey(), e.getValue().getTimestamp());
         }
 

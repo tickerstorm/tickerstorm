@@ -9,15 +9,19 @@ import java.util.Set;
 public class Quote extends BaseMarketData {
 
   public static final String TYPE = "quote";
+  public BigDecimal bid;
+  public BigDecimal ask;
+  public BigDecimal askSize;
+  public BigDecimal bidSize;
 
-  public Quote(String symbol, String stream, Instant timestamp, BigDecimal ask, Integer askSize, BigDecimal bid, Integer bidSize) {
+  public Quote(String symbol, String stream, Instant timestamp, BigDecimal ask, BigDecimal askSize, BigDecimal bid, BigDecimal bidSize) {
     super(symbol, stream, timestamp);
     this.ask = ask;
     this.askSize = askSize;
     this.bid = bid;
     this.bidSize = bidSize;
   }
-  
+
   public Quote(String symbol, String stream, Instant timestamp) {
     super(symbol, stream, timestamp);
   }
@@ -26,17 +30,21 @@ public class Quote extends BaseMarketData {
     super(fields);
     for (Field<?> f : fields) {
 
-      if (f.getName().equalsIgnoreCase(Field.Name.ASK.field()))
+      if (f.getName().equalsIgnoreCase(Field.Name.ASK.field())) {
         this.ask = (BigDecimal) f.getValue();
+      }
 
-      if (f.getName().equalsIgnoreCase(Field.Name.ASK_SIZE.field()))
-        this.askSize = (Integer) f.getValue();
+      if (f.getName().equalsIgnoreCase(Field.Name.ASK_SIZE.field())) {
+        this.askSize = (BigDecimal) f.getValue();
+      }
 
-      if (f.getName().equalsIgnoreCase(Field.Name.BID.field()))
+      if (f.getName().equalsIgnoreCase(Field.Name.BID.field())) {
         this.bid = (BigDecimal) f.getValue();
+      }
 
-      if (f.getName().equalsIgnoreCase(Field.Name.BID_SIZE.field()))
-        this.bidSize = (Integer) f.getValue();
+      if (f.getName().equalsIgnoreCase(Field.Name.BID_SIZE.field())) {
+        this.bidSize = (BigDecimal) f.getValue();
+      }
     }
   }
 
@@ -56,26 +64,21 @@ public class Quote extends BaseMarketData {
     this.ask = ask;
   }
 
-  public Integer getAskSize() {
+  public BigDecimal getAskSize() {
     return askSize;
   }
 
-  public void setAskSize(Integer askSize) {
+  public void setAskSize(BigDecimal askSize) {
     this.askSize = askSize;
   }
 
-  public Integer getBidSize() {
+  public BigDecimal getBidSize() {
     return bidSize;
   }
 
-  public void setBidSize(Integer bidSize) {
+  public void setBidSize(BigDecimal bidSize) {
     this.bidSize = bidSize;
   }
-
-  public BigDecimal bid;
-  public BigDecimal ask;
-  public Integer askSize;
-  public Integer bidSize;
 
   @Override
   public int hashCode() {
@@ -99,33 +102,44 @@ public class Quote extends BaseMarketData {
 
   @Override
   public boolean equals(Object obj) {
-    if (this == obj)
+    if (this == obj) {
       return true;
-    if (!super.equals(obj))
+    }
+    if (!super.equals(obj)) {
       return false;
-    if (getClass() != obj.getClass())
+    }
+    if (getClass() != obj.getClass()) {
       return false;
+    }
     Quote other = (Quote) obj;
     if (ask == null) {
-      if (other.ask != null)
+      if (other.ask != null) {
         return false;
-    } else if (!ask.equals(other.ask))
+      }
+    } else if (!ask.equals(other.ask)) {
       return false;
+    }
     if (askSize == null) {
-      if (other.askSize != null)
+      if (other.askSize != null) {
         return false;
-    } else if (!askSize.equals(other.askSize))
+      }
+    } else if (!askSize.equals(other.askSize)) {
       return false;
+    }
     if (bid == null) {
-      if (other.bid != null)
+      if (other.bid != null) {
         return false;
-    } else if (!bid.equals(other.bid))
+      }
+    } else if (!bid.equals(other.bid)) {
       return false;
+    }
     if (bidSize == null) {
-      if (other.bidSize != null)
+      if (other.bidSize != null) {
         return false;
-    } else if (!bidSize.equals(other.bidSize))
+      }
+    } else if (!bidSize.equals(other.bidSize)) {
       return false;
+    }
     return true;
   }
 
@@ -135,8 +149,8 @@ public class Quote extends BaseMarketData {
     fields.addAll(super.getFields());
     fields.add(new BaseField<BigDecimal>(getEventId(), Field.Name.ASK.field(), ask));
     fields.add(new BaseField<BigDecimal>(getEventId(), Field.Name.BID.field(), bid));
-    fields.add(new BaseField<Integer>(getEventId(), Field.Name.ASK_SIZE.field(), askSize));
-    fields.add(new BaseField<Integer>(getEventId(), Field.Name.BID_SIZE.field(), bidSize));
+    fields.add(new BaseField<BigDecimal>(getEventId(), Field.Name.ASK_SIZE.field(), askSize));
+    fields.add(new BaseField<BigDecimal>(getEventId(), Field.Name.BID_SIZE.field(), bidSize));
     return fields;
   }
 }

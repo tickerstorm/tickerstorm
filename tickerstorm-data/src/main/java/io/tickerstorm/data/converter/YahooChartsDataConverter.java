@@ -47,7 +47,7 @@ public class YahooChartsDataConverter implements DataConverter {
     String[] args = line.split(",");
 
     Bar c = new Bar(query.getSymbol(), "yahoo", Instant.ofEpochSecond(Long.valueOf(args[0])), new BigDecimal(args[4]),
-        new BigDecimal(args[1]), new BigDecimal(args[2]), new BigDecimal(args[3]), query.getInterval(), new Integer(args[5]));
+        new BigDecimal(args[1]), new BigDecimal(args[2]), new BigDecimal(args[3]), query.getInterval(), new BigDecimal(args[5]));
     c.stream = provider();
         
     return new Bar[] {c};
