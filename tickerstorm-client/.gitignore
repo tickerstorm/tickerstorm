@@ -4,3 +4,6 @@
 /.project
 /test-output/
 /.springBeans
+/tickerstorm-client.eml
+/tickerstorm-client.iml
+/.idea/
