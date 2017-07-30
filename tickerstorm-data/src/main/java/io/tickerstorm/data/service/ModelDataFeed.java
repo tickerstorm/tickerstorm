@@ -70,7 +70,7 @@ public class ModelDataFeed {
   @Subscribe
   public void onQuery(ModelDataQuery query) {
 
-    logger.debug("Model data feed query received " + query);
+    logger.info("Quering model data per " + query);
 
     List<Set<Field<?>>> dtos = dao.newSelect(query.getStream()).between(query.from, query.until).select();
 
@@ -89,7 +89,7 @@ public class ModelDataFeed {
       modeldataBus.post(f);
     });
 
-    logger.info("Dispatching " + dtos.size() + " model data fields took " + (System.currentTimeMillis() - startTimer) + "ms");
+    logger.debug("Dispatching " + dtos.size() + " model data fields took " + (System.currentTimeMillis() - startTimer) + "ms");
 
     marker = new Notification(query);
     marker.addMarker(Markers.END.toString());

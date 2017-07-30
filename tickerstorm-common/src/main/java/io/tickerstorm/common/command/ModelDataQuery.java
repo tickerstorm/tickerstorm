@@ -1,6 +1,6 @@
 package io.tickerstorm.common.command;
 
-import io.tickerstorm.common.reactive.CompletionTracker;
+import io.tickerstorm.common.reactive.Observations;
 import io.tickerstorm.common.reactive.Notification;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -24,12 +24,12 @@ public class ModelDataQuery extends Command implements DataFeedQuery {
   }
 
   public Predicate<Notification> isDone() {
-    return CompletionTracker.ModelData.someModelDataQueryEnded
+    return Observations.ModelData.Query.ended
         .and(n -> this.getStream().equalsIgnoreCase(n.getStream()) && n.id.equals(this.id));
   }
   
   public Predicate<Notification> started() {
-    return CompletionTracker.ModelData.someModelDataQueryStarted
+    return Observations.ModelData.Query.started
         .and(n -> this.getStream().equalsIgnoreCase(n.getStream()) && n.id.equals(this.id));
   }
 

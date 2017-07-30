@@ -18,7 +18,7 @@ import com.google.common.eventbus.Subscribe;
 
 import io.tickerstorm.common.cache.CacheManager;
 import io.tickerstorm.common.command.Command;
-import io.tickerstorm.common.reactive.CompletionTracker;
+import io.tickerstorm.common.reactive.Observations;
 import io.tickerstorm.common.command.Markers;
 import io.tickerstorm.common.reactive.Notification;
 import io.tickerstorm.common.config.TransformerConfig;
@@ -63,7 +63,7 @@ public abstract class BaseProcessor implements Processor {
   @Subscribe
   public void onCommand(Command command) throws Exception {
 
-    if (CompletionTracker.Session.isStart.test(command)) {
+    if (Observations.Session.isStart.test(command)) {
       logger.debug("Command received " + command);
 
       if (command.config != null && command.config.containsKey(TRANSFORMERS_YML_NODE)) {
@@ -88,9 +88,14 @@ public abstract class BaseProcessor implements Processor {
 
     }
 
-    if (CompletionTracker.Session.isEnd.test(command)) {
+    if (Observations.Session.isEnd.test(command)) {
       logger.debug("Command received " + command);
       configs.remove(command.getStream());
+
+      Notification not = new Notification(command);
+      not.markers.add(Markers.SUCCESS.toString());
+      not.properties.put("transformer", name());
+      notificationsBus.post(not);
     }
 
   }

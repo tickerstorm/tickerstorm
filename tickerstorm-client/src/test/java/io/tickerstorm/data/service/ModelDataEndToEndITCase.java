@@ -33,11 +33,11 @@
 package io.tickerstorm.data.service;
 
 import com.google.common.eventbus.EventBus;
+import io.tickerstorm.common.command.Command;
 import io.tickerstorm.common.command.Markers;
 import io.tickerstorm.common.command.ModelDataQuery;
-import io.tickerstorm.common.command.Trigger;
 import io.tickerstorm.common.eventbus.Destinations;
-import io.tickerstorm.common.reactive.CompletionTracker;
+import io.tickerstorm.common.reactive.Observations;
 import io.tickerstorm.common.reactive.Observer;
 import io.tickerstorm.common.test.TestDataFactory;
 import io.tickerstorm.data.BaseIntegrationTest;
@@ -80,12 +80,12 @@ public class ModelDataEndToEndITCase extends BaseIntegrationTest {
   public void cleanup() throws Exception {
     super.cleanup();
 
-    Trigger delete = new Trigger(session.stream(), "delete.data");
+    Command delete = new Command(session.stream(), "delete.data");
     delete.addMarker(Markers.MARKET_DATA.toString());
     delete.addMarker(Markers.DELETE.toString());
     session.execute(delete);
 
-    delete = new Trigger(session.stream(), "delete.data");
+    delete = new Command(session.stream(), "delete.data");
     delete.addMarker(Markers.MODEL_DATA.toString());
     delete.addMarker(Markers.DELETE.toString());
     session.execute(delete);
@@ -107,16 +107,16 @@ public class ModelDataEndToEndITCase extends BaseIntegrationTest {
     q.until = Instant.now().plus(5, ChronoUnit.SECONDS);
 
     Observer.observe(session.getNotificationsBus(), "marketdata")
-        .startCountDownOn(CompletionTracker.MarketData.isSaved(session.stream()))
-        .extendTimeoutOn(CompletionTracker.MarketData.isSaved(session.stream()), 1000).whenTimedOut(() -> {
+        .startCountDownOn(Observations.MarketData.isSaved(session.stream()))
+        .extendTimeoutOn(Observations.MarketData.isSaved(session.stream()), 1000).whenTimedOut(() -> {
 
       triggeredMarket.set(true);
 
     }).start();
 
     Observer.observe(session.getNotificationsBus(), "modeldata")
-        .startCountDownOn(CompletionTracker.ModelData.isSaved(session.stream()))
-        .extendTimeoutOn(CompletionTracker.ModelData.isSaved(session.stream()), 1000).whenTimedOut(() -> {
+        .startCountDownOn(Observations.ModelData.isSaved(session.stream()))
+        .extendTimeoutOn(Observations.ModelData.isSaved(session.stream()), 1000).whenTimedOut(() -> {
 
       triggeredModel.set(true);
       session.execute(q);

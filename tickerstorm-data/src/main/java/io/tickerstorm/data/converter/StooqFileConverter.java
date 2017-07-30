@@ -154,6 +154,7 @@ public class StooqFileConverter extends BaseFileConverter {
 
         Notification not = new Notification(provider());
         not.addMarker(Markers.FILE.toString());
+        not.addMarker(Markers.MARKET_DATA.toString());
         not.addMarker(Markers.INGEST.toString());
         not.addMarker(Markers.START.toString());
         not.addMarker(Markers.LOCATION.toString());
@@ -169,6 +170,7 @@ public class StooqFileConverter extends BaseFileConverter {
 
         not = new Notification(provider());
         not.addMarker(Markers.FILE.toString());
+        not.addMarker(Markers.MARKET_DATA.toString());
         not.addMarker(Markers.INGEST.toString());
         not.addMarker(Markers.SUCCESS.toString());
         not.addMarker(Markers.LOCATION.toString());
@@ -180,6 +182,7 @@ public class StooqFileConverter extends BaseFileConverter {
 
         Notification not = new Notification(provider());
         not.addMarker(Markers.FILE.toString());
+        not.addMarker(Markers.MARKET_DATA.toString());
         not.addMarker(Markers.INGEST.toString());
         not.addMarker(Markers.FAILED.toString());
         not.addMarker(Markers.LOCATION.toString());

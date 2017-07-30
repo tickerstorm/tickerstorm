@@ -36,8 +36,8 @@ import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import io.tickerstorm.common.Session;
 import io.tickerstorm.common.SessionFactory;
+import io.tickerstorm.common.command.Command;
 import io.tickerstorm.common.command.Markers;
-import io.tickerstorm.common.command.Trigger;
 import io.tickerstorm.common.entity.Field;
 import io.tickerstorm.common.eventbus.Destinations;
 import io.tickerstorm.common.test.TestDataFactory;
@@ -97,12 +97,12 @@ public class StrategyServiceEndToEndITCase {
     session = factory.newSession();
     session.configure(new DefaultResourceLoader().getResource("classpath:yml/modeldataendtoenditcase.yml").getInputStream(), stream);
 
-    Trigger delete = new Trigger(session.stream(), "delete.data");
+    Command delete = new Command(session.stream(), "delete.data");
     delete.addMarker(Markers.MARKET_DATA.toString());
     delete.addMarker(Markers.DELETE.toString());
     session.execute(delete);
 
-    delete = new Trigger(session.stream(), "delete.data");
+    delete = new Command(session.stream(), "delete.data");
     delete.addMarker(Markers.MODEL_DATA.toString());
     delete.addMarker(Markers.DELETE.toString());
     session.execute(delete);

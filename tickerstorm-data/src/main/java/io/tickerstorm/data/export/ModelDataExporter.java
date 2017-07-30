@@ -1,6 +1,7 @@
 package io.tickerstorm.data.export;
 
 import com.google.common.base.Throwables;
+import com.google.common.collect.Lists;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import com.google.common.io.Files;
@@ -60,7 +61,7 @@ public class ModelDataExporter {
   @Subscribe
   public void onCommand(ExportModelDataToCSV command) {
 
-    final Set<String> fieldNames = dao.allHeaders(command.getStream());
+    final List<String> fieldNames = Lists.newArrayList(dao.allHeaders(command.getStream()));
     final List<Set<Field<?>>> dtos = dao.newSelect(command.modelQuery.getStream()).between(command.modelQuery.from, command.modelQuery.until).select();
 
     if (fieldNames.isEmpty() || dtos.isEmpty()) {
@@ -96,22 +97,29 @@ public class ModelDataExporter {
       n.addMarker(Markers.START.toString());
       notificationBus.post(n);
 
+      logger.info("Exporting " + dtos.size() + " rows to " + file.getAbsolutePath());
+
       final String[] header = fieldNames.toArray(new String[]{});
+      Arrays.sort(header);
       mapWriter.writeHeader(header);
-      Map<String, Object> row = new HashMap<>();
+      final Map<String, Object> row = new HashMap<>();
 
       dtos.stream().forEach(s -> {
+
         s.stream().forEach(f -> {
-          try {
-            row.put(f.getName(), f.getValue());
-            mapWriter.write(row, header, cellProcessor);
-          } catch (Exception e2) {
-            logger.error(e2.getMessage(), e2);
-          }
+          row.put(f.getName(), f.getValue());
         });
+
+        try {
+          mapWriter.write(row, header, cellProcessor);
+        } catch (Exception e2) {
+          logger.error(e2.getMessage(), e2);
+        } finally {
+          row.clear();
+        }
       });
 
-      logger.info("Exported model data to " + file.getAbsolutePath());
+      logger.info("Done exporting model data to " + file.getAbsolutePath());
 
       n = new Notification(command);
       n.addMarker(Markers.SUCCESS.toString());

@@ -78,7 +78,7 @@ public class HistoricalDataFeedITCase {
   private EventBus notificationsBus;
   @Qualifier(Destinations.COMMANDS_BUS)
   @Autowired
-  private EventBus queryBus;
+  private EventBus commandBus;
   @Autowired
   private InfluxMarketDataDao dao;
 
@@ -112,7 +112,7 @@ public class HistoricalDataFeedITCase {
     query.until = LocalDateTime.of(2015, 6, 11, 0, 0);
     query.periods.add(Bar.MIN_1_INTERVAL);
     query.zone = ZoneOffset.ofHours(-7);
-    queryBus.post(query);
+    commandBus.post(query);
 
     Thread.sleep(500);
 

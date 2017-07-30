@@ -36,19 +36,29 @@ import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Created by kkarski on 4/7/17.
  */
 public class ReactiveBoolean {
 
+  private final static Logger logger = LoggerFactory.getLogger("ReactiveBoolean");
   private final AtomicBoolean value = new AtomicBoolean(false);
   private final EventBus bus;
+  private final String name;
   private Predicate<Notification> falseCondition;
   private Predicate<Notification> trueCondition;
 
   ReactiveBoolean(EventBus bus) {
     this.bus = bus;
+    this.name = "";
+  }
+
+  ReactiveBoolean(EventBus bus, String name) {
+    this.bus = bus;
+    this.name = name;
   }
 
   public ReactiveBoolean init(boolean val) {
@@ -58,11 +68,13 @@ public class ReactiveBoolean {
 
   public ReactiveBoolean falseOn(Predicate<Notification> falseCondition) {
     this.falseCondition = falseCondition;
+    logger.debug("ReactiveBoolean is false");
     return this;
   }
 
   public ReactiveBoolean trueOn(Predicate<Notification> trueCondition) {
     this.trueCondition = trueCondition;
+    logger.debug("ReactiveBoolean is true");
     return this;
   }
 

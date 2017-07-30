@@ -273,8 +273,8 @@ public class InfluxModelDataDao {
       Query q2 = null;
 
       if (!StringUtils.isEmpty(stream)) {
-        q1 = new Query("SHOW FIELD KEYS ON " + keyspace + " FROM \"" + InfluxModelDataDto.PREFIX + stream + "\"", keyspace);
-        q2 = new Query("SHOW TAG KEYS ON " + keyspace + " FROM \"" + InfluxModelDataDto.PREFIX + stream + "\"", keyspace);
+        q1 = new Query("SHOW FIELD KEYS ON " + keyspace + " FROM \"" + InfluxModelDataDto.PREFIX + stream.toLowerCase() + "\"", keyspace);
+        q2 = new Query("SHOW TAG KEYS ON " + keyspace + " FROM \"" + InfluxModelDataDto.PREFIX + stream.toLowerCase() + "\"", keyspace);
       }
 
       logger.debug("Executing select: " + q1.getCommand());
@@ -307,10 +307,12 @@ public class InfluxModelDataDao {
         });
       }
 
-      //always there
-      data.add(Name.TIMESTAMP.field());
-      data.add(Name.STREAM.field());
-      data.add(Name.SYMBOL.field());
+      if (!data.isEmpty()) {
+        //always there
+        data.add(Name.TIMESTAMP.field());
+        data.add(Name.STREAM.field());
+        data.add(Name.SYMBOL.field());
+      }
 
       return data;
     }

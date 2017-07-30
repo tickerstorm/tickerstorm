@@ -1,6 +1,6 @@
 package io.tickerstorm.common.command;
 
-import io.tickerstorm.common.reactive.CompletionTracker.ModelData.Export;
+import io.tickerstorm.common.reactive.Observations.ModelData.Export;
 import io.tickerstorm.common.reactive.Notification;
 import java.util.function.Predicate;
 
@@ -17,8 +17,8 @@ public class ExportModelDataToCSV extends Command {
     this.modelQuery = new ModelDataQuery(stream);
   }
 
-  public ExportModelDataToCSV(String stream, ModelDataQuery q) {
-    super(stream, "data.modeldata.export.csv");
+  public ExportModelDataToCSV(ModelDataQuery q) {
+    super(q.stream, "data.modeldata.export.csv");
     this.modelQuery = q;
     this.markers.add(Markers.FILE.toString());
     this.markers.add(Markers.EXPORT.toString());

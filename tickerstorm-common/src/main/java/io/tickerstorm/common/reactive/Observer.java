@@ -73,7 +73,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author kkarski
  */
-public class Observer implements CompletionTracker {
+public class Observer implements Observations {
 
   private final static Logger logger = LoggerFactory.getLogger(Observer.class);
   private static final ScheduledExecutorService timer = Executors.newSingleThreadScheduledExecutor();
@@ -306,6 +306,10 @@ public class Observer implements CompletionTracker {
 
   public ReactiveBoolean newBoolean() {
     return new ReactiveBoolean(this.notificationsBus);
+  }
+
+  public EventAggregator newAggregator() {
+    return new EventAggregator(this.notificationsBus);
   }
 
   @FunctionalInterface

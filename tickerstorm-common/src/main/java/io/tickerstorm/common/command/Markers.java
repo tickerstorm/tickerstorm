@@ -4,6 +4,8 @@ public enum Markers {
 
   QUERY("query"),
 
+  COMMAND("command"),
+
   MARKET_DATA("market_data"),
 
   MODEL_DATA("model_data"),
@@ -31,6 +33,8 @@ public enum Markers {
   LOCATION("location"),
 
   FAILED("failed"),
+
+  IN_PROGRESS("in_progress"),
   
   MESSAGE("message"),
   

@@ -117,7 +117,7 @@ public class InfluxModelDataSinkITCase {
       return match;
     }));
 
-    Assert.assertTrue(tuple.containsAll(dtos));
+    Assert.assertTrue(tuple.containsAll(dtos.get(0)));
 
     dtos.get(0).stream().forEach(f -> {
 

@@ -1,5 +1,7 @@
 package io.tickerstorm.common.command;
 
+import com.google.common.collect.Lists;
+import io.tickerstorm.common.entity.Event;
 import io.tickerstorm.common.reactive.Notification;
 import java.io.Serializable;
 import java.time.Instant;
@@ -9,36 +11,18 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 
-import com.google.common.collect.Lists;
-
-import io.tickerstorm.common.entity.Event;
-
 @SuppressWarnings("serial")
-public abstract class Command implements Marker, Event, Serializable {
+public class Command implements Marker, Event, Serializable {
 
-  public String id = UUID.randomUUID().toString();
   public final Set<String> markers = new HashSet<>();
   public final Map<String, Object> config = new HashMap<>();
+  public final String type;
+  public String id = UUID.randomUUID().toString();
   public Instant timestamp = Instant.now();
   protected String stream;
-
-  public void setStream(String stream) {
-    this.stream = stream;
-  }
-
-  public final String type;
-
-  public String getStream() {
-    return stream;
-  }
-
-  public String id() {
-    return id;
-  }
 
   public Command(String stream, String type, String... marker) {
     this.stream = stream;
@@ -57,6 +41,18 @@ public abstract class Command implements Marker, Event, Serializable {
     this.type = type;
   }
 
+  public String getStream() {
+    return stream;
+  }
+
+  public void setStream(String stream) {
+    this.stream = stream;
+  }
+
+  public String id() {
+    return id;
+  }
+
   @Override
   public int hashCode() {
     final int prime = 31;
@@ -70,33 +66,44 @@ public abstract class Command implements Marker, Event, Serializable {
 
   @Override
   public boolean equals(Object obj) {
-    if (this == obj)
+    if (this == obj) {
       return true;
-    if (obj == null)
+    }
+    if (obj == null) {
       return false;
-    if (getClass() != obj.getClass())
+    }
+    if (getClass() != obj.getClass()) {
       return false;
+    }
     Command other = (Command) obj;
     if (config == null) {
-      if (other.config != null)
+      if (other.config != null) {
         return false;
-    } else if (!config.equals(other.config))
+      }
+    } else if (!config.equals(other.config)) {
       return false;
+    }
     if (id == null) {
-      if (other.id != null)
+      if (other.id != null) {
         return false;
-    } else if (!id.equals(other.id))
+      }
+    } else if (!id.equals(other.id)) {
       return false;
+    }
     if (markers == null) {
-      if (other.markers != null)
+      if (other.markers != null) {
         return false;
-    } else if (!markers.equals(other.markers))
+      }
+    } else if (!markers.equals(other.markers)) {
       return false;
+    }
     if (stream == null) {
-      if (other.stream != null)
+      if (other.stream != null) {
         return false;
-    } else if (!stream.equals(other.stream))
+      }
+    } else if (!stream.equals(other.stream)) {
       return false;
+    }
     return true;
   }
 
@@ -131,7 +138,9 @@ public abstract class Command implements Marker, Event, Serializable {
     return type;
   }
 
-  public abstract boolean isValid();
+  public boolean isValid() {
+    return validate();
+  }
 
   protected boolean validate() {
     return (!StringUtils.isEmpty(this.stream) && !StringUtils.isEmpty(this.id) && this.timestamp != null);

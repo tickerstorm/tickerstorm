@@ -40,6 +40,7 @@ import io.tickerstorm.common.command.Markers;
 import io.tickerstorm.common.config.TransformerConfig;
 import io.tickerstorm.common.eventbus.Destinations;
 import io.tickerstorm.common.reactive.Observations.Session;
+import io.tickerstorm.strategy.processor.BaseProcessor;
 import io.tickerstorm.common.reactive.Notification;
 import java.util.HashMap;
 import java.util.List;
@@ -80,19 +81,19 @@ public class StrategyService {
   @Subscribe
   public void onCommand(Command command) throws Exception {
 
-    if (command.config != null && command.config.containsKey(TRANSFORMERS_YML_NODE)) {
+    if (command.config != null && command.config.containsKey(BaseProcessor.TRANSFORMERS_YML_NODE)) {
 
-      Map<String, List<Map<String, String>>> trans = (Map<String, List<Map<String, String>>>) command.config.get(TRANSFORMERS_YML_NODE);
+      Map<String, List<Map<String, String>>> trans = (Map<String, List<Map<String, String>>>) command.config.get(BaseProcessor.TRANSFORMERS_YML_NODE);
 
       if (trans.containsKey(name())) {
         TransformerConfig config = new TransformerConfig(trans.get(name()));
-        getConfig(command.getStream()).put(TRANSFORMER_CONFIG_KEY, config);
+        BaseProcessor.getConfig(command.getStream()).put(BaseProcessor.TRANSFORMER_CONFIG_KEY, config);
       }
 
       // Initialize cache
       CacheManager.getInstance(command.getStream());
     } else {
-      getConfig(command.getStream()).put(TRANSFORMER_CONFIG_KEY, new TransformerConfig(false));
+      getConfig(command.getStream()).put(BaseProcessor.TRANSFORMER_CONFIG_KEY, new TransformerConfig(false));
     }
 
     Notification not = new Notification(command);

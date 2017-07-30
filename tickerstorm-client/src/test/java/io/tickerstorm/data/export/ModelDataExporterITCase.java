@@ -34,12 +34,11 @@ package io.tickerstorm.data.export;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
+import io.tickerstorm.common.command.Command;
 import io.tickerstorm.common.command.ExportModelDataToCSV;
-import io.tickerstorm.common.command.HistoricalFeedQuery;
 import io.tickerstorm.common.command.Markers;
-import io.tickerstorm.common.entity.Bar;
 import io.tickerstorm.common.eventbus.Destinations;
-import io.tickerstorm.common.reactive.CompletionTracker;
+import io.tickerstorm.common.reactive.Observations;
 import io.tickerstorm.common.reactive.Notification;
 import io.tickerstorm.common.reactive.Observer;
 import io.tickerstorm.common.reactive.ReactiveBoolean;
@@ -48,9 +47,8 @@ import io.tickerstorm.data.BaseIntegrationTest;
 import io.tickerstorm.data.IntegrationTestContext;
 import java.io.File;
 import java.math.BigDecimal;
+import java.net.URI;
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.After;
@@ -63,7 +61,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
@@ -87,20 +84,43 @@ public class ModelDataExporterITCase extends BaseIntegrationTest {
   @Override
   public void onMarketDataServiceInitialized() throws Exception {
     session = factory.newSession();
-    session.configure(new DefaultResourceLoader().getResource("classpath:yml/modeldataendtoenditcase.yml").getInputStream(), stream);
+    session.configure(new URI("classpath:yml/modeldataendtoenditcase.yml"), stream);
     session.start();
+
+    Command delete = new Command(stream, "delete.data");
+    delete.markers.add(Markers.MODEL_DATA.toString());
+    delete.markers.add(Markers.DELETE.toString());
+    session.execute(delete);
+
+    delete = new Command(stream, "delete.data");
+    delete.markers.add(Markers.MARKET_DATA.toString());
+    delete.markers.add(Markers.DELETE.toString());
+    session.execute(delete);
 
     Thread.sleep(5000);
   }
 
   @Before
   public void setup() throws Exception {
+
+    Command delete = new Command(stream, "delete.data");
+    delete.markers.add(Markers.MODEL_DATA.toString());
+    delete.markers.add(Markers.DELETE.toString());
+    session.execute(delete);
+
+    delete = new Command(stream, "delete.data");
+    delete.markers.add(Markers.MARKET_DATA.toString());
+    delete.markers.add(Markers.DELETE.toString());
+    session.execute(delete);
+
     super.init();
     java.nio.file.Files.deleteIfExists(new File(location).toPath());
   }
 
+  @Override
   @After
-  public void taerdown() throws Exception {
+  public void cleanup() throws Exception {
+    super.cleanup();
     //java.nio.file.Files.deleteIfExists(new File(location).toPath());
   }
 
@@ -112,49 +132,23 @@ public class ModelDataExporterITCase extends BaseIntegrationTest {
     exportCommend.markers.add(Markers.LOCATION.toString());
     exportCommend.config.put(Markers.LOCATION.toString(), location);
 
-    final ReactiveBoolean fileSaved = Observer.observe(session.getNotificationsBus()).newBoolean().trueOn(exportCommend.isDone()).start();
-
-    Observer.observe(session.getNotificationsBus(), "export to csv").startCountDownOn(CompletionTracker.ModelData.isSaved(session.stream()))
-        .extendTimeoutOn(CompletionTracker.ModelData.isSaved(session.stream()), 2000).whenTimedOut(() -> {
+    Observer.observe(session.getNotificationsBus(), "export to csv").startCountDownOn(Observations.ModelData.isSaved(session.stream()))
+        .extendTimeoutOn(Observations.ModelData.isSaved(session.stream()), 5000).whenTimedOut(() -> {
 
       session.execute(exportCommend);
+      logger.info("Dispatched export command");
 
     }).start();
 
-    Observer.observe(session.getNotificationsBus(), "query historical feed").startCountDownOn(CompletionTracker.Ingest.someIngestStarted)
-        .completeWhen(CompletionTracker.Ingest.someIngestFinished).mustCompleteWithin(2000).whenComplete((n) -> {
-
-      HistoricalFeedQuery query = new HistoricalFeedQuery(stream, "Google", "TOL");
-      query.from = LocalDateTime.of(2015, 6, 10, 0, 0);
-      query.until = LocalDateTime.of(2015, 6, 11, 0, 0);
-      query.periods.add(Bar.MIN_1_INTERVAL);
-      query.zone = ZoneOffset.ofHours(-7);
-      session.execute(query);
-
-    }).whenTimedOut(() -> {
-      Assert.fail();
-    }).start();
-
-    Observer.observe(session.getNotificationsBus(), "file saved").startCountDownOn(exportCommend.started())
-        .completeWhen(exportCommend.isDone()).mustCompleteWithin(2000).whenComplete((n) -> {
-
-      file_saved.set(true);
-
-    }).failedWhen(exportCommend.failed()).whenFailed((n) -> {
-
-      logger.error(n.getProperties().get(Markers.MESSAGE.toString()));
-
-      Assert.fail();
-    }).whenTimedOut(() -> {
-      Assert.fail();
-    }).start();
+    final ReactiveBoolean fileSaved = Observer.observe(session.getNotificationsBus()).newBoolean().trueOn(exportCommend.isDone())
+        .falseOn(exportCommend.failed()).start();
 
     TestDataFactory.buildCandles(100, "goog", session.stream(), BigDecimal.ONE).stream().forEach(c -> {
       brokderFeed.post(c);
     });
 
-    while (!fileSaved.value()) {
-      Thread.sleep(5000);
+    while(!fileSaved.value()) {
+      Thread.sleep(1000);
     }
 
     Assert.assertTrue(new File(location).exists());

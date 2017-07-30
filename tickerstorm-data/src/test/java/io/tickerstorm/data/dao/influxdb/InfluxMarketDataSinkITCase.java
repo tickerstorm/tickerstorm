@@ -36,7 +36,7 @@ import com.google.common.eventbus.EventBus;
 import io.tickerstorm.common.entity.Bar;
 import io.tickerstorm.common.entity.MarketData;
 import io.tickerstorm.common.eventbus.Destinations;
-import io.tickerstorm.common.reactive.CompletionTracker;
+import io.tickerstorm.common.reactive.Observations;
 import io.tickerstorm.common.reactive.Observer;
 import io.tickerstorm.data.TestMarketDataServiceConfig;
 import java.math.BigDecimal;
@@ -103,8 +103,8 @@ public class InfluxMarketDataSinkITCase {
     final AtomicBoolean done = new AtomicBoolean(false);
 
     Observer.observe(notificationsBus, "marketdata")
-        .startCountDownOn(CompletionTracker.MarketData.isSaved(stream))
-        .completeWhen(CompletionTracker.MarketData.isSaved(stream))
+        .startCountDownOn(Observations.MarketData.isSaved(stream))
+        .completeWhen(Observations.MarketData.isSaved(stream))
         .whenTimedOut(() -> {
 
           Assert.fail("No market data persisted");

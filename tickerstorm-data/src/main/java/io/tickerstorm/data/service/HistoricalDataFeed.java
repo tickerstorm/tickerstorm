@@ -42,12 +42,9 @@ import io.tickerstorm.common.entity.MarketData;
 import io.tickerstorm.common.eventbus.Destinations;
 import io.tickerstorm.common.reactive.Notification;
 import io.tickerstorm.data.dao.influxdb.InfluxMarketDataDao;
-import java.math.BigInteger;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
-import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -105,25 +102,16 @@ public class HistoricalDataFeed {
   @Subscribe
   public void onQuery(HistoricalFeedQuery query) {
 
-    logger.debug("Historical feed query received");
+    logger.info("Historical feed query received");
     Instant start = query.from.toInstant(ZoneOffset.UTC);
     Instant end = query.until.toInstant(ZoneOffset.UTC);
-    Instant date = start;
-
-    List<BigInteger> dates = new ArrayList<>();
-    dates.add(new BigInteger(dateFormat.format(date)));
-
-    while (date.compareTo(end) < 0) {
-      date = date.plus(1, ChronoUnit.DAYS);
-      dates.add(new BigInteger(dateFormat.format(date)));
-    }
 
     for (String s : query.symbols) {
 
       long startTimer = System.currentTimeMillis();
       List<MarketData> dtos = dao.newSelect().bySource(query.source.toLowerCase()).bySymbol(s.toLowerCase()).byType(Bar.TYPE.toLowerCase()).between(start, end)
           .asStream(query.getStream()).select();
-      logger.info("Query took " + (System.currentTimeMillis() - startTimer) + "ms to fetch " + dtos.size() + " results.");
+      logger.debug("Query took " + (System.currentTimeMillis() - startTimer) + "ms to fetch " + dtos.size() + " results.");
 
       Notification marker = new Notification(query);
       marker.addMarker(Markers.START.toString());
